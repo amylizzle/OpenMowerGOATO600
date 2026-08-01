@@ -1,0 +1,2 @@
+uint8 motorIdx
+uint8 motorState

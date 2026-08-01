@@ -1,0 +1,12 @@
+#enum
+uint8 ROLL_MOTOR_UP = 0
+uint8 ROLL_MOTOR_DOWN = 1
+uint8 value  #ROLL_MOTOR_DOWN是工作
+uint8 type
+
+---
+
+uint8 ROLL_MOTOR_SUCCESS = 0
+uint8 ROLL_MOTOR_FAIL = 1
+uint8 res
+uint8 value #返回request申请的值

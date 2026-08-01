@@ -1,0 +1,3 @@
+uint8 LOCATE_VALID   = 0
+uint8 LOCATE_INVALID = 1
+

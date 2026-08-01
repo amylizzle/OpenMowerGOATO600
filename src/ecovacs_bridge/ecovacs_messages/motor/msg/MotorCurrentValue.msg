@@ -1,0 +1,2 @@
+MotorType type
+uint16 current

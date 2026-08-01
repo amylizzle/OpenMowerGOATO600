@@ -1,0 +1,6 @@
+uint16 chargeVoltage
+int16 batteryCurrent 
+uint16 batteryVoltage
+uint8 chargeStatus
+int8 batteryTemperature
+uint8 chargeAlarm

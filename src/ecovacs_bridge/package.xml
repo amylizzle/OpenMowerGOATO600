@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package format="2">
+    <name>ecovacs_bridge</name>
+    <version>0.0.1</version>
+    <description>Bridge between Ecovacs GOAT native ROS topics and OpenMower topics</description>
+    <maintainer email="user@example.com">OpenMower User</maintainer>
+    <license>CC BY-NC-SA 4.0</license>
+
+    <buildtool_depend>catkin</buildtool_depend>
+    <build_depend>rospy</build_depend>
+    <build_depend>open_mower</build_depend>
+    <build_depend>mower_msgs</build_depend>
+    <build_depend>sensor_msgs</build_depend>
+    <build_depend>geometry_msgs</build_depend>
+    <build_depend>std_msgs</build_depend>
+    <build_depend>nmea_msgs</build_depend>
+
+    <exec_depend>rospy</exec_depend>
+    <exec_depend>open_mower</exec_depend>
+    <exec_depend>mower_msgs</exec_depend>
+    <exec_depend>sensor_msgs</exec_depend>
+    <exec_depend>geometry_msgs</exec_depend>
+    <exec_depend>std_msgs</exec_depend>
+    <exec_depend>nmea_msgs</exec_depend>
+
+    <export>
+    </export>
+</package>

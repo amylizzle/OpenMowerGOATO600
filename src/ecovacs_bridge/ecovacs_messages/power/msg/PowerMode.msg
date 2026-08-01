@@ -1,0 +1,13 @@
+#enum
+uint8 POWER_MODE_ERP = 0
+uint8 POWER_MODE_CEC = 1
+uint8 POWER_MODE_POWER_OFF = 2
+uint8 POWER_MODE_REBOOT = 3
+uint8 POWER_MODE_LOW = 4
+uint8 POWER_MODE_WATCHDOG_REBOOT = 5
+uint8 RTK_POWER_CTRL = 6
+uint8 LDS_POWER_CTRL = 7
+uint8 FLASH_BRIGHTNESS_CTRL = 8
+uint8 powerMode
+uint8 operate   # 0 quit , 1 enter.
+

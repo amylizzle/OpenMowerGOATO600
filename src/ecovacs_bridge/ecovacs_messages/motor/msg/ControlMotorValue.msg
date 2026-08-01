@@ -1,0 +1,3 @@
+MotorType type
+MotorControlType controlType
+int16 value
