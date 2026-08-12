@@ -40,6 +40,7 @@ ROS_PACKAGES="${ROS_PACKAGES:-ros-noetic-desktop-full}"
 ROS_DISTRO="noetic"
 ROS_REPO_URL="http://packages.ros.org/ros/ubuntu"
 ROS_KEY_URL="https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc"
+PYTHON_SOURCE_URL="https://www.python.org/ftp/python/3.10.20/Python-3.10.20.tar.xz"
 
 # Reuse a host ROS installation at /opt/ros instead of installing ROS inside the
 # chroot. auto -> use host ROS if /opt/ros/${ROS_DISTRO} exists, else install.
@@ -155,8 +156,12 @@ EOF
         export DEBIAN_FRONTEND=noninteractive
         apt-get update
         apt-get install -y --no-install-recommends \
-            sudo git zsh gdb rsync ssh lsb-release gnupg ca-certificates python3.10 python3-rosdep \
-            python3-empy python3-nose libgtest-dev libgmock-dev
+            sudo git zsh gdb rsync ssh lsb-release gnupg ca-certificates libgtest-dev libgmock-dev
+    "
+
+    setup_python
+    run_chroot "
+        pip3 install emby nose rosdep
     "
 
     if host_ros_enabled; then
@@ -207,6 +212,30 @@ EOF
     "
 
     info "setup complete: ${ROOTFS}"
+}
+
+setup_python() {
+    # we gotta compile python3.10 from source because it doesn't exist for ubuntu 20.04 arm64 as a binary I can find anywhere
+    info "running python setup"
+    if ! command -v curl >/dev/null 2>&1 && ! command -v wget >/dev/null 2>&1; then
+            info "installing curl on the host"
+            apt-get update && apt-get install -y curl
+        fi
+    (command -v curl >/dev/null 2>&1 && curl -fsSL -o "${ROOTFS}/root/python.tar.xz" "${PYTHON_SOURCE_URL}") \
+        || wget -qO "${ROOTFS}/root/python.tar.xz" "${PYTHON_SOURCE_URL}"
+    run_chroot "
+        apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev liblzma-dev libffi-dev
+        cd /root
+        tar xf python.tar.xz
+        cd Python-3.10.20
+        ./configure --prefix=/usr/lib/aarch64-linux-gnu --with-shared --with-pkg-config-libdir=/usr/lib/aarch64-linux-gnu/lib/pkgconfig 
+        make
+        make install
+        ln -sfn /usr/lib/aarch64-linux-gnu/bin/python3 /usr/bin/python3.10
+        ln -sfn /usr/lib/aarch64-linux-gnu/bin/python3 /usr/local/bin/python3
+        ln -sfn /usr/lib/aarch64-linux-gnu/bin/pip3 /usr/local/bin/pip3
+    "
+    #cp /usr/share/pyshared/lsb_release.py /usr/local/lib/python3.10/site-packages/ #maybe?
 }
 
 # ----------------------------------------------------------------------------
