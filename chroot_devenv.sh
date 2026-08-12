@@ -157,7 +157,7 @@ EOF
         apt-get update
         apt-get install -y --no-install-recommends \
             sudo git zsh gdb rsync ssh lsb-release gnupg ca-certificates libgtest-dev \
-            libgmock-dev cmake python-rosdep3 python-empy python-nose
+            libgmock-dev cmake python3-rosdep python3-empy python3-nose
     "
 
     setup_python
