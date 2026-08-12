@@ -156,13 +156,11 @@ EOF
         export DEBIAN_FRONTEND=noninteractive
         apt-get update
         apt-get install -y --no-install-recommends \
-            sudo git zsh gdb rsync ssh lsb-release gnupg ca-certificates libgtest-dev libgmock-dev
+            sudo git zsh gdb rsync ssh lsb-release gnupg ca-certificates libgtest-dev \
+            libgmock-dev cmake python-rosdep3 python-empy python-nose
     "
 
     setup_python
-    run_chroot "
-        pip3 install emby nose rosdep
-    "
 
     if host_ros_enabled; then
         info "reusing host ROS at ${HOST_ROS_PATH} (bind-mounted into the chroot)"
@@ -232,10 +230,10 @@ setup_python() {
         make
         make install
         ln -sfn /usr/lib/aarch64-linux-gnu/bin/python3 /usr/bin/python3.10
-        ln -sfn /usr/lib/aarch64-linux-gnu/bin/python3 /usr/local/bin/python3
-        ln -sfn /usr/lib/aarch64-linux-gnu/bin/pip3 /usr/local/bin/pip3
     "
     #cp /usr/share/pyshared/lsb_release.py /usr/local/lib/python3.10/site-packages/ #maybe?
+    # ln -sfn /usr/lib/aarch64-linux-gnu/bin/python3 /usr/local/bin/python3
+    # ln -sfn /usr/lib/aarch64-linux-gnu/bin/pip3 /usr/local/bin/pip3
 }
 
 # ----------------------------------------------------------------------------
