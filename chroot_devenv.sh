@@ -44,7 +44,7 @@ PYTHON_SOURCE_URL="https://www.python.org/ftp/python/3.10.20/Python-3.10.20.tar.
 
 # Reuse a host ROS installation at /opt/ros instead of installing ROS inside the
 # chroot. auto -> use host ROS if /opt/ros/${ROS_DISTRO} exists, else install.
-DEVENV_USE_HOST_ROS="${DEVENV_USE_HOST_ROS:-auto}"
+DEVENV_USE_HOST_ROS="${DEVENV_USE_HOST_ROS:-0}"
 HOST_ROS_PATH="/opt/ros/${ROS_DISTRO}"
 
 # ----------------------------------------------------------------------------
@@ -160,8 +160,6 @@ EOF
             libgmock-dev cmake python3-rosdep python3-empy python3-nose
     "
 
-    setup_python
-
     if host_ros_enabled; then
         info "reusing host ROS at ${HOST_ROS_PATH} (bind-mounted into the chroot)"
     else
@@ -210,30 +208,6 @@ EOF
     "
 
     info "setup complete: ${ROOTFS}"
-}
-
-setup_python() {
-    # we gotta compile python3.10 from source because it doesn't exist for ubuntu 20.04 arm64 as a binary I can find anywhere
-    info "running python setup"
-    if ! command -v curl >/dev/null 2>&1 && ! command -v wget >/dev/null 2>&1; then
-            info "installing curl on the host"
-            apt-get update && apt-get install -y curl
-        fi
-    (command -v curl >/dev/null 2>&1 && curl -fsSL -o "${ROOTFS}/root/python.tar.xz" "${PYTHON_SOURCE_URL}") \
-        || wget -qO "${ROOTFS}/root/python.tar.xz" "${PYTHON_SOURCE_URL}"
-    run_chroot "
-        apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev liblzma-dev libffi-dev
-        cd /root
-        tar xf python.tar.xz
-        cd Python-3.10.20
-        ./configure --prefix=/usr/lib/aarch64-linux-gnu --with-shared --with-pkg-config-libdir=/usr/lib/aarch64-linux-gnu/lib/pkgconfig 
-        make
-        make install
-        ln -sfn /usr/lib/aarch64-linux-gnu/bin/python3 /usr/bin/python3.10
-    "
-    #cp /usr/share/pyshared/lsb_release.py /usr/local/lib/python3.10/site-packages/ #maybe?
-    # ln -sfn /usr/lib/aarch64-linux-gnu/bin/python3 /usr/local/bin/python3
-    # ln -sfn /usr/lib/aarch64-linux-gnu/bin/pip3 /usr/local/bin/pip3
 }
 
 # ----------------------------------------------------------------------------
