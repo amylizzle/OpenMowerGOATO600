@@ -12,6 +12,7 @@ from geometry_msgs.msg import TwistStamped, Twist
 from sensor_msgs.msg import Imu
 from std_msgs.msg import String, Header
 from mower_msgs.msg import Emergency, ESCStatus, Status, Power
+from mower_msgs.srv import MowerControlSrv, EmergencyStopSrv
 try:
     from nmea_msgs.msg import Sentence
 except ImportError:
@@ -46,12 +47,13 @@ except ImportError:
     Geomag = None
 
 try:
-    from ecovacs_messages.msg import EStopState, RainDetectState, OnOffInfo, OnOffSensorValue
+    from ecovacs_messages.msg import EStopState, RainDetectState, OnOffInfo, OnOffSensorValue, EStopControl
 except ImportError:
     EStopState = None
     RainDetectState = None
     OnOffInfo = None
     OnOffSensorValue = None
+    EStopControl = None
 
 try:
     from ecovacs_messages.msg import Gps
@@ -120,6 +122,11 @@ class EcovacsBridgeNode:
         else:
             self.pub_send_data = None
 
+        if EStopControl is not None:
+            self.pub_estop_control = rospy.Publisher('/onOffInfo/EStopControl', EStopControl, queue_size=10)
+        else:
+            self.pub_estop_control = None
+
         # --- subscribers: GOAT topics ---
         if WheelSpeedReport is not None:
             rospy.Subscriber('/wheel/WheelSpeedReport', WheelSpeedReport, self.on_wheel_speed)
@@ -182,6 +189,10 @@ class EcovacsBridgeNode:
         elif Sentence is None:
             # try generic std_msgs/String or raw
             pass
+
+        # --- services: OpenMower low-level control (mower_logic clients) ---
+        rospy.Service('ll/_service/mow_enabled', MowerControlSrv, self.on_mow_enabled)
+        rospy.Service('ll/_service/emergency', EmergencyStopSrv, self.on_emergency)
 
         # state
         self.current_charge_state = None
@@ -341,6 +352,40 @@ class EcovacsBridgeNode:
         self.pub_absolute_pose.publish(ap)
 
     # --- OpenMower → GOAT translators ---
+
+    def on_mow_enabled(self, req, res):
+        """Service: ll/_service/mow_enabled → LawnMowerMotor + MotorSpeedControl"""
+        if req.mow_enabled:
+            if self.pub_lawn_mower is not None:
+                l = LawnMowerMotor()
+                l.type = 0  # ROLL_MOTOR
+                l.value = LawnMowerMotor.ROLL_MOTOR_MAX_VALUE
+                l.pubName = ''
+                self.pub_lawn_mower.publish(l)
+            if self.pub_motor_speed is not None:
+                mc = MotorSpeedControl()
+                mc.val = 1
+                mc.speedleft = 3000.0
+                mc.speedright = 3000.0
+                mc.runtime = 0.0
+                self.pub_motor_speed.publish(mc)
+        else:
+            if self.pub_lawn_mower is not None:
+                l = LawnMowerMotor()
+                l.type = 0
+                l.value = 0
+                l.pubName = ''
+                self.pub_lawn_mower.publish(l)
+        return True
+
+    def on_emergency(self, req, res):
+        """Service: ll/_service/emergency → EStopControl"""
+        if self.pub_estop_control is None:
+            return False
+        ec = EStopControl()
+        ec.action = 0 if req.emergency else 1  # 0=trigger stop, 1=cancel
+        self.pub_estop_control.publish(ec)
+        return True
 
     def on_cmd_vel(self, msg):
         """Translate Twist → SetLinearAngularSpeed"""
