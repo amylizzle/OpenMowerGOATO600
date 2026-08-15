@@ -211,6 +211,8 @@ EOF
     run_chroot "
         apt install -y nginx 
         rm -rf /var/www /etc/nginx/sites-enabled/* 
+        mkdir /opt/open_mower_ros
+        ln -s /workspace/src/open_mower_ros/web /opt/open_mower_ros/web
     "
     info "copying nginx config into chroot"
     cp "./src/open_mower_ros/docker/assets/nginx.conf" "${ROOTFS}/etc/nginx/conf.d/default.conf"
