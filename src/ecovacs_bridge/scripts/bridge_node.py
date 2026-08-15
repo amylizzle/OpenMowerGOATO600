@@ -225,7 +225,7 @@ class EcovacsBridgeNode:
     def on_motor_speed(self, msg):
         """Translate MotorSpeedReport → mower_status"""
         s = Status()
-        s.header.stamp = rospy.Time.now()
+        s.stamp = rospy.Time.now()
         s.mower_status = Status.MOWER_STATUS_OK
         s.raspberry_pi_power = True
         s.is_charging = self.current_charge_state if self.current_charge_state is not None else False
@@ -251,7 +251,7 @@ class EcovacsBridgeNode:
     def on_battery(self, msg):
         """Translate Battery → Power"""
         p = Power()
-        p.header.stamp = rospy.Time.now()
+        p.stamp = rospy.Time.now()
         p.battery_pct = float(msg.battery)  # 0-100 %
         p.charger_enabled = False
         p.charger_status = "low_voltage_power_off" if msg.isLowVoltageToPowerOff else ""
@@ -260,7 +260,7 @@ class EcovacsBridgeNode:
     def on_charge_vol_cur(self, msg):
         """Translate ChargeVolCur → Power charge voltage/current"""
         p = Power()
-        p.header.stamp = rospy.Time.now()
+        p.stamp = rospy.Time.now()
         p.charge_voltage = msg.chargeVol / 1000.0  # mV → V
         p.charge_current = msg.chargeCur / 1000.0  # mA → A
         p.charger_enabled = msg.chargeStep > 0
