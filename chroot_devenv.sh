@@ -292,6 +292,7 @@ cleanup() {
 
 launchom() {
     run_chroot "
+        source /workspace/devel/setup.bash
         source /workspace/mower_config.sh
         roslaunch open_mower open_mower.launch
     "

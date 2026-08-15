@@ -43,8 +43,12 @@ congrats, you can now make whatever modifications you like to the filesystem and
 
 You gotta compile on the GOAT, so use your shiny new SSH login and run
 ```
+mount -o remount,rw /
 apt install --reinstall git
+mount -o remount,ro /
+cd /var
 git clone https://github.com/amylizzle/OpenMowerGOATO600.git
+cd OpenMowerGOATO600
 ./chroot_devenv.sh
 ```
 This will take a while. It sets up a chroot dev environment under /var, builds and then runs OpenMower. 
