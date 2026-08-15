@@ -1,0 +1,10 @@
+float64 timenow
+float64 x
+float64 y
+float64 z
+float64 lat
+float64 lon
+float64 alt
+int8 type
+int8 sats
+string source

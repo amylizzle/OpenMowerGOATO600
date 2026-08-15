@@ -318,6 +318,8 @@ launchom() {
         roslaunch_pid=\$!
         rosrun ecovacs_bridge bridge_node.py
         kill \$roslaunch_pid 2>/dev/null
+        service nginx stop
+        service mosquitto stop
     "
 }
 

@@ -80,6 +80,7 @@ add_message_files(
         PredictPose.msg
         RainDetectState.msg
         RecvData.msg
+        RtkData.msg
         RobotInvalidState.msg
         ScreenKeyResetEvent.msg
         ScreenLockControl.msg

@@ -60,6 +60,11 @@ except ImportError:
     Gps = None
 
 try:
+    from ecovacs_messages.msg import RtkData
+except ImportError:
+    RtkData = None
+
+try:
     from ecovacs_messages.msg import SendData, RecvData
 except ImportError:
     SendData = None
@@ -152,10 +157,12 @@ class EcovacsBridgeNode:
         else:
             rospy.logwarn("ecovacs_bridge: imu.msg.ImuSensor not available")
 
-        if Gps is not None:
+        if RtkData is not None:
+            rospy.Subscriber('/rtk/rtkData', RtkData, self.on_gps)
+        elif Gps is not None:
             rospy.Subscriber('/gps/gps', Gps, self.on_gps)
         else:
-            rospy.logwarn("ecovacs_bridge: gps.msg.Gps not available")
+            rospy.logwarn("ecovacs_bridge: RtkData/Gps not available")
 
         # --- subscribers: OpenMower topics (commands going to GOAT) ---
         rospy.Subscriber('ll/cmd_vel', Twist, self.on_cmd_vel)
@@ -285,7 +292,7 @@ class EcovacsBridgeNode:
         self.pub_imu.publish(imu)
 
     def on_gps(self, msg):
-        """Translate Gps → AbsolutePose (if available)"""
+        """Translate RtkData/Gps → AbsolutePose (if available)"""
         if self.pub_absolute_pose is None:
             return
         ap = AbsolutePose()
@@ -293,9 +300,9 @@ class EcovacsBridgeNode:
         ap.header.frame_id = 'map'
         ap.source = AbsolutePose.SOURCE_GPS
         ap.flags = 0
-        ap.pose.pose.position.x = msg.latitude
-        ap.pose.pose.position.y = msg.longitude
-        ap.pose.pose.position.z = msg.altitude
+        ap.pose.pose.position.x = getattr(msg, 'lat', getattr(msg, 'latitude', 0.0))
+        ap.pose.pose.position.y = getattr(msg, 'lon', getattr(msg, 'longitude', 0.0))
+        ap.pose.pose.position.z = getattr(msg, 'alt', getattr(msg, 'altitude', 0.0))
         # orientation stays identity
         ap.pose.pose.orientation.x = 0
         ap.pose.pose.orientation.y = 0
