@@ -19,10 +19,10 @@ except ImportError:
 
 # GOAT message types - imported if available
 try:
-    from ecovacs_messages.msg import WheelSpeedReport, SetWheelSpeed
+    from ecovacs_messages.msg import WheelSpeedReport, SetLinearAngularSpeed
 except ImportError:
     WheelSpeedReport = None
-    SetWheelSpeed = None
+    SetLinearAngularSpeed = None
 
 try:
     from ecovacs_messages.msg import MotorSpeedReport, LawnMowerMotor, MotorSpeedControl
@@ -32,11 +32,11 @@ except ImportError:
     MotorSpeedControl = None
 
 try:
-    from ecovacs_messages.msg import BatteryInfo, Battery, ChargeState
+    from ecovacs_messages.msg import Battery, ChargeState, ChargeVolCur
 except ImportError:
-    BatteryInfo = None
     Battery = None
     ChargeState = None
+    ChargeVolCur = None
 
 try:
     from ecovacs_messages.msg import ImuSensor, GyroInfo, Geomag
@@ -46,13 +46,12 @@ except ImportError:
     Geomag = None
 
 try:
-    from ecovacs_messages.msg import EStopState, RainDetectState, BumpValue, DownInValue, FallValue
+    from ecovacs_messages.msg import EStopState, RainDetectState, OnOffInfo, OnOffSensorValue
 except ImportError:
     EStopState = None
     RainDetectState = None
-    BumpValue = None
-    DownInValue = None
-    FallValue = None
+    OnOffInfo = None
+    OnOffSensorValue = None
 
 try:
     from ecovacs_messages.msg import Gps
@@ -101,18 +100,18 @@ class EcovacsBridgeNode:
             self.pub_absolute_pose = None
 
         # --- publishers: GOAT topics (what GOAT firmware expects) ---
-        if SetWheelSpeed is not None:
-            self.pub_set_wheel_speed = rospy.Publisher('/wheel/set_linear_angular_speed', SetWheelSpeed, queue_size=10)
+        if SetLinearAngularSpeed is not None:
+            self.pub_set_wheel_speed = rospy.Publisher('/wheel/SetLinearAngularSpeed', SetLinearAngularSpeed, queue_size=10)
         else:
             self.pub_set_wheel_speed = None
 
         if LawnMowerMotor is not None:
-            self.pub_lawn_mower = rospy.Publisher('/motor/lawn_mower_motor', LawnMowerMotor, queue_size=10)
+            self.pub_lawn_mower = rospy.Publisher('/motor/LawnMowerMotor', LawnMowerMotor, queue_size=10)
         else:
             self.pub_lawn_mower = None
 
         if MotorSpeedControl is not None:
-            self.pub_motor_speed = rospy.Publisher('/motor/motor_speed_control', MotorSpeedControl, queue_size=10)
+            self.pub_motor_speed = rospy.Publisher('/motor/MotorSpeedControl', MotorSpeedControl, queue_size=10)
         else:
             self.pub_motor_speed = None
 
@@ -123,44 +122,54 @@ class EcovacsBridgeNode:
 
         # --- subscribers: GOAT topics ---
         if WheelSpeedReport is not None:
-            rospy.Subscriber('/wheel/wheel_speed_report', WheelSpeedReport, self.on_wheel_speed)
+            rospy.Subscriber('/wheel/WheelSpeedReport', WheelSpeedReport, self.on_wheel_speed)
         else:
-            rospy.logwarn("ecovacs_bridge: wheel.msg.WheelSpeedReport not available")
+            rospy.logwarn("ecovacs_bridge: WheelSpeedReport not available")
 
         if MotorSpeedReport is not None:
-            rospy.Subscriber('/motor/motor_speed_report', MotorSpeedReport, self.on_motor_speed)
+            rospy.Subscriber('/motor/MotorSpeedReport', MotorSpeedReport, self.on_motor_speed)
         else:
-            rospy.logwarn("ecovacs_bridge: motor.msg.MotorSpeedReport not available")
+            rospy.logwarn("ecovacs_bridge: MotorSpeedReport not available")
 
-        if BatteryInfo is not None:
-            rospy.Subscriber('/power/battery_info', BatteryInfo, self.on_battery_info)
+        if Battery is not None:
+            rospy.Subscriber('/power/Battery', Battery, self.on_battery)
         else:
-            rospy.logwarn("ecovacs_bridge: power.msg.BatteryInfo not available")
+            rospy.logwarn("ecovacs_bridge: Battery not available")
+
+        if ChargeVolCur is not None:
+            rospy.Subscriber('/power/ChargeVolCur', ChargeVolCur, self.on_charge_vol_cur)
+        else:
+            rospy.logwarn("ecovacs_bridge: ChargeVolCur not available")
 
         if ChargeState is not None:
-            rospy.Subscriber('/power/charge_state', ChargeState, self.on_charge_state)
+            rospy.Subscriber('/power/ChargeState', ChargeState, self.on_charge_state)
         else:
-            rospy.logwarn("ecovacs_bridge: power.msg.ChargeState not available")
+            rospy.logwarn("ecovacs_bridge: ChargeState not available")
 
         if EStopState is not None:
-            rospy.Subscriber('/on_off_info/e_stop_state', EStopState, self.on_estop)
+            rospy.Subscriber('/onOffInfo/EStopState', EStopState, self.on_estop)
         else:
-            rospy.logwarn("ecovacs_bridge: on_off_info.msg.EStopState not available")
+            rospy.logwarn("ecovacs_bridge: EStopState not available")
 
         if RainDetectState is not None:
-            rospy.Subscriber('/on_off_info/rain_detect_state', RainDetectState, self.on_rain)
+            rospy.Subscriber('/onOffInfo/RainDetectState', RainDetectState, self.on_rain)
         else:
-            rospy.logwarn("ecovacs_bridge: on_off_info.msg.RainDetectState not available")
+            rospy.logwarn("ecovacs_bridge: RainDetectState not available")
+
+        if OnOffInfo is not None:
+            rospy.Subscriber('/onOffInfo/OnOffInfo', OnOffInfo, self.on_on_off)
+        else:
+            rospy.logwarn("ecovacs_bridge: OnOffInfo not available")
 
         if ImuSensor is not None:
-            rospy.Subscriber('/imu/imu_sensor', ImuSensor, self.on_imu)
+            rospy.Subscriber('/imu/ImuSensor', ImuSensor, self.on_imu)
         else:
-            rospy.logwarn("ecovacs_bridge: imu.msg.ImuSensor not available")
+            rospy.logwarn("ecovacs_bridge: ImuSensor not available")
 
         if RtkData is not None:
             rospy.Subscriber('/rtk/rtkData', RtkData, self.on_gps)
         elif Gps is not None:
-            rospy.Subscriber('/gps/gps', Gps, self.on_gps)
+            rospy.Subscriber('/gps/Gps', Gps, self.on_gps)
         else:
             rospy.logwarn("ecovacs_bridge: RtkData/Gps not available")
 
@@ -239,21 +248,28 @@ class EcovacsBridgeNode:
         s.mower_motor_rpm = float(abs(msg.speed))
         self.pub_mower_status.publish(s)
 
-    def on_battery_info(self, msg):
-        """Translate BatteryInfo → Power"""
+    def on_battery(self, msg):
+        """Translate Battery → Power"""
         p = Power()
         p.header.stamp = rospy.Time.now()
-        p.battery_voltage = msg.batteryVoltage / 1000.0  # mV → V
-        p.battery_pct = 0.0  # not provided by BatteryInfo alone
-        p.charge_voltage = msg.chargeVoltage / 1000.0
-        p.charge_current = msg.batteryCurrent / 1000.0  # mA → A
-        p.charger_enabled = msg.chargeStatus > 0
-        p.charger_status = str(msg.chargeStatus)
+        p.battery_pct = float(msg.battery)  # 0-100 %
+        p.charger_enabled = False
+        p.charger_status = "low_voltage_power_off" if msg.isLowVoltageToPowerOff else ""
+        self.pub_power.publish(p)
+
+    def on_charge_vol_cur(self, msg):
+        """Translate ChargeVolCur → Power charge voltage/current"""
+        p = Power()
+        p.header.stamp = rospy.Time.now()
+        p.charge_voltage = msg.chargeVol / 1000.0  # mV → V
+        p.charge_current = msg.chargeCur / 1000.0  # mA → A
+        p.charger_enabled = msg.chargeStep > 0
+        p.charger_status = "charging" if msg.chargeStep > 0 else ""
         self.pub_power.publish(p)
 
     def on_charge_state(self, msg):
         """Translate ChargeState → remember is_charging state"""
-        self.current_charge_state = msg.isOnCharger
+        self.current_charge_state = msg.isOnCharger > 0
 
     def on_estop(self, msg):
         """Translate EStopState → Emergency"""
@@ -268,6 +284,20 @@ class EcovacsBridgeNode:
     def on_rain(self, msg):
         """Remember rain state for mower_status"""
         self.current_rain = msg.value > 0
+
+    def on_on_off(self, msg):
+        """Translate OnOffInfo values → Emergency (bump/fall)"""
+        if OnOffSensorValue is None:
+            return
+        for v in msg.values:
+            if v.type == OnOffSensorValue.TYPE_BUMP or v.type == OnOffSensorValue.TYPE_FALL:
+                if v.value > 0:
+                    e = Emergency()
+                    e.stamp = rospy.Time.now()
+                    e.active_emergency = True
+                    e.latched_emergency = True
+                    e.reason = "bump" if v.type == OnOffSensorValue.TYPE_BUMP else "fall"
+                    self.pub_emergency.publish(e)
 
     def on_imu(self, msg):
         """Translate ImuSensor → sensor_msgs/Imu"""
@@ -299,7 +329,7 @@ class EcovacsBridgeNode:
         ap.header.stamp = rospy.Time.now()
         ap.header.frame_id = 'map'
         ap.source = AbsolutePose.SOURCE_GPS
-        ap.flags = 0
+        ap.flags = 2 # TODO!!! This just says all GPS data is legit, which it may not be
         ap.pose.pose.position.x = getattr(msg, 'lat', getattr(msg, 'latitude', 0.0))
         ap.pose.pose.position.y = getattr(msg, 'lon', getattr(msg, 'longitude', 0.0))
         ap.pose.pose.position.z = getattr(msg, 'alt', getattr(msg, 'altitude', 0.0))
@@ -313,12 +343,12 @@ class EcovacsBridgeNode:
     # --- OpenMower → GOAT translators ---
 
     def on_cmd_vel(self, msg):
-        """Translate Twist → SetWheelSpeed or SetLinearAngularSpeed"""
+        """Translate Twist → SetLinearAngularSpeed"""
         if self.pub_set_wheel_speed is not None:
-            s = SetWheelSpeed()
-            s.speed_type = SetWheelSpeed.SPEED_TYPE_DRIVING
+            s = SetLinearAngularSpeed()
+            s.linear_speed = msg.linear.x
+            s.angular_speed = msg.angular.z
             s.pubName = ''
-            s.speed = [msg.linear.x, msg.angular.z]
             self.pub_set_wheel_speed.publish(s)
 
     def on_xbot_action(self, msg):
