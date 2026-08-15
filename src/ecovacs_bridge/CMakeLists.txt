@@ -4,6 +4,8 @@ project(ecovacs_bridge)
 find_package(catkin REQUIRED COMPONENTS
     rospy
     open_mower
+    mower_msgs
+    ecovacs_messages
     sensor_msgs
     geometry_msgs
     std_msgs
@@ -13,7 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_python_setup()
 
 catkin_package(
-    CATKIN_DEPENDS rospy open_mower sensor_msgs geometry_msgs std_msgs nmea_msgs
+    CATKIN_DEPENDS rospy open_mower mower_msgs ecovacs_messages sensor_msgs geometry_msgs std_msgs nmea_msgs
 )
 
 install(PROGRAMS

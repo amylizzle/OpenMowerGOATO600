@@ -1,0 +1,11 @@
+# type enum
+uint8 TYPE_DOWNIN_LEFT = 0
+uint8 TYPE_DOWNIN_FRONT = 1
+uint8 TYPE_DOWNIN_FRONT_RIGHT = 2
+uint8 TYPE_DOWNIN_RIGHT = 3
+uint8 TYPE_DOWNIN_LEFT_BACK = 4
+uint8 TYPE_DOWNIN_RIGHT_BACK = 5
+uint8 type    # TYPE
+
+uint8 VALUE_TRIGGER = 1
+uint8 value

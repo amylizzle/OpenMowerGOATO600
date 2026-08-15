@@ -19,34 +19,34 @@ except ImportError:
 
 # GOAT message types - imported if available
 try:
-    from ecovacs_messages.wheel.msg import WheelSpeedReport, SetWheelSpeed
+    from ecovacs_messages.msg import WheelSpeedReport, SetWheelSpeed
 except ImportError:
     WheelSpeedReport = None
     SetWheelSpeed = None
 
 try:
-    from ecovacs_messages.motor.msg import MotorSpeedReport, LawnMowerMotor, MotorSpeedControl
+    from ecovacs_messages.msg import MotorSpeedReport, LawnMowerMotor, MotorSpeedControl
 except ImportError:
     MotorSpeedReport = None
     LawnMowerMotor = None
     MotorSpeedControl = None
 
 try:
-    from ecovacs_messages.power.msg import BatteryInfo, Battery, ChargeState
+    from ecovacs_messages.msg import BatteryInfo, Battery, ChargeState
 except ImportError:
     BatteryInfo = None
     Battery = None
     ChargeState = None
 
 try:
-    from ecovacs_messages.imu.msg import ImuSensor, GyroInfo, Geomag
+    from ecovacs_messages.msg import ImuSensor, GyroInfo, Geomag
 except ImportError:
     ImuSensor = None
     GyroInfo = None
     Geomag = None
 
 try:
-    from on_off_info.msg import EStopState, RainDetectState, BumpValue, DownInValue, FallValue
+    from ecovacs_messages.msg import EStopState, RainDetectState, BumpValue, DownInValue, FallValue
 except ImportError:
     EStopState = None
     RainDetectState = None
@@ -55,18 +55,18 @@ except ImportError:
     FallValue = None
 
 try:
-    from ecovacs_messages.gps.msg import Gps
+    from ecovacs_messages.msg import Gps
 except ImportError:
     Gps = None
 
 try:
-    from ecovacs_messages.comm.msg import SendData, RecvData
+    from ecovacs_messages.msg import SendData, RecvData
 except ImportError:
     SendData = None
     RecvData = None
 
 try:
-    from ecovacs_messages.prediction.msg import Pose, PredictPose
+    from ecovacs_messages.msg import Pose, PredictPose
 except ImportError:
     Pose = None
     PredictPose = None

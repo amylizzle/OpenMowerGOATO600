@@ -1,0 +1,134 @@
+cmake_minimum_required(VERSION 3.0.2)
+project(ecovacs_messages)
+
+find_package(catkin REQUIRED COMPONENTS
+        std_msgs
+        message_generation)
+
+
+add_message_files(
+        FILES
+        AddAlertType.msg
+        AlertBigDataType.msg
+        AlertGrassMotor.msg
+        AlertInfo.msg
+        AlertLostRtk.msg
+        AlertMcu.msg
+        AlertMotor.msg
+        AlertMoveSignal.msg
+        Alerts.msg
+        AlertType.msg
+        AwdSetLinearAngularSpeed.msg
+        AwdWheelSpeedReport.msg
+        BatteryInfo.msg
+        Battery.msg
+        BumpValue.msg
+        CarpetValue.msg
+        ChargeStateCause.msg
+        ChargeStateConfirm.msg
+        ChargeState.msg
+        ChargeVolCur.msg
+        CommControl.msg
+        ControlMotor.msg
+        ControlMotorValue.msg
+        DirtboxAndFallinfo.msg
+        DirtboxAndFall.msg
+        DirtBoxValue.msg
+        DownInCovered.msg
+        DownInValue.msg
+        EStopControl.msg
+        EStopState.msg
+        FallValue.msg
+        FullBumpValue.msg
+        Geomag.msg
+        GoatAlerts.msg
+        GoatAlertType.msg
+        Gps.msg
+        GpsState.msg
+        GyroBias.msg
+        GyroInfo.msg
+        GyroTypeEnum.msg
+        GyroType.msg
+        ImuSensor.msg
+        ImuState.msg
+        InitIMU.msg
+        LackofWaterValue.msg
+        LawnMowerMotor.msg
+        LdsErrorData.msg
+        LdsErrorType.msg
+        MopState.msg
+        MopStateReport.msg
+        MotorControlType.msg
+        MotorCurrent.msg
+        MotorCurrentValue.msg
+        MotorOnOffType.msg
+        MotorSpeedControl.msg
+        MotorSpeedReport.msg
+        MotorStateEnum.msg
+        MotorStateReport.msg
+        MotorTypeEnum.msg
+        MotorType.msg
+        MotorWarningReport.msg
+        OnOffInfo.msg
+        OnOffSensorValue.msg
+        Pose3D.msg
+        Pose.msg
+        PowerMode.msg
+        PredictionOperation3D.msg
+        PredictionOperation.msg
+        PredictPose3D.msg
+        PredictPose.msg
+        RainDetectState.msg
+        RecvData.msg
+        RobotInvalidState.msg
+        ScreenKeyResetEvent.msg
+        ScreenLockControl.msg
+        ScreenPageControl.msg
+        ScreenPageType.msg
+        ScreenResetEvent.msg
+        ScreenSettingData.msg
+        ScreenSettingEvent.msg
+        ScreenSettingUpdate.msg
+        ScreenStateReport.msg
+        ScreenStatusUpdate.msg
+        ScreenTaskActionType.msg
+        ScreenTaskEvent.msg
+        ScreenTaskType.msg
+        ScreenUnlockEvent.msg
+        SendData.msg
+        SetLinearAngularSpeed.msg
+        SetWheelSpeed.msg
+        SLAMOnOffState.msg
+        StuckAlertValue.msg
+        TdkIMUBias.msg
+        TdkIMUData.msg
+        TdkIMU.msg
+        TestOnOffSensor.msg
+        UltraSonicState.msg
+        UpdatePose3D.msg
+        UpdatePose.msg
+        WaterBoxStateReport.msg
+        WaterBoxValue.msg
+        WaterLevel.msg
+        WheelBackProtection.msg
+        WheelDistanceReport.msg
+        WheelHubMotorProtection.msg
+        WheelSpeedReport.msg
+)
+
+add_service_files(
+        FILES
+        AlertState.srv
+        ControlMotorCutter.srv
+        ControlRollMotor.srv
+        FactoryReset.srv
+        LostRtkSnGet.srv
+)
+
+## Generate added messages and services with any dependencies listed here
+generate_messages(
+        DEPENDENCIES
+        std_msgs
+)
+
+catkin_package()

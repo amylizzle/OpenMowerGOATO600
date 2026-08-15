@@ -314,7 +314,10 @@ launchom() {
         source /workspace/mower_config.sh
         service nginx start
         service mosquitto start
-        rosrun ecovacs_bridge bridge_node.py ; roslaunch open_mower open_mower.launch
+        roslaunch open_mower open_mower.launch &
+        roslaunch_pid=\$!
+        rosrun ecovacs_bridge bridge_node.py
+        kill \$roslaunch_pid 2>/dev/null
     "
 }
 
