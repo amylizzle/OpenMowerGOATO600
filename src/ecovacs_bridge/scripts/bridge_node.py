@@ -365,8 +365,8 @@ class EcovacsBridgeNode:
             if self.pub_motor_speed is not None:
                 mc = MotorSpeedControl()
                 mc.val = 1
-                mc.speedleft = 3000.0
-                mc.speedright = 3000.0
+                mc.speedleft = 1.0
+                mc.speedright = 1.0
                 mc.runtime = 0.0
                 self.pub_motor_speed.publish(mc)
         else:
@@ -376,16 +376,16 @@ class EcovacsBridgeNode:
                 l.value = 0
                 l.pubName = ''
                 self.pub_lawn_mower.publish(l)
-        return True
+        return MowerControlSrv.response()
 
     def on_emergency(self, req):
         """Service: ll/_service/emergency → EStopControl"""
         if self.pub_estop_control is None:
-            return False
+            return EmergencyStopSrv.response()
         ec = EStopControl()
         ec.action = 0 if req.emergency else 1  # 0=trigger stop, 1=cancel
         self.pub_estop_control.publish(ec)
-        return True
+        return EmergencyStopSrv.response()
 
     def on_cmd_vel(self, msg):
         """Translate Twist → SetLinearAngularSpeed"""
