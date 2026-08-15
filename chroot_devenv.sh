@@ -207,6 +207,21 @@ EOF
         rm -f /apt-install-list
     "
 
+    info "setting up nginx"
+    run_chroot "
+        apt install -y nginx 
+        rm -rf /var/www /etc/nginx/sites-enabled/* 
+    "
+    info "copying nginx config into chroot"
+    cp "./src/open_mower_ros/docker/assets/nginx.conf" "${ROOTFS}/etc/nginx/conf.d/default.conf"
+
+    info "setting up mosquitto"
+    run_chroot "
+        apt install -y mosquitto
+    "
+    info "copying mosquitto config into chroot"
+    cp "./src/open_mower_ros/docker/assets/mosquitto.conf" "${ROOTFS}/etc/mosquitto/mosquitto.conf"
+
     info "setup complete: ${ROOTFS}"
 }
 
@@ -294,6 +309,8 @@ launchom() {
     run_chroot "
         source /workspace/devel/setup.bash
         source /workspace/mower_config.sh
+        service nginx start
+        service mosquitto start
         roslaunch open_mower open_mower.launch
     "
 }
