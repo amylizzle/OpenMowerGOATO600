@@ -121,7 +121,7 @@ export OM_GPS_PROTOCOL=NMEA
 # For example to use an Ardusimple simpleRTK with USB connection:
 # OM_GPS_PORT="/dev/serial/by-id/usb-u-blox_AG_-_www.u-blox.com_u-blox_GNSS_receiver-if00"
 # You can obtain your usb gps path by executing "ls -l /dev/serial/by-id/*" and look for your gps there.
-export OM_GPS_BAUDRATE="921600"
+export OM_GPS_BAUDRATE="115200"
 export OM_GPS_PORT="/dev/ttyS4"
 
 # If you want to use F9R's sensor fusion, set this to true (you will also need to set DATUM_LAT and DATUM_LONG).

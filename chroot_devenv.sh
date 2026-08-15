@@ -8,16 +8,17 @@
 # Usage:
 #   ./chroot_devenv.sh setup   # create + configure the chroot environment
 #   ./chroot_devenv.sh build   # run the compilation (catkin_make)
+#   ./chroot_devenv.sh run     # launch openmower
 #   ./chroot_devenv.sh shell   # open an interactive shell inside the chroot
 #   ./chroot_devenv.sh cleanup # unmount (+ optionally delete) the rootfs
-#   ./chroot_devenv.sh         # setup then build
+#   ./chroot_devenv.sh         # setup, build, then run
 #
 # Env overrides:
-#   DEVENV_ROOTFS       path to the rootfs dir (default /opt/ros-noetic-chroot)
+#   DEVENV_ROOTFS       path to the rootfs dir (default /var/ros-noetic-chroot)
 #   UBUNTU_MIRROR       base mirror used for debootstrap (defaults to ports, because ARM64)
 #   ROS_PACKAGES        space-separated ROS apt packages (default ros-noetic-desktop-full)
 #   DEVENV_USE_HOST_ROS reuse a host ROS install at /opt/ros/${ROS_DISTRO} instead of
-#                       installing ROS inside the chroot. auto|1|0 (default auto).
+#                       installing ROS inside the chroot. auto|1|0 (default 0).
 #
 # Note: when DEVENV_USE_HOST_ROS is on, /opt/ros is bind-mounted from the host, so
 # rosdep update is skipped (it would write into the host's mounted tree) and the
@@ -40,7 +41,6 @@ ROS_PACKAGES="${ROS_PACKAGES:-ros-noetic-desktop-full}"
 ROS_DISTRO="noetic"
 ROS_REPO_URL="http://packages.ros.org/ros/ubuntu"
 ROS_KEY_URL="https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc"
-PYTHON_SOURCE_URL="https://www.python.org/ftp/python/3.10.20/Python-3.10.20.tar.xz"
 
 # Reuse a host ROS installation at /opt/ros instead of installing ROS inside the
 # chroot. auto -> use host ROS if /opt/ros/${ROS_DISTRO} exists, else install.
