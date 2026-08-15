@@ -22,6 +22,8 @@
 export OM_HARDWARE_VERSION="GOAT0600"
 export HARDWARE_PLATFORM="CUSTOM"
 export OM_NO_COMMS=true
+export MOWER="CUSTOM"
+export PARAMS_PATH="/workspace/params"
 # Uncomment and set to coordinates near your future docking station, this will be your map origin.
 # There might be a case that you don't need those if you using OM_USE_RELATIVE_POSITION=True
 export OM_DATUM_LAT=48.CHANGEME
