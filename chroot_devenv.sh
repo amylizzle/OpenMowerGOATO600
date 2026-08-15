@@ -260,7 +260,8 @@ shell() {
     mount_all
     trap 'unmount_all' EXIT
     info "entering chroot shell (workspace at /workspace)"
-    chroot "${ROOTFS}" /bin/bash -l
+    # launch shell with openmower prefix so I stop trying to run things outside the goddamn chroot
+    debian_chroot="openmower" chroot "${ROOTFS}" /bin/bash -l
 }
 
 # Delete the rootfs only after confirming it is a genuine debootstrap chroot and
@@ -313,7 +314,7 @@ launchom() {
         source /workspace/mower_config.sh
         service nginx start
         service mosquitto start
-        roslaunch open_mower open_mower.launch
+        rosrun ecovacs_bridge bridge_node.py ; roslaunch open_mower open_mower.launch
     "
 }
 
