@@ -376,7 +376,7 @@ class EcovacsBridgeNode:
                 l.value = 0
                 l.pubName = ''
                 self.pub_lawn_mower.publish(l)
-        return MowerControlSrv.response()
+        return [False]
 
     def on_emergency(self, req):
         """Service: ll/_service/emergency → EStopControl"""
@@ -385,7 +385,7 @@ class EcovacsBridgeNode:
         ec = EStopControl()
         ec.action = 0 if req.emergency else 1  # 0=trigger stop, 1=cancel
         self.pub_estop_control.publish(ec)
-        return EmergencyStopSrv.response()
+        return [False]
 
     def on_cmd_vel(self, msg):
         """Translate Twist → SetLinearAngularSpeed"""
