@@ -39,4 +39,12 @@ setenv avb_boot 'echo slot=${slot_suffix}; run setbootargs; part size mmc 0 boot
 
 congrats, you can now make whatever modifications you like to the filesystem and kernel and it'll boot without verification. You should be able to ssh into your GOAT and do whatever you like.
 
-Then, when I've finished working out the OM/GOAT shim, you'll just copy it over and run a script and it'll be done.
+## Compile OpenMower
+
+You gotta compile on the GOAT, so use your shiny new SSH login and run
+```
+apt install --reinstall git
+git clone https://github.com/amylizzle/OpenMowerGOATO600.git
+./chroot_devenv.sh
+```
+This will take a while. It sets up a chroot dev environment under /var, builds and then runs OpenMower. 

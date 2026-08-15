@@ -223,12 +223,13 @@ build() {
     info "running catkin_make inside the chroot"
     # catkin_init_workspace only creates src/CMakeLists.txt if it is absent
     # (it fails when the symlink already exists from a prior build).
+    # -j1 because we run out of memory on the goat otherwise 
     run_chroot "
         export ROS_DISTRO=${ROS_DISTRO}
         source /opt/ros/${ROS_DISTRO}/setup.bash
         cd ${WORKSPACE_IN_CHROOT}
         [ -e src/CMakeLists.txt ] || (cd src && catkin_init_workspace)
-        catkin_make
+        catkin_make -j1
     "
     info "build finished"
 }
@@ -289,6 +290,13 @@ cleanup() {
     fi
 }
 
+launchom() {
+    run_chroot "
+        source /workspace/mower_config.sh
+        roslaunch open_mower open_mower.launch
+    "
+}
+
 # ----------------------------------------------------------------------------
 # main
 # ----------------------------------------------------------------------------
@@ -296,7 +304,8 @@ case "${1:-}" in
     setup)   setup ;;
     build)   build ;;
     shell)   shell ;;
+    run)     launchom   ;;
     cleanup) cleanup "${2:-}" ;;
-    "" )     info "no command given; running setup then build"; setup; build ;;
+    "" )     info "no command given; running setup, build, run"; setup; build; launchom ;;
     *)       fatal "unknown command '${1}'; expected setup|build|shell|cleanup" ;;
 esac
