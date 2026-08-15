@@ -353,7 +353,7 @@ class EcovacsBridgeNode:
 
     # --- OpenMower → GOAT translators ---
 
-    def on_mow_enabled(self, req, res):
+    def on_mow_enabled(self, req):
         """Service: ll/_service/mow_enabled → LawnMowerMotor + MotorSpeedControl"""
         if req.mow_enabled:
             if self.pub_lawn_mower is not None:
@@ -378,7 +378,7 @@ class EcovacsBridgeNode:
                 self.pub_lawn_mower.publish(l)
         return True
 
-    def on_emergency(self, req, res):
+    def on_emergency(self, req):
         """Service: ll/_service/emergency → EStopControl"""
         if self.pub_estop_control is None:
             return False
