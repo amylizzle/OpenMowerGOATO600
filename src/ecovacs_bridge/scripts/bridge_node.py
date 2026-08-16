@@ -87,113 +87,6 @@ class EcovacsBridgeNode:
     def __init__(self):
         rospy.init_node('ecovacs_bridge', anonymous=False)
 
-        # --- publishers: OpenMower topics (what OpenMower expects) ---
-        self.pub_twist = rospy.Publisher('ll/diff_drive/measured_twist', TwistStamped, queue_size=10)
-        self.pub_left_esc = rospy.Publisher('ll/diff_drive/left_esc_status', ESCStatus, queue_size=10)
-        self.pub_right_esc = rospy.Publisher('ll/diff_drive/right_esc_status', ESCStatus, queue_size=10)
-        self.pub_mower_status = rospy.Publisher('ll/mower_status', Status, queue_size=10)
-        self.pub_emergency = rospy.Publisher('ll/emergency', Emergency, queue_size=10)
-        self.pub_power = rospy.Publisher('ll/power', Power, queue_size=10)
-        self.pub_imu = rospy.Publisher('ll/imu/data_raw', Imu, queue_size=10)
-
-        if AbsolutePose is not None:
-            self.pub_absolute_pose = rospy.Publisher('ll/position/gps', AbsolutePose, queue_size=10)
-        else:
-            self.pub_absolute_pose = None
-
-        # --- publishers: GOAT topics (what GOAT firmware expects) ---
-        if SetLinearAngularSpeed is not None:
-            self.pub_set_wheel_speed = rospy.Publisher('/wheel/SetLinearAngularSpeed', SetLinearAngularSpeed, queue_size=10)
-        else:
-            self.pub_set_wheel_speed = None
-
-        if LawnMowerMotor is not None:
-            self.pub_lawn_mower = rospy.Publisher('/motor/LawnMowerMotor', LawnMowerMotor, queue_size=10)
-        else:
-            self.pub_lawn_mower = None
-
-        if MotorSpeedControl is not None:
-            self.pub_motor_speed = rospy.Publisher('/motor/MotorSpeedControl', MotorSpeedControl, queue_size=10)
-        else:
-            self.pub_motor_speed = None
-
-        if SendData is not None:
-            self.pub_send_data = rospy.Publisher('/comm/send_data', SendData, queue_size=10)
-        else:
-            self.pub_send_data = None
-
-        if EStopControl is not None:
-            self.pub_estop_control = rospy.Publisher('/onOffInfo/EStopControl', EStopControl, queue_size=10)
-        else:
-            self.pub_estop_control = None
-
-        # --- subscribers: GOAT topics ---
-        if WheelSpeedReport is not None:
-            rospy.Subscriber('/wheel/WheelSpeedReport', WheelSpeedReport, self.on_wheel_speed)
-        else:
-            rospy.logwarn("ecovacs_bridge: WheelSpeedReport not available")
-
-        if MotorSpeedReport is not None:
-            rospy.Subscriber('/motor/MotorSpeedReport', MotorSpeedReport, self.on_motor_speed)
-        else:
-            rospy.logwarn("ecovacs_bridge: MotorSpeedReport not available")
-
-        if Battery is not None:
-            rospy.Subscriber('/power/Battery', Battery, self.on_battery)
-        else:
-            rospy.logwarn("ecovacs_bridge: Battery not available")
-
-        if ChargeVolCur is not None:
-            rospy.Subscriber('/power/ChargeVolCur', ChargeVolCur, self.on_charge_vol_cur)
-        else:
-            rospy.logwarn("ecovacs_bridge: ChargeVolCur not available")
-
-        if ChargeState is not None:
-            rospy.Subscriber('/power/ChargeState', ChargeState, self.on_charge_state)
-        else:
-            rospy.logwarn("ecovacs_bridge: ChargeState not available")
-
-        if EStopState is not None:
-            rospy.Subscriber('/onOffInfo/EStopState', EStopState, self.on_estop)
-        else:
-            rospy.logwarn("ecovacs_bridge: EStopState not available")
-
-        if RainDetectState is not None:
-            rospy.Subscriber('/onOffInfo/RainDetectState', RainDetectState, self.on_rain)
-        else:
-            rospy.logwarn("ecovacs_bridge: RainDetectState not available")
-
-        if OnOffInfo is not None:
-            rospy.Subscriber('/onOffInfo/OnOffInfo', OnOffInfo, self.on_on_off)
-        else:
-            rospy.logwarn("ecovacs_bridge: OnOffInfo not available")
-
-        if ImuSensor is not None:
-            rospy.Subscriber('/imu/ImuSensor', ImuSensor, self.on_imu)
-        else:
-            rospy.logwarn("ecovacs_bridge: ImuSensor not available")
-
-        if RtkData is not None:
-            rospy.Subscriber('/rtk/rtkData', RtkData, self.on_gps)
-        elif Gps is not None:
-            rospy.Subscriber('/gps/Gps', Gps, self.on_gps)
-        else:
-            rospy.logwarn("ecovacs_bridge: RtkData/Gps not available")
-
-        # --- subscribers: OpenMower topics (commands going to GOAT) ---
-        rospy.Subscriber('ll/cmd_vel', Twist, self.on_cmd_vel)
-        rospy.Subscriber('xbot/action', String, self.on_xbot_action)
-
-        if Sentence is not None:
-            rospy.Subscriber('ll/position/gps/rtcm', Sentence, self.on_rtcm)
-        elif Sentence is None:
-            # try generic std_msgs/String or raw
-            pass
-
-        # --- services: OpenMower low-level control (mower_logic clients) ---
-        rospy.Service('ll/_service/mow_enabled', MowerControlSrv, self.on_mow_enabled)
-        rospy.Service('ll/_service/emergency', EmergencyStopSrv, self.on_emergency)
-
         # state - basically hold a message for each publisher and update it with
         # only the bits that change for each subscriber
         self.emergency = Emergency()
@@ -203,16 +96,54 @@ class EcovacsBridgeNode:
         self.power = Power()
         self.mower_status = Status()
         self.imu_msg = Imu()
-        self.absolute_pose = AbsolutePose() if AbsolutePose is not None else None
-        self.set_wheel_speed_msg = SetLinearAngularSpeed() if SetLinearAngularSpeed is not None else None
-        self.lawn_mower_msg = LawnMowerMotor() if LawnMowerMotor is not None else None
-        self.motor_speed_msg = MotorSpeedControl() if MotorSpeedControl is not None else None
-        self.send_data_msg = SendData() if SendData is not None else None
-        self.estop_control_msg = EStopControl() if EStopControl is not None else None
+        self.absolute_pose = AbsolutePose()
+        self.set_wheel_speed_msg = SetLinearAngularSpeed() 
+        self.lawn_mower_msg = LawnMowerMotor()
+        self.motor_speed_msg = MotorSpeedControl() 
+        self.send_data_msg = SendData()
+        self.estop_control_msg = EStopControl() 
 
         self.current_charge_state = None
         self.current_rain = False
         self.current_estop = False
+
+        # --- publishers: OpenMower topics (what OpenMower expects) ---
+        self.pub_twist = rospy.Publisher('ll/diff_drive/measured_twist', TwistStamped, queue_size=10)
+        self.pub_left_esc = rospy.Publisher('ll/diff_drive/left_esc_status', ESCStatus, queue_size=10)
+        self.pub_right_esc = rospy.Publisher('ll/diff_drive/right_esc_status', ESCStatus, queue_size=10)
+        self.pub_mower_status = rospy.Publisher('ll/mower_status', Status, queue_size=10)
+        self.pub_emergency = rospy.Publisher('ll/emergency', Emergency, queue_size=10)
+        self.pub_power = rospy.Publisher('ll/power', Power, queue_size=10)
+        self.pub_imu = rospy.Publisher('ll/imu/data_raw', Imu, queue_size=10)
+        self.pub_absolute_pose = rospy.Publisher('ll/position/gps', AbsolutePose, queue_size=10)
+
+        # --- publishers: GOAT topics (what GOAT firmware expects) ---
+        self.pub_set_wheel_speed = rospy.Publisher('/wheel/SetLinearAngularSpeed', SetLinearAngularSpeed, queue_size=10)
+        self.pub_lawn_mower = rospy.Publisher('/motor/LawnMowerMotor', LawnMowerMotor, queue_size=10)
+        self.pub_motor_speed = rospy.Publisher('/motor/MotorSpeedControl', MotorSpeedControl, queue_size=10)
+        self.pub_send_data = rospy.Publisher('/comm/send_data', SendData, queue_size=10)
+        self.pub_estop_control = rospy.Publisher('/onOffInfo/EStopControl', EStopControl, queue_size=10)
+
+        # --- subscribers: GOAT topics ---
+        rospy.Subscriber('/wheel/WheelSpeedReport', WheelSpeedReport, self.on_wheel_speed)
+        rospy.Subscriber('/motor/MotorSpeedReport', MotorSpeedReport, self.on_motor_speed)
+        rospy.Subscriber('/power/Battery', Battery, self.on_battery)
+        rospy.Subscriber('/power/ChargeVolCur', ChargeVolCur, self.on_charge_vol_cur)
+        rospy.Subscriber('/power/ChargeState', ChargeState, self.on_charge_state)
+        rospy.Subscriber('/onOffInfo/EStopState', EStopState, self.on_estop)
+        rospy.Subscriber('/onOffInfo/RainDetectState', RainDetectState, self.on_rain)
+        rospy.Subscriber('/onOffInfo/OnOffInfo', OnOffInfo, self.on_on_off)
+        rospy.Subscriber('/imu/ImuSensor', ImuSensor, self.on_imu)
+        rospy.Subscriber('/rtk/rtkData', RtkData, self.on_gps)
+        rospy.Subscriber('/gps/Gps', Gps, self.on_gps)
+
+        # --- subscribers: OpenMower topics (commands going to GOAT) ---
+        rospy.Subscriber('ll/cmd_vel', Twist, self.on_cmd_vel)
+        rospy.Subscriber('xbot/action', String, self.on_xbot_action)
+
+        # --- services: OpenMower low-level control (mower_logic clients) ---
+        rospy.Service('ll/_service/mow_enabled', MowerControlSrv, self.on_mow_enabled)
+        rospy.Service('ll/_service/emergency', EmergencyStopSrv, self.on_emergency)
 
         # publish an initial all-clear Emergency so mower_logic's StateSubscriber unblocks
         self.emergency.stamp = rospy.Time.now()
