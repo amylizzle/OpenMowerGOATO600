@@ -4,3 +4,12 @@
 [submodule "src/open_mower_ros"]
 	path = src/open_mower_ros
 	url = https://github.com/ClemensElflein/open_mower_ros.git
+[submodule "src/open_goat_firmware/ext/xbot_framework"]
+	path = src/open_goat_firmware/ext/xbot_framework
+	url = https://github.com/xtech/xbot_framework.git
+[submodule "src/open_goat_firmware/ext/minmea"]
+	path = src/open_goat_firmware/ext/minmea
+	url = https://github.com/rovo89/minmea.git
+[submodule "src/open_goat_firmware/ext/etl"]
+	path = src/open_goat_firmware/ext/etl
+	url = https://github.com/ETLCPP/etl
