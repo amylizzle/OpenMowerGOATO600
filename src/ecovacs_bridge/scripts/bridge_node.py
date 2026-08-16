@@ -194,18 +194,32 @@ class EcovacsBridgeNode:
         rospy.Service('ll/_service/mow_enabled', MowerControlSrv, self.on_mow_enabled)
         rospy.Service('ll/_service/emergency', EmergencyStopSrv, self.on_emergency)
 
-        # state
+        # state - basically hold a message for each publisher and update it with
+        # only the bits that change for each subscriber
+        self.emergency = Emergency()
+        self.twist = TwistStamped()
+        self.left_esc = ESCStatus()
+        self.right_esc = ESCStatus()
+        self.power = Power()
+        self.mower_status = Status()
+        self.imu_msg = Imu()
+        self.absolute_pose = AbsolutePose() if AbsolutePose is not None else None
+        self.set_wheel_speed_msg = SetLinearAngularSpeed() if SetLinearAngularSpeed is not None else None
+        self.lawn_mower_msg = LawnMowerMotor() if LawnMowerMotor is not None else None
+        self.motor_speed_msg = MotorSpeedControl() if MotorSpeedControl is not None else None
+        self.send_data_msg = SendData() if SendData is not None else None
+        self.estop_control_msg = EStopControl() if EStopControl is not None else None
+
         self.current_charge_state = None
         self.current_rain = False
         self.current_estop = False
 
         # publish an initial all-clear Emergency so mower_logic's StateSubscriber unblocks
-        e = Emergency()
-        e.stamp = rospy.Time.now()
-        e.active_emergency = False
-        e.latched_emergency = False
-        e.reason = ""
-        self.pub_emergency.publish(e)
+        self.emergency.stamp = rospy.Time.now()
+        self.emergency.active_emergency = False
+        self.emergency.latched_emergency = False
+        self.emergency.reason = ""
+        self.pub_emergency.publish(self.emergency)
 
         rospy.loginfo("ecovacs_bridge: initialized")
 
@@ -216,34 +230,31 @@ class EcovacsBridgeNode:
         now = rospy.Time.now()
 
         # TwistStamped
-        t = TwistStamped()
-        t.header.stamp = now
-        t.header.frame_id = 'base_link'
-        t.twist.linear.x = msg.linear_speed
-        t.twist.angular.z = msg.angular_speed
-        self.pub_twist.publish(t)
+        self.twist.header.stamp = now
+        self.twist.header.frame_id = 'base_link'
+        self.twist.twist.linear.x = msg.linear_speed
+        self.twist.twist.angular.z = msg.angular_speed
+        self.pub_twist.publish(self.twist)
 
         # left ESC status
-        left = ESCStatus()
-        left.status = ESCStatus.ESC_STATUS_RUNNING if not msg.left_wheel_stall else ESCStatus.ESC_STATUS_STALLED
-        left.rpm = int(msg.left_wheel_speed * 60 / (math.pi * 0.2))  # rough RPM from m/s, wheel diam ~0.2m
-        left.current = 0.0
-        left.temperature_motor = 40.0 + (10.0 if msg.left_wheel_temp else 0.0)
-        left.temperature_pcb = 35.0
-        self.pub_left_esc.publish(left)
+        self.left_esc.status = ESCStatus.ESC_STATUS_RUNNING if not msg.left_wheel_stall else ESCStatus.ESC_STATUS_STALLED
+        self.left_esc.rpm = int(msg.left_wheel_speed * 60 / (math.pi * 0.2))  # rough RPM from m/s, wheel diam ~0.2m
+        self.left_esc.current = 0.0
+        self.left_esc.temperature_motor = 40.0 + (10.0 if msg.left_wheel_temp else 0.0)
+        self.left_esc.temperature_pcb = 35.0
+        self.pub_left_esc.publish(self.left_esc)
 
         # right ESC status
-        right = ESCStatus()
-        right.status = ESCStatus.ESC_STATUS_RUNNING if not msg.right_wheel_stall else ESCStatus.ESC_STATUS_STALLED
-        right.rpm = int(msg.right_wheel_speed * 60 / (math.pi * 0.2))
-        right.current = 0.0
-        right.temperature_motor = 40.0 + (10.0 if msg.right_wheel_temp else 0.0)
-        right.temperature_pcb = 35.0
-        self.pub_right_esc.publish(right)
+        self.right_esc.status = ESCStatus.ESC_STATUS_RUNNING if not msg.right_wheel_stall else ESCStatus.ESC_STATUS_STALLED
+        self.right_esc.rpm = int(msg.right_wheel_speed * 60 / (math.pi * 0.2))
+        self.right_esc.current = 0.0
+        self.right_esc.temperature_motor = 40.0 + (10.0 if msg.right_wheel_temp else 0.0)
+        self.right_esc.temperature_pcb = 35.0
+        self.pub_right_esc.publish(self.right_esc)
 
     def on_motor_speed(self, msg):
         """Translate MotorSpeedReport → mower_status"""
-        s = Status()
+        s = self.mower_status
         s.stamp = rospy.Time.now()
         s.mower_status = Status.MOWER_STATUS_OK
         s.raspberry_pi_power = True
@@ -269,7 +280,7 @@ class EcovacsBridgeNode:
 
     def on_battery(self, msg):
         """Translate Battery → Power"""
-        p = Power()
+        p = self.power
         p.stamp = rospy.Time.now()
         p.battery_pct = float(msg.battery)  # 0-100 %
         p.charger_enabled = False
@@ -278,7 +289,7 @@ class EcovacsBridgeNode:
 
     def on_charge_vol_cur(self, msg):
         """Translate ChargeVolCur → Power charge voltage/current"""
-        p = Power()
+        p = self.power
         p.stamp = rospy.Time.now()
         p.charge_voltage = msg.chargeVol / 1000.0  # mV → V
         p.charge_current = msg.chargeCur / 1000.0  # mA → A
@@ -292,7 +303,7 @@ class EcovacsBridgeNode:
 
     def on_estop(self, msg):
         """Translate EStopState → Emergency"""
-        e = Emergency()
+        e = self.emergency
         e.stamp = rospy.Time.now()
         e.active_emergency = msg.state > 0
         e.latched_emergency = msg.state > 0
@@ -311,7 +322,7 @@ class EcovacsBridgeNode:
         for v in msg.values:
             if v.type == OnOffSensorValue.TYPE_BUMP or v.type == OnOffSensorValue.TYPE_FALL:
                 if v.value > 0:
-                    e = Emergency()
+                    e = self.emergency
                     e.stamp = rospy.Time.now()
                     e.active_emergency = True
                     e.latched_emergency = True
@@ -320,7 +331,7 @@ class EcovacsBridgeNode:
 
     def on_imu(self, msg):
         """Translate ImuSensor → sensor_msgs/Imu"""
-        imu = Imu()
+        imu = self.imu_msg
         imu.header.stamp = rospy.Time.now()
         imu.header.frame_id = 'base_imu_link'
 
@@ -344,7 +355,7 @@ class EcovacsBridgeNode:
         """Translate RtkData/Gps → AbsolutePose (if available)"""
         if self.pub_absolute_pose is None:
             return
-        ap = AbsolutePose()
+        ap = self.absolute_pose
         ap.header.stamp = rospy.Time.now()
         ap.header.frame_id = 'map'
         ap.source = AbsolutePose.SOURCE_GPS
@@ -365,13 +376,13 @@ class EcovacsBridgeNode:
         """Service: ll/_service/mow_enabled → LawnMowerMotor + MotorSpeedControl"""
         if req.mow_enabled:
             if self.pub_lawn_mower is not None:
-                l = LawnMowerMotor()
+                l = self.lawn_mower_msg
                 l.type = 0  # ROLL_MOTOR
                 l.value = LawnMowerMotor.ROLL_MOTOR_MAX_VALUE
                 l.pubName = ''
                 self.pub_lawn_mower.publish(l)
             if self.pub_motor_speed is not None:
-                mc = MotorSpeedControl()
+                mc = self.motor_speed_msg
                 mc.val = 1
                 mc.speedleft = 1.0
                 mc.speedright = 1.0
@@ -379,7 +390,7 @@ class EcovacsBridgeNode:
                 self.pub_motor_speed.publish(mc)
         else:
             if self.pub_lawn_mower is not None:
-                l = LawnMowerMotor()
+                l = self.lawn_mower_msg
                 l.type = 0
                 l.value = 0
                 l.pubName = ''
@@ -390,7 +401,7 @@ class EcovacsBridgeNode:
         """Service: ll/_service/emergency → EStopControl"""
         if self.pub_estop_control is None:
             return EmergencyStopSrvResponse()
-        ec = EStopControl()
+        ec = self.estop_control_msg
         ec.action = 0 if req.emergency else 1  # 0=trigger stop, 1=cancel
         self.pub_estop_control.publish(ec)
         return EmergencyStopSrvResponse()
@@ -398,7 +409,7 @@ class EcovacsBridgeNode:
     def on_cmd_vel(self, msg):
         """Translate Twist → SetLinearAngularSpeed"""
         if self.pub_set_wheel_speed is not None:
-            s = SetLinearAngularSpeed()
+            s = self.set_wheel_speed_msg
             s.linear_speed = msg.linear.x
             s.angular_speed = msg.angular.z
             s.pubName = ''
@@ -411,7 +422,7 @@ class EcovacsBridgeNode:
         if data.startswith('mow'):
             # enable/disable mowing motor
             if self.pub_lawn_mower is not None:
-                l = LawnMowerMotor()
+                l = self.lawn_mower_msg
                 l.type = 0  # ROLL_MOTOR
                 l.value = LawnMowerMotor.ROLL_MOTOR_MAX_VALUE if 'on' in data or 'start' in data else 0
                 l.pubName = ''
@@ -419,7 +430,7 @@ class EcovacsBridgeNode:
         elif data.startswith('speed'):
             # set cutting speed
             if self.pub_motor_speed is not None:
-                mc = MotorSpeedControl()
+                mc = self.motor_speed_msg
                 mc.val = 1
                 mc.speedleft = 3000.0
                 mc.speedright = 3000.0
@@ -429,7 +440,7 @@ class EcovacsBridgeNode:
     def on_rtcm(self, msg):
         """Translate RTCM correction → GOAT comm send_data"""
         if self.pub_send_data is not None and SendData is not None:
-            sd = SendData()
+            sd = self.send_data_msg
             sd.data = msg.data
             self.pub_send_data.publish(sd)
 
