@@ -8,9 +8,9 @@
 #include <etl/atomic.h>
 
 #include <MowerServiceBase.hpp>
-#include <debug/debug_tcp_interface.hpp>
 #include <drivers/motor/motor_driver.hpp>
 #include <globals.hpp>
+#include "posix_ch.h"
 
 using namespace xbot::driver::motor;
 using namespace xbot::service;

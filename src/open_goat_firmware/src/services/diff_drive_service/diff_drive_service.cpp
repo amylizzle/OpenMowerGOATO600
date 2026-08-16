@@ -9,6 +9,7 @@
 #include <drivers/motor/motor_driver.hpp>
 #include <services.hpp>
 #include <xbot-service/portable/system.hpp>
+#include "posix_ch.h"
 
 using namespace xbot::driver::motor;
 

@@ -55,7 +55,7 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         src/main.cpp
-        src/services/imu_service/imu_service.cpp
+        # src/services/imu_service/imu_service.cpp
         src/services/power_service/power_service.cpp
         src/services/bms_service/bms_service.cpp
         src/services/emergency_service/emergency_service.cpp
@@ -86,7 +86,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC
         lwjson
 )
 
-target_add_service(${CMAKE_PROJECT_NAME} ImuService ${CMAKE_CURRENT_SOURCE_DIR}/../open_mower_ros/services/imu_service.json)
+# target_add_service(${CMAKE_PROJECT_NAME} ImuService ${CMAKE_CURRENT_SOURCE_DIR}/../open_mower_ros/services/imu_service.json)
 target_add_service(${CMAKE_PROJECT_NAME} PowerService ${CMAKE_CURRENT_SOURCE_DIR}/../open_mower_ros/services/power_service.json)
 target_add_service(${CMAKE_PROJECT_NAME} BmsService ${CMAKE_CURRENT_SOURCE_DIR}/../open_mower_ros/services/bms_service.json)
 target_add_service(${CMAKE_PROJECT_NAME} EmergencyService ${CMAKE_CURRENT_SOURCE_DIR}/../open_mower_ros/services/emergency_service.json)

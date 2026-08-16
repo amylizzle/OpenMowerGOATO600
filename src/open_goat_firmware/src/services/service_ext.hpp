@@ -2,6 +2,8 @@
 #define SERVICE_EXT_HPP
 
 #include <xbot-service/Service.hpp>
+#include "posix_ch.h"
+#include <etl/algorithm.h>
 
 inline bool TimeoutReached(uint32_t duration, uint32_t delay, uint32_t& block_time) {
   if (duration >= delay) {
@@ -12,23 +14,13 @@ inline bool TimeoutReached(uint32_t duration, uint32_t delay, uint32_t& block_ti
   }
 }
 
-// namespace xbot::service {
-// class ServiceExt : public Service {
-//  public:
-//   explicit ServiceExt(uint16_t service_id, void* stack, size_t stack_size) : Service(service_id, stack, stack_size) {
-//   }
+namespace xbot::service {
+class ServiceExt : public Service {
+ public:
+  explicit ServiceExt(uint16_t service_id, void* stack, size_t stack_size) : Service(service_id, stack, stack_size) {
+  }
 
-//   virtual bool IsHealthy() {
-//     return false;
-//   }
-
-//   void SendEvent(Events::Events id) {
-//     syssts_t sts = chSysGetStatusAndLockX();
-//     chEvtSignalI(process_thread_, EVENT_MASK(id));
-//     chMBPostI(&packet_queue_, reinterpret_cast<msg_t>(nullptr));
-//     chSysRestoreStatusX(sts);
-//   }
-// };
-// }  // namespace xbot::service
+};
+}  // namespace xbot::service
 
 #endif  // SERVICE_EXT_HPP

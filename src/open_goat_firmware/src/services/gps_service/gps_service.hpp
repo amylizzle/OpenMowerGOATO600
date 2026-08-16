@@ -7,7 +7,6 @@
 #include <globals.hpp>
 
 #include "GpsServiceBase.hpp"
-#include "debug/debug_tcp_interface.hpp"
 
 using namespace xbot::driver::gps;
 

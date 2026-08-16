@@ -10,6 +10,7 @@
 #include <EmergencyServiceBase.hpp>
 #include <InputServiceBase.hpp>
 #include <drivers/input/input_driver.hpp>
+#include "posix_ch.h"
 
 using namespace xbot::driver::input;
 using namespace xbot::service;

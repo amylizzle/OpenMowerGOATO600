@@ -13,6 +13,8 @@
 #include <limits>
 #include <xbot-service/Lock.hpp>
 
+#include "posix_ch.h"
+
 using namespace xbot::service;
 
 using CHARGER_STATUS = ChargerDriver::CHARGER_STATUS;

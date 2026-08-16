@@ -10,9 +10,6 @@
 #include <cstring>
 #include <globals.hpp>
 
-#include "board.h"
-#include "drivers/adc/adc1.hpp"
-
 using namespace xbot::driver;
 
 // Static assertions to ensure ChargerDriver::ReChargeVoltage enum matches PowerService ReChargeVoltages enum

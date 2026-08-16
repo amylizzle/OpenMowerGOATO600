@@ -9,6 +9,7 @@
 #include <ulog.h>
 
 #include <xbot-service/portable/system.hpp>
+#include "posix_ch.h"
 
 static SPIConfig spi_config = {
     false,

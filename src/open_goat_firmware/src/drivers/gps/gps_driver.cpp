@@ -7,6 +7,7 @@
 #include <etl/algorithm.h>
 
 #include <cmath>
+#include "posix_ch.h"
 
 namespace xbot::driver::gps {
 
@@ -96,7 +97,7 @@ void GpsDriver::threadFunc() {
       // (in case ISR happened between the timeout and now, this will be set to false by ISR)
       if (processing_done_) {
         // Stop reception and get the partial received length
-        size_t not_received_len = uartStopReceiveI(uart_);
+        ssize_t not_received_len = uartStopReceiveI(uart_);
         if (not_received_len != UART_ERR_NOT_ACTIVE) {
           // Uart was still receiving, so the buffer length is not complete
           processing_buffer_len_ = RECV_BUFFER_SIZE - not_received_len;

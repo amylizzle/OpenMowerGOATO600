@@ -29,3 +29,12 @@ void StartPeripheralDrivers(UARTDriver* gps_uart, UARTDriver* mcu_uart) {
 }
 
 } // namespace
+
+int main() {
+    UARTDriver* gpsuart = CreateUARTDriver("/dev/ttyS3", 115200);
+    UARTDriver* mcuuart = CreateUARTDriver("/dev/ttyS2", 115200);
+
+    StartPeripheralDrivers(gpsuart, mcuuart);
+
+    return 0;
+}

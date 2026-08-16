@@ -8,8 +8,7 @@
 #include <board_utils.hpp>
 #include <cstdio>
 #include <globals.hpp>
-
-#include "debug/debug_udp_interface.hpp"
+#include "posix_ch.h"
 
 bool GpsService::LoadAndStartGpsDriver(ProtocolType protocol_type, uint8_t uart, uint32_t baudrate) {
   // Get the requested UART port (if 0 is specified, ask the robot.cpp for the default port)

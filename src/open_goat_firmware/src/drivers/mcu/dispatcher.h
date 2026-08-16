@@ -5,6 +5,7 @@
 #define XBOT_DRIVER_MCU_DISPATCHER_H
 
 #include <etl/delegate.h>
+#include "posix_ch.h"
 
 namespace xbot::driver::mcu {
 

@@ -1,8 +1,6 @@
 #ifndef XBOT_DRIVER_GPS_NMEA_GPS_DRIVER_H
 #define XBOT_DRIVER_GPS_NMEA_GPS_DRIVER_H
 
-#include <debug/debuggable_driver.hpp>
-
 #include "gps_driver.h"
 
 namespace xbot::driver::gps {

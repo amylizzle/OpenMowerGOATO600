@@ -43,7 +43,7 @@ size_t UbxGpsDriver::ProcessBytes(const uint8_t *buffer, size_t len) {
       switch (gbuffer_fill) {
         case 0: {
           // buffer empty, looking for 0xb5
-          const auto header_start = static_cast<uint8_t *>(memchr(buffer, 0xb5, len));
+          const auto header_start = static_cast<const uint8_t *>(memchr(buffer, 0xb5, len));
           if (header_start == nullptr) {
             // reject the whole input, we don't have 0xb5
             len = 0;

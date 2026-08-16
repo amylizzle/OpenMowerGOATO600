@@ -8,13 +8,14 @@
 #include <etl/delegate.h>
 
 #include "GpsServiceBase.hpp"
+#include "posix_ch.h"
 
 namespace xbot::driver::gps {
-class GpsDriver : public DebuggableDriver {
+class GpsDriver {
  public:
-  void RawDataInput(uint8_t *data, size_t size) override;
+  void RawDataInput(uint8_t *data, size_t size);
 
-  ~GpsDriver() override = default;
+  ~GpsDriver() = default;
 
   /*
    * The final GPS state we're interested in.
@@ -84,6 +85,10 @@ class GpsDriver : public DebuggableDriver {
     return uart_;
   }
 
+  // Optional: when in raw mode, drivers may emit raw output
+  virtual bool IsRawMode() const { return false; }
+  virtual void RawDataOutput(const uint8_t *data, size_t size) { (void)data; (void)size; }
+
   uint32_t GetUartBaudrate() const {
     return uart_config_.speed;
   }
@@ -127,6 +132,7 @@ class GpsDriver : public DebuggableDriver {
 
   THD_WORKING_AREA(thd_wa_, 1024){};
   thread_t *processing_thread_ = nullptr;
+  MUTEX_DECL(mutex_);
   // This is reset by the receiving ISR and set by the thread to signal if it's safe to process more data.
   volatile bool processing_done_ = true;
   bool stopped_ = true;

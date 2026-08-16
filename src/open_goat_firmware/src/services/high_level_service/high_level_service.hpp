@@ -4,6 +4,7 @@
 #include <etl/string.h>
 
 #include <HighLevelServiceBase.hpp>
+#include "posix_ch.h"
 #include <xbot-service/Lock.hpp>
 
 using namespace xbot::service;

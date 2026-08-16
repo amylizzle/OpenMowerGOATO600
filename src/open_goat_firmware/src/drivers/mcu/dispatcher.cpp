@@ -5,6 +5,7 @@
 #include "dispatcher.h"
 
 #include <etl/algorithm.h>
+#include "posix_ch.h"
 #include <cstring>
 #include <vector>
 #include <utility>
