@@ -199,6 +199,14 @@ class EcovacsBridgeNode:
         self.current_rain = False
         self.current_estop = False
 
+        # publish an initial all-clear Emergency so mower_logic's StateSubscriber unblocks
+        e = Emergency()
+        e.stamp = rospy.Time.now()
+        e.active_emergency = False
+        e.latched_emergency = False
+        e.reason = ""
+        self.pub_emergency.publish(e)
+
         rospy.loginfo("ecovacs_bridge: initialized")
 
     # --- GOAT → OpenMower translators ---
@@ -376,7 +384,7 @@ class EcovacsBridgeNode:
                 l.value = 0
                 l.pubName = ''
                 self.pub_lawn_mower.publish(l)
-        return [False]
+        return MowerControlSrv.response()
 
     def on_emergency(self, req):
         """Service: ll/_service/emergency → EStopControl"""
@@ -385,7 +393,7 @@ class EcovacsBridgeNode:
         ec = EStopControl()
         ec.action = 0 if req.emergency else 1  # 0=trigger stop, 1=cancel
         self.pub_estop_control.publish(ec)
-        return [False]
+        return EmergencyStopSrv.response()
 
     def on_cmd_vel(self, msg):
         """Translate Twist → SetLinearAngularSpeed"""
