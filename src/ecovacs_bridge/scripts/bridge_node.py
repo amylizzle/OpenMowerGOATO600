@@ -33,9 +33,10 @@ except ImportError:
     MotorSpeedControl = None
 
 try:
-    from ecovacs_messages.msg import Battery, ChargeState, ChargeVolCur
+    from ecovacs_messages.msg import Battery, ChargeState, ChargeVolCur, BatteryInfo
 except ImportError:
     Battery = None
+    BatteryInfo = None
     ChargeState = None
     ChargeVolCur = None
 
@@ -128,6 +129,7 @@ class EcovacsBridgeNode:
         rospy.Subscriber('/wheel/WheelSpeedReport', WheelSpeedReport, self.on_wheel_speed)
         rospy.Subscriber('/motor/MotorSpeedReport', MotorSpeedReport, self.on_motor_speed)
         rospy.Subscriber('/power/Battery', Battery, self.on_battery)
+        rospy.Subscriber('/bigdata/BigDataBatteryInfo', Battery, self.on_battery_bigdata)
         rospy.Subscriber('/power/ChargeVolCur', ChargeVolCur, self.on_charge_vol_cur)
         rospy.Subscriber('/power/ChargeState', ChargeState, self.on_charge_state)
         rospy.Subscriber('/onOffInfo/EStopState', EStopState, self.on_estop)
@@ -214,9 +216,18 @@ class EcovacsBridgeNode:
         p = self.power
         p.stamp = rospy.Time.now()
         p.battery_pct = float(msg.battery)  # 0-100 %
-        p.charger_enabled = False
-        p.charger_status = "low_voltage_power_off" if msg.isLowVoltageToPowerOff else ""
+        if msg.isLowVoltageToPowerOff:
+            p.charger_status = "low_voltage_power_off" 
         self.pub_power.publish(p)
+
+    def on_battery_bigdata(self, msg):
+        """Translate BatteryInfo → Power"""
+        p = self.power
+        p.stamp = rospy.Time.now()
+        p.battery_pct = float(msg.batteryLevel)  # 0-100 %
+        p.battery_voltage = float(msg.batteryVoltage) / 1000.0  # mA
+        p.dcdc_input_current = float(msg.batteryCurrent)
+        self.pub_power.publish(p)        
 
     def on_charge_vol_cur(self, msg):
         """Translate ChargeVolCur → Power charge voltage/current"""
@@ -225,7 +236,8 @@ class EcovacsBridgeNode:
         p.charge_voltage = msg.chargeVol / 1000.0  # mV → V
         p.charge_current = msg.chargeCur / 1000.0  # mA → A
         p.charger_enabled = msg.chargeStep > 0
-        p.charger_status = "charging" if msg.chargeStep > 0 else ""
+        if msg.chargeStep > 0:
+            p.charger_status = "charging"
         self.pub_power.publish(p)
 
     def on_charge_state(self, msg):
