@@ -12,7 +12,7 @@ from geometry_msgs.msg import TwistStamped, Twist
 from sensor_msgs.msg import Imu
 from std_msgs.msg import String, Header
 from mower_msgs.msg import Emergency, ESCStatus, Status, Power
-from mower_msgs.srv import MowerControlSrv, EmergencyStopSrv
+from mower_msgs.srv import MowerControlSrv, EmergencyStopSrv, MowerControlSrvResponse, EmergencyStopSrvResponse
 try:
     from nmea_msgs.msg import Sentence
 except ImportError:
@@ -384,16 +384,16 @@ class EcovacsBridgeNode:
                 l.value = 0
                 l.pubName = ''
                 self.pub_lawn_mower.publish(l)
-        return MowerControlSrv.response()
+        return MowerControlSrvResponse()
 
     def on_emergency(self, req):
         """Service: ll/_service/emergency → EStopControl"""
         if self.pub_estop_control is None:
-            return EmergencyStopSrv.response()
+            return EmergencyStopSrvResponse()
         ec = EStopControl()
         ec.action = 0 if req.emergency else 1  # 0=trigger stop, 1=cancel
         self.pub_estop_control.publish(ec)
-        return EmergencyStopSrv.response()
+        return EmergencyStopSrvResponse()
 
     def on_cmd_vel(self, msg):
         """Translate Twist → SetLinearAngularSpeed"""
