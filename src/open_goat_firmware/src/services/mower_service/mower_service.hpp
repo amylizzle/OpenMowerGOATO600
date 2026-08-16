@@ -5,7 +5,6 @@
 #ifndef MOWER_SERVICE_HPP
 #define MOWER_SERVICE_HPP
 
-#include <ch.h>
 #include <etl/atomic.h>
 
 #include <MowerServiceBase.hpp>

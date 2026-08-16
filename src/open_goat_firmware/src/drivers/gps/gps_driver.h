@@ -7,11 +7,7 @@
 
 #include <etl/delegate.h>
 
-#include <debug/debuggable_driver.hpp>
-
 #include "GpsServiceBase.hpp"
-#include "ch.h"
-#include "hal.h"
 
 namespace xbot::driver::gps {
 class GpsDriver : public DebuggableDriver {

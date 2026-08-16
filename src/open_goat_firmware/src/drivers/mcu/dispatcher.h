@@ -5,8 +5,6 @@
 #define XBOT_DRIVER_MCU_DISPATCHER_H
 
 #include <etl/delegate.h>
-#include "ch.h"
-#include "hal.h"
 
 namespace xbot::driver::mcu {
 

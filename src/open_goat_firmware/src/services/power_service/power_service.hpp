@@ -5,7 +5,6 @@
 #ifndef POWER_SERVICE_HPP
 #define POWER_SERVICE_HPP
 
-#include <ch.h>
 #include <etl/atomic.h>
 #include <ulog.h>
 

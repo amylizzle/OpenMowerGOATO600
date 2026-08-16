@@ -8,8 +8,6 @@
 #ifndef BMS_SERVICE_HPP
 #define BMS_SERVICE_HPP
 
-#include <ch.h>
-
 #include <BmsServiceBase.hpp>
 #include <drivers/bms/bms_driver.hpp>
 
