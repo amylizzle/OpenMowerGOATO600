@@ -129,7 +129,7 @@ class EcovacsBridgeNode:
         rospy.Subscriber('/wheel/WheelSpeedReport', WheelSpeedReport, self.on_wheel_speed)
         rospy.Subscriber('/motor/MotorSpeedReport', MotorSpeedReport, self.on_motor_speed)
         rospy.Subscriber('/power/Battery', Battery, self.on_battery)
-        rospy.Subscriber('/bigdata/BigDataBatteryInfo', Battery, self.on_battery_bigdata)
+        rospy.Subscriber('/bigdata/BigDataBatteryInfo', BatteryInfo, self.on_battery_bigdata)
         rospy.Subscriber('/power/ChargeVolCur', ChargeVolCur, self.on_charge_vol_cur)
         rospy.Subscriber('/power/ChargeState', ChargeState, self.on_charge_state)
         rospy.Subscriber('/onOffInfo/EStopState', EStopState, self.on_estop)
