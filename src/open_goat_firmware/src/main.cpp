@@ -6,7 +6,7 @@
 // This file provides a minimal wiring example. Actual UART driver
 // instances / board-specific names must be supplied by the board layer.
 
-#include "../../open_mower_ros/services/service_ids.h"
+#include "service_ids.h"
 #include <globals.cpp>
 
 int main() {
