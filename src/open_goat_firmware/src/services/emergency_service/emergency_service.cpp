@@ -5,8 +5,7 @@
 #include "emergency_service.hpp"
 
 #include <xbot-service/Lock.hpp>
-
-#include "services.hpp"
+#include <xbot-service/portable/system.hpp>
 
 using xbot::service::Lock;
 
@@ -20,12 +19,13 @@ uint32_t EmergencyService::OnLoop(uint32_t now_micros, uint32_t) {
 }
 
 uint32_t EmergencyService::CheckInputs(uint32_t now) {
-  constexpr uint16_t potential_reasons = EmergencyReason::STOP | EmergencyReason::LIFT |
-                                         EmergencyReason::LIFT_MULTIPLE | EmergencyReason::COLLISION |
-                                         EmergencyReason::COLLISION_MULTIPLE;
-  auto [reasons, block_time] = input_service.GetEmergencyReasons(now);
-  UpdateEmergency(reasons, potential_reasons);
-  return block_time;
+  // constexpr uint16_t potential_reasons = EmergencyReason::STOP | EmergencyReason::LIFT |
+  //                                        EmergencyReason::LIFT_MULTIPLE | EmergencyReason::COLLISION |
+  //                                        EmergencyReason::COLLISION_MULTIPLE;
+  // auto [reasons, block_time] = input_service.GetEmergencyReasons(now);
+  // UpdateEmergency(reasons, potential_reasons);
+  // return block_time;
+  return now;
 }
 
 void EmergencyService::OnHighLevelEmergencyChanged(const uint16_t* new_value, uint32_t length) {
@@ -61,7 +61,7 @@ void EmergencyService::UpdateEmergency(uint16_t add, uint16_t clear) {
       return;
     }
   }
-  chEvtBroadcastFlags(&mower_events, MowerEvents::EMERGENCY_CHANGED);
+  // chEvtBroadcastFlags(&mower_events, MowerEvents::EMERGENCY_CHANGED);
   SendStatus();
 }
 

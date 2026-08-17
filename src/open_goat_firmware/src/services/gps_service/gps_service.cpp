@@ -1,21 +1,18 @@
 #include "gps_service.hpp"
 
-#include <chprintf.h>
 #include <drivers/gps/nmea_gps_driver.h>
 #include <drivers/gps/ublox_gps_driver.h>
 #include <ulog.h>
 
-#include <board_utils.hpp>
 #include <cstdio>
-#include <globals.hpp>
 #include "posix_ch.h"
 
-bool GpsService::LoadAndStartGpsDriver(ProtocolType protocol_type, uint8_t uart, uint32_t baudrate) {
+bool GpsService::LoadAndStartGpsDriver(ProtocolType protocol_type, const char *device, uint32_t baudrate) {
   // Get the requested UART port (if 0 is specified, ask the robot.cpp for the default port)
-  UARTDriver* uart_driver = uart == 0 ? robot->GPS_GetUartPort() : GetUARTDriverByIndex(uart);
+  UARTDriver* uart_driver = CreateUARTDriver(device, baudrate);
   if (uart_driver == nullptr) {
     char msg[100]{};
-    chsnprintf(msg, sizeof(msg), "Could not open UART. Check the provided uart_index: %i", uart);
+    chsnprintf(msg, sizeof(msg), "Could not open UART. Check the provided device: %s", device);
     ULOG_ARG_ERROR(&service_id_, msg);
     return false;
   }
@@ -31,11 +28,7 @@ bool GpsService::LoadAndStartGpsDriver(ProtocolType protocol_type, uint8_t uart,
       etl::delegate<void(const GpsDriver::GpsState&)>::create<GpsService, &GpsService::GpsStateCallback>(*this));
 
   gps_driver_->StartDriver(uart_driver, baudrate);
-  debug_interface_.SetDriver(gps_driver_);
-  debug_interface_.Start();
 
-  // Keep track of the UART port
-  used_port_index_ = uart;
 
   return true;
 }
@@ -45,20 +38,7 @@ bool GpsService::OnStart() {
 
   if (gps_driver_ == nullptr) {
     // We don't have a gps driver running yet, so create one.
-    return LoadAndStartGpsDriver(Protocol.value, Uart.value, Baudrate.value);
-  }
-
-  // We already have the driver, if the protocol, uart or baudrate has changed, restart the board
-  // (since we will not stop the driver, because of heap fragmentation issues)
-  if (gps_driver_->GetProtocolType() != Protocol.value || used_port_index_ != Uart.value ||
-      gps_driver_->GetUartBaudrate() != Baudrate.value) {
-    ULOG_ARG_WARNING(&service_id_, "GPS protocol, uart or baudrate change detected - restarting");
-    // Save new settings to persistent storage (if supported by robot)
-    if (!robot->SaveGpsSettings(Protocol.value, Uart.value, Baudrate.value)) {
-      ULOG_ERROR("Failed to save GPS settings! Abort GpsService::OnStart()");
-      return false;
-    }
-    NVIC_SystemReset();
+    return LoadAndStartGpsDriver(Protocol.value, ("/dev/ttyS" + std::to_string(Uart.value)).c_str(), Baudrate.value);
   }
 
   return true;

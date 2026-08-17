@@ -10,7 +10,6 @@
 #include <cstring>
 #include <globals.hpp>
 
-using namespace xbot::driver;
 
 // Static assertions to ensure ChargerDriver::ReChargeVoltage enum matches PowerService ReChargeVoltages enum
 static_assert(static_cast<uint8_t>(ChargerDriver::ReChargeVoltage::PERCENT_93_0) == 0, "ReChargeVoltage enum mismatch");
@@ -50,8 +49,8 @@ void PowerService::service_tick_() {
     battery_percent_ =
         (battery_volts_ - BatteryEmptyVoltage.value) / (BatteryFullVoltage.value - BatteryEmptyVoltage.value);
   } else {
-    battery_percent_ = (battery_volts_ - robot->Power_GetDefaultBatteryEmptyVoltage()) /
-                       (robot->Power_GetDefaultBatteryFullVoltage() - robot->Power_GetDefaultBatteryEmptyVoltage());
+    battery_percent_ = (battery_volts_ - GetDefaultBatteryEmptyVoltage()) /
+                       (GetDefaultBatteryFullVoltage() - GetDefaultBatteryEmptyVoltage());
   }
   SendBatteryPercentage(etl::max(0.0f, etl::min(1.0f, battery_percent_)));
   SendChargerInputCurrent(adapter_current_);
@@ -65,31 +64,6 @@ void PowerService::service_tick_() {
 }
 
 void PowerService::driver_tick_() {
-  update_charger_();
-  read_adc_();
-
-  if (charger_configured_ && power_management_callback_) {
-    power_management_callback_();
-  }
-}
-
-void PowerService::read_adc_() {
-  xbot::service::Lock lk{&mtx_};
-
-  // ADC-Accuracy Debugging:
-  // adc1::DumpBenchmarkMeasurement(adc1::Adc1ConversionId::V_BATTERY, "V-BAT", 20, true);
-  // adc1::DumpBenchmarkMeasurement(adc1::Adc1ConversionId::V_CHARGER, "V-CHG", 20, true);
-
-  adapter_volts_adc_ = adc1::GetValueOrNaN(adc1::Adc1ConversionId::V_CHARGER, 100);
-  battery_volts_adc_ = adc1::GetValueOrNaN(adc1::Adc1ConversionId::V_BATTERY, 100);
-  dcdc_current_ = adc1::GetValueOrNaN(adc1::Adc1ConversionId::I_IN_DCDC, 100);
-
-  // Debug: VREF monitoring every 2 seconds
-  /*static uint32_t vref_debug_count = 0;
-  if (++vref_debug_count % 2 == 0) {
-    ULOG_INFO("adc-debug: VREF=%.4fV V-BAT=%.4f V-CHG=%.4f", adc3::GetLastVref(), battery_volts_adc_,
-              adapter_volts_adc_);
-  }*/
 }
 
 void PowerService::update_charger_() {
@@ -107,11 +81,11 @@ void PowerService::update_charger_() {
         LogDebugMessage("Setting PreCharge Current to %f A", PreChargeCurrent.value);
         success &= charger_->setPreChargeCurrent(PreChargeCurrent.value);
       } else {
-        LogDebugMessage("Setting PreCharge Current to default %f A", robot->Power_GetDefaultPreChargeCurrent());
-        success &= charger_->setPreChargeCurrent(robot->Power_GetDefaultPreChargeCurrent());
+        LogDebugMessage("Setting PreCharge Current to default %f A", GetDefaultPreChargeCurrent());
+        success &= charger_->setPreChargeCurrent(GetDefaultPreChargeCurrent());
       }
 
-      float software_charge_current = robot->Power_GetDefaultChargeCurrent();
+      float software_charge_current = GetDefaultChargeCurrent();
 
       // Check, if the user has provided custom current. If so, use it
       if (ChargeCurrent.valid && ChargeCurrent.value > 0) {
@@ -124,7 +98,7 @@ void PowerService::update_charger_() {
 
       if (!override_limit) {
         // Limit the current to the max value provided by the robot
-        software_charge_current = std::min(robot->Power_GetMaxChargeCurrent(), software_charge_current);
+        software_charge_current = std::min(GetMaxChargeCurrent(), software_charge_current);
       } else {
         LogDebugMessage("Overriding hardware charge current limit");
       }
@@ -141,9 +115,9 @@ void PowerService::update_charger_() {
         success &= charger_->setChargingVoltage(ChargeVoltage.value);
       } else {
         // Only set a custom value, if the robot implementation provides one.
-        if (robot->Power_GetDefaultChargeVoltage() > 0.0) {
-          LogDebugMessage("Setting Charge Voltage to default %f V", robot->Power_GetDefaultChargeVoltage());
-          success &= charger_->setChargingVoltage(robot->Power_GetDefaultChargeVoltage());
+        if (GetDefaultChargeVoltage() > 0.0) {
+          LogDebugMessage("Setting Charge Voltage to default %f V", GetDefaultChargeVoltage());
+          success &= charger_->setChargingVoltage(GetDefaultChargeVoltage());
         } else {
           LogDebugMessage("Not setting Charge Voltage");
         }
@@ -152,15 +126,15 @@ void PowerService::update_charger_() {
         LogDebugMessage("Setting Termination Current to %f A", TerminationCurrent.value);
         success &= charger_->setTerminationCurrent(TerminationCurrent.value);
       } else {
-        LogDebugMessage("Setting Termination Current to default %f A", robot->Power_GetDefaultTerminationCurrent());
-        success &= charger_->setTerminationCurrent(robot->Power_GetDefaultTerminationCurrent());
+        LogDebugMessage("Setting Termination Current to default %f A", GetDefaultTerminationCurrent());
+        success &= charger_->setTerminationCurrent(GetDefaultTerminationCurrent());
       }
       if (ReChargeVoltage.valid) {
         LogDebugMessage("Setting ReCharge Voltage to %d", static_cast<int>(ReChargeVoltage.value));
         success &= charger_->setReChargeVoltage(static_cast<ChargerDriver::ReChargeVoltage>(ReChargeVoltage.value));
       } else {
         LogDebugMessage("Setting ReCharge Voltage to default");
-        success &= charger_->setReChargeVoltage(robot->Power_GetDefaultReChargeVoltage());
+        success &= charger_->setReChargeVoltage(GetDefaultReChargeVoltage());
       }
 
       // Disable temperature sense, the battery doesn't have it
@@ -219,17 +193,7 @@ void PowerService::update_charger_() {
       // Error during comms or watchdog timer expired, reconfigure charger
       charger_configured_ = false;
       ULOG_ARG_ERROR(&service_id_, "Error during charging comms - reconfiguring");
-    } else {
-      if (battery_volts_ < robot->Power_GetAbsoluteMinVoltage()) {
-        critical_count_++;
-        if (critical_count_ > 10) {
-          palClearLine(LINE_HIGH_LEVEL_GLOBAL_EN);
-        }
-      } else {
-        critical_count_ = 0;
-        palSetLine(LINE_HIGH_LEVEL_GLOBAL_EN);
-      }
-    }
+    } 
   }
 }
 

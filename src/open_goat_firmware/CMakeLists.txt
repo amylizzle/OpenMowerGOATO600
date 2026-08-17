@@ -1,4 +1,11 @@
 cmake_minimum_required(VERSION 3.22)
+# Set the project name
+set(CMAKE_PROJECT_NAME open_goat)
+
+# Set C++ standard globally before project initialization
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS ON)
 
 # Set custom port path and extended service classes (only if present)
 if(EXISTS ${CMAKE_SOURCE_DIR}/portable/xbot)
@@ -7,8 +14,6 @@ if(EXISTS ${CMAKE_SOURCE_DIR}/portable/xbot)
 endif()
 set(XBOT_SERVICE_EXT "services/service_ext.hpp")
 
-# Set the project name
-set(CMAKE_PROJECT_NAME open_goat)
 
 # Include git version script
 include("cmake/GetGitVersion.cmake")
@@ -31,11 +36,6 @@ enable_language(C CXX ASM)
 
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME})
-set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
-        CXX_STANDARD 17
-        CXX_STANDARD_REQUIRED ON
-        CXX_EXTENSIONS ON
-)
 
 # Add generated include directory for git_version.h
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${GENERATED_INCLUDE_DIR})
@@ -59,16 +59,19 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         src/services/power_service/power_service.cpp
         src/services/bms_service/bms_service.cpp
         src/services/emergency_service/emergency_service.cpp
-        src/services/diff_drive_service/diff_drive_service.cpp
-        src/services/mower_service/mower_service.cpp
+        # src/services/diff_drive_service/diff_drive_service.cpp
+        # src/services/mower_service/mower_service.cpp
         src/services/gps_service/gps_service.cpp
-        src/services/input_service/input_service.cpp
+        # src/services/input_service/input_service.cpp
         src/services/high_level_service/high_level_service.cpp
         # GPS driver
         src/drivers/gps/gps_driver.cpp
         src/drivers/gps/ublox_gps_driver.cpp
         src/drivers/gps/nmea_gps_driver.cpp
         ext/minmea/minmea.c
+        # BMS driver
+        src/drivers/power/bms_driver.cpp
+        src/drivers/power/charger.cpp
 )
 
 # Add include paths
@@ -90,10 +93,10 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC
 target_add_service(${CMAKE_PROJECT_NAME} PowerService ${CMAKE_CURRENT_SOURCE_DIR}/../open_mower_ros/services/power_service.json)
 target_add_service(${CMAKE_PROJECT_NAME} BmsService ${CMAKE_CURRENT_SOURCE_DIR}/../open_mower_ros/services/bms_service.json)
 target_add_service(${CMAKE_PROJECT_NAME} EmergencyService ${CMAKE_CURRENT_SOURCE_DIR}/../open_mower_ros/services/emergency_service.json)
-target_add_service(${CMAKE_PROJECT_NAME} DiffDriveService ${CMAKE_CURRENT_SOURCE_DIR}/../open_mower_ros/services/diff_drive_service.json)
-target_add_service(${CMAKE_PROJECT_NAME} MowerService ${CMAKE_CURRENT_SOURCE_DIR}/../open_mower_ros/services/mower_service.json)
+# target_add_service(${CMAKE_PROJECT_NAME} DiffDriveService ${CMAKE_CURRENT_SOURCE_DIR}/../open_mower_ros/services/diff_drive_service.json)
+# target_add_service(${CMAKE_PROJECT_NAME} MowerService ${CMAKE_CURRENT_SOURCE_DIR}/../open_mower_ros/services/mower_service.json)
 target_add_service(${CMAKE_PROJECT_NAME} GpsService ${CMAKE_CURRENT_SOURCE_DIR}/../open_mower_ros/services/gps_service.json)
-target_add_service(${CMAKE_PROJECT_NAME} InputService ${CMAKE_CURRENT_SOURCE_DIR}/../open_mower_ros/services/input_service.json)
+# target_add_service(${CMAKE_PROJECT_NAME} InputService ${CMAKE_CURRENT_SOURCE_DIR}/../open_mower_ros/services/input_service.json)
 target_add_service(${CMAKE_PROJECT_NAME} HighLevelService ${CMAKE_CURRENT_SOURCE_DIR}/../open_mower_ros/services/high_level_service.json)
 
 set_target_properties(${CMAKE_PROJECT_NAME}

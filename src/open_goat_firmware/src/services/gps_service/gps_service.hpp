@@ -4,7 +4,6 @@
 #include <drivers/gps/gps_driver.h>
 
 #include <cstring>
-#include <globals.hpp>
 
 #include "GpsServiceBase.hpp"
 
@@ -37,7 +36,7 @@ class GpsService : public GpsServiceBase {
    * Allows initializing the GPS driver before service OnStart(), enabling
    * immediate GPS functionality without waiting for ROS configuration.
    */
-  bool LoadAndStartGpsDriver(ProtocolType protocol_type, uint8_t uart, uint32_t baudrate);
+  bool LoadAndStartGpsDriver(ProtocolType protocol_type, const char *device, uint32_t baudrate);
 
  protected:
   bool OnStart() override;
@@ -46,11 +45,8 @@ class GpsService : public GpsServiceBase {
 
  private:
   GpsDriver* gps_driver_ = nullptr;
-  DebugTCPInterface debug_interface_{10000, nullptr};
-
   // Keep track of the configuration used by the gps_driver_ loaded (initial values don't matter)
   // ATTN: Might become problematic as soon as GpsServiceBase.Uart defaults to != 0
-  int used_port_index_ = 0;
 
   // NTRIP statistics - timestamp of last received RTCM packet
   uint32_t last_ntrip_time_ = 0;

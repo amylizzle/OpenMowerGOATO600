@@ -20,6 +20,10 @@ class ServiceExt : public Service {
   explicit ServiceExt(uint16_t service_id, void* stack, size_t stack_size) : Service(service_id, stack, stack_size) {
   }
 
+  virtual bool IsHealthy() {
+    return false;
+  } 
+
 };
 }  // namespace xbot::service
 

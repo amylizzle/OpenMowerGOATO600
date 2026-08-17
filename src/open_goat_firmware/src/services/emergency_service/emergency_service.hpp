@@ -10,7 +10,6 @@
 
 #include <EmergencyServiceBase.hpp>
 
-#include "globals.hpp"
 #include "posix_ch.h"
 
 using namespace xbot::service;

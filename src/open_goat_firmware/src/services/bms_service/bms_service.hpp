@@ -9,7 +9,7 @@
 #define BMS_SERVICE_HPP
 
 #include <BmsServiceBase.hpp>
-#include <drivers/bms/bms_driver.hpp>
+#include <drivers/power/bms_driver.hpp>
 
 using namespace xbot::service;
 using namespace xbot::driver::bms;

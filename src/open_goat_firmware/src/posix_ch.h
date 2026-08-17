@@ -11,6 +11,7 @@
 #include <atomic>
 #include <chrono>
 #include <cstdint>
+#include <cstdlib>
 #include <unistd.h>
 #include <errno.h>
 #include <termios.h>

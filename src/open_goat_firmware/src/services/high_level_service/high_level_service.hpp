@@ -2,6 +2,7 @@
 #define HIGH_LEVEL_SERVICE_HPP
 
 #include <etl/string.h>
+#include <etl/delegate.h>
 
 #include <HighLevelServiceBase.hpp>
 #include "posix_ch.h"

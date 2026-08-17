@@ -9,7 +9,7 @@
 #include <ulog.h>
 
 #include <PowerServiceBase.hpp>
-#include <drivers/charger/charger.hpp>
+#include <drivers/power/charger.hpp>
 #include <limits>
 #include <xbot-service/Lock.hpp>
 
@@ -25,6 +25,38 @@ class PowerService : public PowerServiceBase {
   }
 
   void SetDriver(ChargerDriver* charger_driver);
+
+  float GetDefaultBatteryEmptyVoltage() {
+    return 0.0f;
+  } 
+
+  float GetDefaultBatteryFullVoltage() {
+    return 20.0f;
+  }
+
+  float GetDefaultPreChargeCurrent() { // probably don't need this, I thing GOAT's charging is handled in hardware
+    return 1.0f; 
+  }
+
+  float GetDefaultChargeCurrent() { // probably don't need this, I thing GOAT's charging is handled in hardware
+    return 1.0f; 
+  }
+
+  float GetMaxChargeCurrent() { // probably don't need this, I thing GOAT's charging is handled in hardware
+    return 1.0f; 
+  }
+
+  float GetDefaultChargeVoltage() { // probably don't need this, I thing GOAT's charging is handled in hardware
+    return 1.0f; 
+  }
+
+  ChargerDriver::ReChargeVoltage GetDefaultReChargeVoltage() { // probably don't need this, I thing GOAT's charging is handled in hardware
+    return ChargerDriver::ReChargeVoltage::PERCENT_93_0; 
+  }
+
+  float GetDefaultTerminationCurrent() { // probably don't need this, I thing GOAT's charging is handled in hardware
+    return 1.0f; 
+  }
 
   [[nodiscard]] float GetChargeCurrent() {
     xbot::service::Lock lk{&mtx_};
@@ -79,11 +111,6 @@ class PowerService : public PowerServiceBase {
     return SystemCurrent.valid ? SystemCurrent.value : std::numeric_limits<float>::quiet_NaN();
   }
 
-  using PowerManagementCallback = etl::delegate<void()>;
-  void SetPowerManagementCallback(PowerManagementCallback callback) {
-    power_management_callback_ = callback;
-  }
-
   bool IsHealthy() override {
     return IsRunning() && charger_configured_.load();
   }
@@ -131,8 +158,6 @@ class PowerService : public PowerServiceBase {
   int critical_count_ = 0;
   CHARGER_STATUS charger_status_ = CHARGER_STATUS::COMMS_ERROR;
   ChargerDriver* charger_ = nullptr;
-
-  PowerManagementCallback power_management_callback_;
 
   THD_WORKING_AREA(wa, 1500){};
 

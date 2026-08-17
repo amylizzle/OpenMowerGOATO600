@@ -10,7 +10,6 @@
 
 #include <DiffDriveServiceBase.hpp>
 #include <drivers/motor/motor_driver.hpp>
-#include <globals.hpp>
 #include <xbot-service/portable/socket.hpp>
 
 using namespace xbot::service;
