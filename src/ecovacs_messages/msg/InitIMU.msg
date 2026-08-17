@@ -1,5 +1,0 @@
-# type enum
-uint8 INIT_TYPE_GYRO = 0
-uint8 INIT_TYPE_ROLL_PITCH_YAW = 1
-uint8 INIT_TYPE_GYRO_AND_ACC = 2
-uint8 type    #INIT_TYPE

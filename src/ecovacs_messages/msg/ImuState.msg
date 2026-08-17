@@ -1,2 +1,0 @@
-uint8 gyroState
-uint8 accState

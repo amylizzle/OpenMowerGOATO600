@@ -1,1 +1,0 @@
-uint8 chargeStateConfirm #0 BreakAway 1 normalDockConnect 2 addDockConnect 3 OmniDockConnect

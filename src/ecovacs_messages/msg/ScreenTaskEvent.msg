@@ -1,2 +1,0 @@
-ScreenTaskType  		task
-ScreenTaskActionType 	action

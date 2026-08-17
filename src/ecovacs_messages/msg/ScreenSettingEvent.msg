@@ -1,1 +1,0 @@
-ScreenSettingData setting

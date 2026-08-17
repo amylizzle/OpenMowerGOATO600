@@ -1,1 +1,0 @@
-MotorCurrentValue[] currents
