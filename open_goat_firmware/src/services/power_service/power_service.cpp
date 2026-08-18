@@ -1,27 +1,33 @@
-//
-// Created by clemens on 09.09.24.
-//
 #include <string>
+#include <globals.hpp>
 #include "power_service.hpp"
 
+using namespace xbot::driver::power;
+
+bool PowerService::OnStart() {
+
+  if (driver_ == nullptr) {
+    // We don't have a driver running yet, so create one.
+    driver_ = new PowerDriver(&mcu_dispatcher_driver);
+  }
+
+  return true;
+}
+
 void PowerService::tick() {
-  // bool is_charging;
-  double charge_volts = 0.0;
-  double battery_volts = 0.0;
-  double charge_current = 0.0;
-  std::string charge_state = "CHARGING";
-  // robot_.GetIsCharging(is_charging, charging_time, charge_state, charge_volts, battery_volts, charge_current);
+  PowerDriver::Data powerdata = driver_->GetData();
+  // powerdata.chargingState;
+  // powerdata.batteryTemp;
+  // powerdata.batteryID;
+  // powerdata.chargeStep;
 
   // Send the sensor values
   StartTransaction();
-  SendBatteryVoltage(battery_volts);
-  SendChargeVoltage(charge_volts);
-  SendChargeCurrent(charge_current);
-  SendChargerEnabled(true);
-  SendChargingStatus(charge_state.c_str(), charge_state.length());
+  SendBatteryVoltage(powerdata.stateOfCharge);
+  SendChargeVoltage(powerdata.chargeVoltage / 1000.0f);
+  SendChargeCurrent(powerdata.chargeCurrent / 1000.0f);
+  SendChargerEnabled(powerdata.chargeVoltage > 0);
+  // SendChargingStatus(charge_state.c_str(), charge_state.length());
   CommitTransaction();
 }
 
-void PowerService::OnChargingAllowedChanged(const uint8_t& new_value) {
-  (void)new_value;
-}

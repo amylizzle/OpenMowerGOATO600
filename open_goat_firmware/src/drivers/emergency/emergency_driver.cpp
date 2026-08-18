@@ -11,20 +11,13 @@ EmergencyDriver::EmergencyDriver(xbot::driver::mcu::Dispatcher* dispatcher) : mc
 }
 
 uint16_t EmergencyDriver::GetEmergencyState() {
-    return  EmergencyReason::COLLISION |  EmergencyReason::STOP;
+    uint16_t state = 0;
+    if(this->bump) state |= EmergencyReason::COLLISION;
+    if(this->fall) state |= EmergencyReason::LIFT;
+    if(this->roll) state |= EmergencyReason::LIFT_MULTIPLE;
+    if(this->Stop) state |= EmergencyReason::STOP;
+    return state;
 }
-        // "LATCH": 0,
-        // "TIMEOUT_INPUTS": 1,
-        // "STOP": 2,
-        // "LIFT": 3,
-        // "LIFT_MULTIPLE": 4,
-        // "COLLISION": 5,
-        // "COLLISION_MULTIPLE": 9,
-        // "TIMEOUT_HIGH_LEVEL": 6,
-        // "HIGH_LEVEL": 7,
-        // "SERVICE_NOT_READY": 8,
-        // "MOWER_RPM_TIMEOUT": 10,
-        // "MOWER_RPM_LIMIT": 11
 
 void EmergencyDriver::OnBCMessage(const uint8_t *payload, size_t length) {
     bool change = false;

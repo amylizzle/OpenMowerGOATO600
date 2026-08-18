@@ -3,26 +3,24 @@
 
 #include <cstdint>
 #include <etl/delegate.h>
+#include <drivers/mcu/dispatcher.hpp>
+
 
 namespace xbot::driver::imu {
 
 class ImuDriver {
- public:
-  using DataReadyCallback = etl::delegate<void()>;
+ private:
+  xbot::driver::mcu::Dispatcher* mcu_driver_; 
 
-  virtual ~ImuDriver() = default;
+ public:
+  ImuDriver(xbot::driver::mcu::Dispatcher* dispatcher);
+  ~ImuDriver() = default;
 
   // Initialize hardware / bus
-  virtual bool Start() = 0;
-
-  // Return true if device is present
-  virtual bool IsPresent() const = 0;
+  void Start();
 
   // Read latest axes data. Expect length==9 (3 accel, 3 gyro, 3 reserved) or similar.
-  virtual bool ReadAxes(double* axes, size_t length) = 0;
-
-  // Set a callback when new data is available
-  virtual void SetDataReadyCallback(const DataReadyCallback& cb) = 0;
+  void ReadAxes(double* axes, size_t length);
 };
 
 } // namespace xbot::driver::imu

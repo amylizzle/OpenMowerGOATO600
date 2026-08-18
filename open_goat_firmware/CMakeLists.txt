@@ -62,9 +62,11 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         # MCU driver
         src/drivers/mcu/dispatcher.cpp
         # Power driver
-        src/drivers/power/charger.cpp
+        src/drivers/power/power_driver.cpp
         # Emergency driver
         src/drivers/emergency/emergency_driver.cpp
+        # IMU driver
+        src/drivers/imu/imu_driver.cpp
 )
 
 # Add include paths

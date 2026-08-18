@@ -1,6 +1,3 @@
-//
-// Created by clemens on 26.07.24.
-//
 #include <globals.hpp>
 #include "emergency_service.hpp"
 
