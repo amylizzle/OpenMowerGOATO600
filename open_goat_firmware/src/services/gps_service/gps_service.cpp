@@ -12,7 +12,7 @@ bool GpsService::LoadAndStartGpsDriver(ProtocolType protocol_type, const char *d
   UARTDriver* uart_driver = CreateUARTDriver(device, baudrate);
   if (uart_driver == nullptr) {
     char msg[100]{};
-    chsnprintf(msg, sizeof(msg), "Could not open UART. Check the provided device: %s", device);
+    snprintf(msg, sizeof(msg), "Could not open UART. Check the provided device: %s", device);
     ULOG_ARG_ERROR(&service_id_, msg);
     return false;
   }
@@ -27,7 +27,7 @@ bool GpsService::LoadAndStartGpsDriver(ProtocolType protocol_type, const char *d
   gps_driver_->SetStateCallback(
       etl::delegate<void(const GpsDriver::GpsState&)>::create<GpsService, &GpsService::GpsStateCallback>(*this));
 
-  gps_driver_->StartDriver(uart_driver, baudrate);
+  gps_driver_->StartDriver(uart_driver);
 
 
   return true;

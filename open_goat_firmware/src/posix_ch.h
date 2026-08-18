@@ -18,11 +18,6 @@
 #include <fcntl.h>
 
 
-// Priority mapping
-#ifndef NORMALPRIO
-#define NORMALPRIO 0
-#endif
-
 // Basic constants
 #define MSG_OK 0
 #define UART_ERR_NOT_ACTIVE (-1)
@@ -39,14 +34,6 @@ inline uint32_t chVTGetSystemTimeX() {
 }
 
 #define TIME_I2S(x) ((x) / 1000u)
-
-// snprintf alias used in firmware
-#include <cstdio>
-#define chsnprintf snprintf
-
-// Thread working area macro
-// Expand to a plain array so it can be used both at global scope and inside classes
-#define THD_WORKING_AREA(name, size) char name[size]
 
 // Minimal UART types used in project
 struct UARTConfig {
@@ -181,11 +168,15 @@ struct thread_t {
   uint32_t ev_flags{0};
 };
 
-// Mutex macro - use the framework's recursive mutex type so xbot::service::Lock works
-#include <mutex>
-#define MUTEX_DECL(name) std::recursive_mutex name
-inline void chMtxLock(std::recursive_mutex *m) { m->lock(); }
-inline void chMtxUnlock(std::recursive_mutex *m) { m->unlock(); }
+// Debug/assert
+#define DbgAssert(expr, msg) { assert(expr && msg); }
+
+// Thread create
+inline thread_t *createThread(void (*fn)(void *), void *arg) {
+  thread_t *t = new thread_t();
+  t->native_thread = std::thread([t,fn,arg]() { t->id = std::this_thread::get_id(); fn(arg); });
+  return t;
+}
 
 // System lock (cooperative replacement)
 inline std::mutex &ch_sys_mutex() { static std::mutex m; return m; }
@@ -193,19 +184,6 @@ inline void chSysLock() { ch_sys_mutex().lock(); }
 inline void chSysUnlock() { ch_sys_mutex().unlock(); }
 inline void chSysLockFromISR() { chSysLock(); }
 inline void chSysUnlockFromISR() { chSysUnlock(); }
-
-// Debug/assert
-inline void chDbgAssert(bool expr, const char *msg) { (void)msg; if(!expr) { abort(); } }
-inline void chRegSetThreadName(const char *name) { (void)name; }
-
-// Thread create
-inline thread_t *chThdCreateStatic(void *wa, size_t wa_size, int prio, void (*fn)(void *), void *arg) {
-  (void)wa; (void)wa_size; (void)prio;
-  thread_t *t = new thread_t();
-  t->native_thread = std::thread([t,fn,arg]() { t->id = std::this_thread::get_id(); fn(arg); });
-  return t;
-}
-inline void chThdSleep(uint32_t ms) { std::this_thread::sleep_for(std::chrono::milliseconds(ms)); }
 
 // Events
 inline void chEvtSignalI(thread_t *tp, uint32_t flags) {

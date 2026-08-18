@@ -17,7 +17,7 @@ class Dispatcher {
 	~Dispatcher() = default;
 
 	// Start the dispatcher reading from the provided UART at the given baudrate.
-	bool StartDriver(UARTDriver *uart, uint32_t baudrate);
+	bool StartDriver(UARTDriver *uart);
 
 	// Register a handler for a two-character command id (cmd0, cmd1).
 	void RegisterHandler(uint8_t cmd0, uint8_t cmd1, const MessageHandler &handler);
@@ -27,9 +27,6 @@ class Dispatcher {
 	size_t ProcessBytes(const uint8_t *buffer, size_t len);
 
  private:
-	struct UARTConfigEx : UARTConfig {
-		Dispatcher *context;
-	};
 
 	static constexpr size_t RECV_BUFFER_SIZE = 512;
 	uint8_t recv_buffer1_[RECV_BUFFER_SIZE]{};
@@ -38,9 +35,8 @@ class Dispatcher {
 	volatile size_t processing_buffer_len_ = 0;
 
 	UARTDriver *uart_{};
-	UARTConfigEx uart_config_{};
+	UARTConfig uart_config_{};
 
-	THD_WORKING_AREA(thd_wa_, 1536){};
 	thread_t *processing_thread_ = nullptr;
 	volatile bool processing_done_ = true;
 	bool stopped_ = true;

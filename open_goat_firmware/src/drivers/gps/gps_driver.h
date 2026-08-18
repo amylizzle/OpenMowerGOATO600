@@ -9,6 +9,7 @@
 
 #include "GpsServiceBase.hpp"
 #include "posix_ch.h"
+#include <mutex>
 
 namespace xbot::driver::gps {
 class GpsDriver {
@@ -59,7 +60,7 @@ class GpsDriver {
   typedef etl::delegate<void(const GpsState &new_state)> StateCallback;
 
  public:
-  bool StartDriver(UARTDriver *uart, uint32_t baudrate);
+  bool StartDriver(UARTDriver *uart);
   void SetStateCallback(const GpsDriver::StateCallback &function);
 
   void SendRTCM(const uint8_t *data, size_t size);
@@ -112,10 +113,6 @@ class GpsDriver {
   virtual size_t ProcessBytes(const uint8_t *buffer, size_t len) = 0;
 
  private:
-  // Extend the config struct by a pointer to this instance, so that we can access it in callbacks.
-  struct UARTConfigEx : UARTConfig {
-    GpsDriver *context;
-  };
 
   static constexpr size_t RECV_BUFFER_SIZE = 512;
   // 20Hz timeout for reception
@@ -128,11 +125,10 @@ class GpsDriver {
   volatile size_t processing_buffer_len_ = 0;
 
   UARTDriver *uart_{};
-  UARTConfigEx uart_config_{};
+  UARTConfig uart_config_{};
 
-  THD_WORKING_AREA(thd_wa_, 1024){};
   thread_t *processing_thread_ = nullptr;
-  MUTEX_DECL(mutex_);
+  std::recursive_mutex mutex_;
   // This is reset by the receiving ISR and set by the thread to signal if it's safe to process more data.
   volatile bool processing_done_ = true;
   bool stopped_ = true;

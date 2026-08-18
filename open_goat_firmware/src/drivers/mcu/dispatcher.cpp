@@ -37,9 +37,9 @@ static uint8_t crc8(const uint8_t *data, size_t len) {
 	return static_cast<uint8_t>(crc ^ CRC_XOROUT);
 }
 
-bool Dispatcher::StartDriver(UARTDriver *uart, uint32_t baudrate) {
-	chDbgAssert(stopped_, "don't start the dispatcher twice");
-	chDbgAssert(uart != nullptr, "need to provide a driver");
+bool Dispatcher::StartDriver(UARTDriver *uart) {
+	DbgAssert(stopped_, "don't start the dispatcher twice");
+	DbgAssert(uart != nullptr, "need to provide a driver");
 	if (!stopped_) return false;
 
 	// ensure CRC table is built once
@@ -50,13 +50,13 @@ bool Dispatcher::StartDriver(UARTDriver *uart, uint32_t baudrate) {
 	}
 
 	uart_ = uart;
-	uart_config_.speed = baudrate;
+	uart_config_ = *(uart->config);
 	uart_config_.context = this;
 
 	uart_config_.rxend_cb = [](UARTDriver *uartp) {
 		chSysLockFromISR();
-		Dispatcher *instance = reinterpret_cast<const UARTConfigEx *>(uartp->config)->context;
-		chDbgAssert(instance != nullptr, "instance cannot be null!");
+		Dispatcher *instance = reinterpret_cast<Dispatcher *>(const_cast<UARTConfig *>(uartp->config)->context);
+		DbgAssert(instance != nullptr, "instance cannot be null!");
 		if (!instance->processing_done_) {
 			uint8_t *next_recv_buffer = (instance->processing_buffer_ == instance->recv_buffer1_) ? instance->recv_buffer2_ : instance->recv_buffer1_;
 			uartStartReceiveI(uartp, RECV_BUFFER_SIZE, next_recv_buffer);
@@ -77,7 +77,7 @@ bool Dispatcher::StartDriver(UARTDriver *uart, uint32_t baudrate) {
 	if (!started) return false;
 
 	stopped_ = false;
-	processing_thread_ = chThdCreateStatic(&thd_wa_, sizeof(thd_wa_), NORMALPRIO, threadHelper, this);
+	processing_thread_ = createThread(threadHelper, this);
 	uartStartReceive(uart, RECV_BUFFER_SIZE, recv_buffer1_);
 	return true;
 }
@@ -185,7 +185,6 @@ void Dispatcher::threadFunc() {
 }
 
 void Dispatcher::threadHelper(void *instance) {
-	chRegSetThreadName("McuDispatcher");
 	auto *drv = static_cast<Dispatcher *>(instance);
 	drv->threadFunc();
 }

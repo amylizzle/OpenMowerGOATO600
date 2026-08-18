@@ -16,14 +16,14 @@ void GpsDriver::RawDataInput(uint8_t *data, size_t size) {
   send_raw(data, size);
 }
 
-bool GpsDriver::StartDriver(UARTDriver *uart, uint32_t baudrate) {
-  chDbgAssert(stopped_, "don't start the driver twice");
-  chDbgAssert(uart != nullptr, "need to provide a driver");
+bool GpsDriver::StartDriver(UARTDriver *uart) {
+  DbgAssert(stopped_, "don't start the driver twice");
+  DbgAssert(uart != nullptr, "need to provide a driver");
   if (!stopped_) {
     return false;
   }
   this->uart_ = uart;
-  uart_config_.speed = baudrate;
+  uart_config_ = *(uart->config);
   uart_config_.context = this;
   bool uartStarted = uartStart(uart, &uart_config_) == MSG_OK;
   if (!uartStarted) {
@@ -32,8 +32,8 @@ bool GpsDriver::StartDriver(UARTDriver *uart, uint32_t baudrate) {
 
   uart_config_.rxend_cb = [](UARTDriver *uartp) {
     chSysLockFromISR();
-    GpsDriver *instance = reinterpret_cast<const UARTConfigEx *>(uartp->config)->context;
-    chDbgAssert(instance != nullptr, "instance cannot be null!");
+    GpsDriver *instance = reinterpret_cast<GpsDriver *>(const_cast<UARTConfig *>(uartp->config)->context);
+    DbgAssert(instance != nullptr, "instance cannot be null!");
     if (!instance->processing_done_) {
       // This is bad, processing is too slow to keep up with updates!
       // We just read into the same buffer again
@@ -58,7 +58,7 @@ bool GpsDriver::StartDriver(UARTDriver *uart, uint32_t baudrate) {
   };
 
   stopped_ = false;
-  processing_thread_ = chThdCreateStatic(&thd_wa_, sizeof(thd_wa_), NORMALPRIO, threadHelper, this);
+  processing_thread_ = createThread(threadHelper, this);
 #ifdef USE_SEGGER_SYSTEMVIEW
   processing_thread_->name = "GpsDriver";
 #endif
@@ -72,9 +72,9 @@ void GpsDriver::SetStateCallback(const GpsDriver::StateCallback &function) {
 }
 
 bool GpsDriver::send_raw(const void *data, size_t size) {
-  chMtxLock(&mutex_);
+  mutex_.lock();
   uartSendFullTimeout(uart_, &size, data, TIME_INFINITE);
-  chMtxUnlock(&mutex_);
+  mutex_.unlock();
   return true;
 }
 
@@ -128,7 +128,6 @@ void GpsDriver::threadFunc() {
 }
 
 void GpsDriver::threadHelper(void *instance) {
-  chRegSetThreadName("GpsDriver");
   auto *gps_interface = static_cast<GpsDriver *>(instance);
   gps_interface->threadFunc();
 }

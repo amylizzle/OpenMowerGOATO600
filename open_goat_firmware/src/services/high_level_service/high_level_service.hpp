@@ -57,7 +57,7 @@ class HighLevelService : public HighLevelServiceBase {
   }
 
  private:
-  MUTEX_DECL(mtx_);
+  std::recursive_mutex mtx_;
 
   HighLevelStatus state_id_ = HighLevelStatus::UNKNOWN;
   etl::string<100> state_name_{};

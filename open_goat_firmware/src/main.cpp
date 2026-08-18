@@ -33,7 +33,12 @@ int main() {
 	ULOG_SUBSCRIBE(console_logger, ULOG_DEBUG_LEVEL);
 	#endif
 
-	// mcu_dispatcher_driver.StartDriver(CreateUARTDriver("/dev/ttyS3", 115200),115200);
+	UARTDriver* mcu_uart = CreateUARTDriver("/dev/ttyS3", 115200);
+	if (mcu_uart == nullptr){
+		ULOG_ERROR("Failed to get /dev/ttyS3 for MCU!");
+		exit(1);
+	}
+	mcu_dispatcher_driver.StartDriver(mcu_uart);
 
 	emergency_service.start();
 	diff_drive.start();
