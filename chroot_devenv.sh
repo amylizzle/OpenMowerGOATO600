@@ -37,6 +37,7 @@ WORKSPACE_IN_CHROOT="/workspace"
 
 ROOTFS="${DEVENV_ROOTFS:-/var/ros-noetic-chroot}"
 UBUNTU_MIRROR="${UBUNTU_MIRROR:-https://ports.ubuntu.com/ubuntu-ports}"
+HOST_ARCH="${HOST_ARCH:-arm64}"
 ROS_PACKAGES="${ROS_PACKAGES:-ros-noetic-desktop-full}"
 ROS_DISTRO="noetic"
 ROS_REPO_URL="http://packages.ros.org/ros/ubuntu"
@@ -139,7 +140,7 @@ setup() {
             apt-get update && apt-get install -y debootstrap
         fi
         mkdir -p "${ROOTFS}"
-        debootstrap --arch arm64 --variant=minbase --include=ca-certificates,locales focal "${ROOTFS}" "${UBUNTU_MIRROR}"
+        debootstrap --arch ${HOST_ARCH} --variant=minbase --include=ca-certificates,locales focal "${ROOTFS}" "${UBUNTU_MIRROR}"
     fi
 
     # Configure apt sources inside the chroot (Focal is EOL -> old-releases).
@@ -157,8 +158,8 @@ EOF
         apt-get update
         apt-get install -y --no-install-recommends \
             sudo git zsh gdb rsync ssh lsb-release gnupg ca-certificates libgtest-dev \
-            libgmock-dev cmake python3-rosdep python3-empy python3-nose
-    "
+            libgmock-dev cmake 
+    " # python3-empy python3-nose
 
     if host_ros_enabled; then
         info "reusing host ROS at ${HOST_ROS_PATH} (bind-mounted into the chroot)"
@@ -188,6 +189,8 @@ EOF
         run_chroot "
             export ROS_DISTRO=${ROS_DISTRO}
             source /opt/ros/${ROS_DISTRO}/setup.bash
+            apt install python3-rosdep
+            rosdep init
             rosdep update --rosdistro ${ROS_DISTRO}
         "
     fi
@@ -324,7 +327,7 @@ launchom() {
         service mosquitto start
         roslaunch open_mower open_mower.launch &
         roslaunch_pid=\$!
-        build_fw/open_goat.elf
+        /workspace/build_fw/open_goat.elf
         kill \$roslaunch_pid 2>/dev/null
         service nginx stop
         service mosquitto stop

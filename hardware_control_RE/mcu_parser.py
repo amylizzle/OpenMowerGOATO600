@@ -94,29 +94,106 @@ def parse_stream(stream: bytes, validate=True):
         out.append(parse_frame(c0, c1, ack, data))
     return out
 
+import time
+import os
+class MCULink:
+    def __init__(self, path, baud):
+        self.path = path
+        self.baud = baud
+        self.ser = None
+
+    def open(self):
+        import termios
+        self.fd = os.open(self.path, os.O_RDWR | os.O_NOCTTY | os.O_NONBLOCK)
+        attr = termios.tcgetattr(self.fd)
+        # attr = [iflag, oflag, cflag, lflag, ispeed, ospeed, cc]
+
+        B = {9600: termios.B9600, 57600: termios.B57600,
+             115200: termios.B115200}.get(self.baud, termios.B115200)
+
+        attr[0] = 0        # iflag: raw
+        attr[1] = 0        # oflag: raw
+        attr[2] = termios.CS8 | termios.CREAD | termios.CLOCAL  # cflag: 8N1, no parity
+        attr[3] = 0        # lflag: raw mode
+        attr[4] = B        # ispeed
+        attr[5] = B        # ospeed
+        attr[6][termios.VMIN] = 0
+        attr[6][termios.VTIME] = 0
+
+        termios.tcsetattr(self.fd, termios.TCSANOW, attr)
+        return self
+
+    def write(self, data: bytes):
+        os.write(self.fd, data)
+
+    def read_frame(self, timeout=1.0, poll=0.05):
+        """Read one full framed (0x60..0x0A) message; returns (cmd, data) or None."""
+        buf = bytearray()
+        end = time.time() + timeout
+        while time.time() < end:
+            try:
+                chunk = os.read(self.fd, 256)
+                if chunk:
+                    buf.extend(chunk)
+            except BlockingIOError:
+                pass
+            while True:
+                i = buf.find(b"\x60")
+                if i < 0:
+                    buf.clear()  # no delimiter at all left; nothing to keep
+                    break
+                if len(buf) - i < 3:
+                    break
+                ln = buf[i+2]
+                total = ln + 5
+                if len(buf) - i < total:
+                    break
+                frame = bytes(buf[i:i+total])
+
+                # Validate BEFORE trusting this as a real frame.
+                terminator_ok = frame[-1] == 0x0A
+                check = crc8(frame[:-2])
+                crc_ok = check == frame[-2]
+
+                if terminator_ok and crc_ok:
+                    del buf[:i+total]
+                    return frame[3:5], frame[5:5+ln-2], frame
+
+                # False positive: this 0x60 wasn't a real header.
+                # Only drop the one leading byte so we don't destroy
+                # a genuine frame that may start later in buf.
+                print(f"desync/bad frame at offset {i} "
+                      f"(terminator_ok={terminator_ok}, crc_ok={crc_ok}, "
+                      f"expected_crc={check}, got={frame[-2]}) - resyncing")
+                del buf[:i+1]
+                # loop again to find the next 0x60 candidate
+            time.sleep(poll)
+        return None
+
 def main():
     ap = argparse.ArgumentParser(description="ECOVACS RE MCU frame parser")
     ap.add_argument("file", nargs="?", default="message_dump.bin")
-    ap.add_argument("--summary", action="store_true", help="per-command counts only")
-    ap.add_argument("--limit", type=int, default=0, help="max frames to print")
     args = ap.parse_args()
 
-    stream = open(args.file, "rb").read()
-    frames = parse_stream(stream)
-    print("parsed %d frames from %s" % (len(frames), args.file))
-
-    if args.summary:
-        from collections import Counter
-        c = Counter(f["cmd"] for f in frames)
-        for cmd, n in c.most_common():
-            print("%-4s %d" % (cmd, n))
-        return
-
-    limit = args.limit or len(frames)
-    for f in frames[:limit]:
-        print("%-4s ack=%d %s" % (f["cmd"], f["ack"], f["data"]))
-        if not f.get("unknown"):
-            print("    parsed: %r" % f["parsed"])
-
+    link = MCULink(args.file, 115200)
+    link.open()
+    last = {}
+    try:
+        while True:
+            got = link.read_frame(timeout=1.0)
+            if got is not None:
+                cmd, data, rawframe = got
+                print(f"TYPE:{str(cmd)} ACK:{rawframe[1]} LEN:{rawframe[2]}") 
+                parsed = parse_frame(cmd[0],cmd[1],0,data)
+                if parsed is not None:
+                    print(parsed)
+                else:
+                    print(f"Unknown message type {cmd}: {rawframe.hex()}")
+            else:
+                # no new frame; let user know about timeout
+                print("Nothin...")
+    finally:
+        os.close(link.fd)
+        
 if __name__ == "__main__":
     main()

@@ -21,7 +21,6 @@
 # 0_9_X_MPU9250: Use this if you have an MPU9250 and have a 0.9.x mainboard (be aware that there are many fake chips on the market. So probably not your hardware version).
 export OM_HARDWARE_VERSION="GOAT0600"
 export HARDWARE_PLATFORM="CUSTOM"
-export OM_NO_COMMS=true
 export MOWER="CUSTOM"
 export PARAMS_PATH="/workspace/params"
 # Uncomment and set to coordinates near your future docking station, this will be your map origin.
@@ -65,7 +64,7 @@ export OM_MOWER="CUSTOM"
 # xesc_mini_w_r4ma: for the STM32 version (VESC), but with Rev4 (Mow) Motor Adapter (only available for YardForceSA650 mower type)
 # xesc_2040: for the RP2040 version (very experimental!)
 # xesc_2040_w_r4ma: for the RP2040 version (very experimental!), but with Rev4 (Mow) Motor Adapter (only available for YardForceSA650 mower type)
-export OM_MOWER_ESC_TYPE="xesc_mini"
+# export OM_MOWER_ESC_TYPE="xesc_mini"
 
 # Select your gamepad
 # Currently supported: ps3, shield, steam_stick, steam_touch, switch_pro, xbox360

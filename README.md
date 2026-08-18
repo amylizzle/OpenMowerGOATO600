@@ -52,3 +52,21 @@ cd OpenMowerGOATO600
 ./chroot_devenv.sh
 ```
 This will take a while. It sets up a chroot dev environment under /var, builds and then runs OpenMower. 
+
+# Development Environment
+
+If you want to do development on your host use
+```
+sudo UBUNTU_MIRROR="https://archive.ubuntu.com/ubuntu/" HOST_ARCH="amd64" ./chroot_devenv.sh setup
+```
+to install a local copy of the chroot and install `ser2net` on the GOAT. Edit the config at `/etc/ser2net.conf` to read
+```
+2000:raw:600:/dev/ttyS3:115200 8DATABITS NONE 1STOPBIT
+2001:raw:600:/dev/ttyS4:115200 8DATABITS NONE 1STOPBIT
+```
+and then on your development machine, run `socat` as
+```
+sudo socat pty,link=/dev/ttyM1,raw,echo=0 tcp:goat.lan:2000; sudo socat pty,link=/dev/ttyM2,raw,echo=0 tcp:goat.lan:2001
+```
+
+You can test it's working by running `mcu_parser.py /dev/ttyM1` from `/hardware_control_RE`
