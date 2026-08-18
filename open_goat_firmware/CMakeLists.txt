@@ -82,13 +82,13 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC
         lwjson
 )
 
-target_add_service(${CMAKE_PROJECT_NAME} ImuService ${CMAKE_CURRENT_SOURCE_DIR}/../open_mower_ros/services/imu_service.json)
-target_add_service(${CMAKE_PROJECT_NAME} PowerService ${CMAKE_CURRENT_SOURCE_DIR}/../open_mower_ros/services/power_service.json)
-target_add_service(${CMAKE_PROJECT_NAME} EmergencyService ${CMAKE_CURRENT_SOURCE_DIR}/../open_mower_ros/services/emergency_service.json)
-target_add_service(${CMAKE_PROJECT_NAME} DiffDriveService ${CMAKE_CURRENT_SOURCE_DIR}/../open_mower_ros/services/diff_drive_service.json)
-target_add_service(${CMAKE_PROJECT_NAME} MowerService ${CMAKE_CURRENT_SOURCE_DIR}/../open_mower_ros/services/mower_service.json)
-target_add_service(${CMAKE_PROJECT_NAME} GpsService ${CMAKE_CURRENT_SOURCE_DIR}/../open_mower_ros/services/gps_service.json)
-target_add_service(${CMAKE_PROJECT_NAME} HighLevelService ${CMAKE_CURRENT_SOURCE_DIR}/../open_mower_ros/services/high_level_service.json)
+target_add_service(${CMAKE_PROJECT_NAME} ImuService ${CMAKE_CURRENT_SOURCE_DIR}/../src/open_mower_ros/services/imu_service.json)
+target_add_service(${CMAKE_PROJECT_NAME} PowerService ${CMAKE_CURRENT_SOURCE_DIR}/../src/open_mower_ros/services/power_service.json)
+target_add_service(${CMAKE_PROJECT_NAME} EmergencyService ${CMAKE_CURRENT_SOURCE_DIR}/../src/open_mower_ros/services/emergency_service.json)
+target_add_service(${CMAKE_PROJECT_NAME} DiffDriveService ${CMAKE_CURRENT_SOURCE_DIR}/../src/open_mower_ros/services/diff_drive_service.json)
+target_add_service(${CMAKE_PROJECT_NAME} MowerService ${CMAKE_CURRENT_SOURCE_DIR}/../src/open_mower_ros/services/mower_service.json)
+target_add_service(${CMAKE_PROJECT_NAME} GpsService ${CMAKE_CURRENT_SOURCE_DIR}/../src/open_mower_ros/services/gps_service.json)
+target_add_service(${CMAKE_PROJECT_NAME} HighLevelService ${CMAKE_CURRENT_SOURCE_DIR}/../src/open_mower_ros/services/high_level_service.json)
 
 set_target_properties(${CMAKE_PROJECT_NAME}
         PROPERTIES SUFFIX ".elf")
