@@ -22,17 +22,18 @@ bool GpsDriver::StartDriver(UARTDriver *uart) {
   if (!stopped_) {
     return false;
   }
-  this->uart_ = uart;
-  uart_config_ = *(uart->config);
-  uart_config_.context = this;
-  bool uartStarted = uartStart(uart, &uart_config_) == MSG_OK;
+  
+  uart_ = uart;
+	uart_->config.context = this;
+
+  bool uartStarted = uartStart(uart, &(uart_->config)) == MSG_OK;
   if (!uartStarted) {
     return false;
   }
 
-  uart_config_.rxend_cb = [](UARTDriver *uartp) {
+  uart_->config.rxend_cb = [](UARTDriver *uartp) {
     chSysLockFromISR();
-    GpsDriver *instance = reinterpret_cast<GpsDriver *>(const_cast<UARTConfig *>(uartp->config)->context);
+    GpsDriver *instance = reinterpret_cast<GpsDriver *>(uartp->config.context);
     DbgAssert(instance != nullptr, "instance cannot be null!");
     if (!instance->processing_done_) {
       // This is bad, processing is too slow to keep up with updates!

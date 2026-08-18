@@ -50,12 +50,11 @@ bool Dispatcher::StartDriver(UARTDriver *uart) {
 	}
 
 	uart_ = uart;
-	uart_config_ = *(uart->config);
-	uart_config_.context = this;
+	uart->config.context = this;
 
-	uart_config_.rxend_cb = [](UARTDriver *uartp) {
+	uart->config.rxend_cb = [](UARTDriver *uartp) {
 		chSysLockFromISR();
-		Dispatcher *instance = reinterpret_cast<Dispatcher *>(const_cast<UARTConfig *>(uartp->config)->context);
+		Dispatcher *instance = reinterpret_cast<Dispatcher *>(uartp->config.context);
 		DbgAssert(instance != nullptr, "instance cannot be null!");
 		if (!instance->processing_done_) {
 			uint8_t *next_recv_buffer = (instance->processing_buffer_ == instance->recv_buffer1_) ? instance->recv_buffer2_ : instance->recv_buffer1_;

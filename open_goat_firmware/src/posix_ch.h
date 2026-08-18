@@ -46,7 +46,7 @@ struct DmaStreamEmu { std::atomic<size_t> NDTR{0}; };
 struct DmaEmu { DmaStreamEmu *stream{nullptr}; };
 
 struct UARTDriver {
-  UARTConfig *config{nullptr};
+  UARTConfig config;
   int fd{-1};
   DmaEmu *dmarx{nullptr};
   std::atomic<bool> rx_active{false};
@@ -95,6 +95,7 @@ inline speed_t baud_to_speed(uint32_t baud) {
 // Returns 0 on success, -1 on failure.
 inline int uartOpenPort(UARTDriver *uart, const char *device, uint32_t baud) {
   if (!uart || !device) return -1;
+  uart->config.speed = baud;
   int fd = ::open(device, O_RDWR | O_NOCTTY | O_NONBLOCK);
   if (fd < 0) return -1;
 
@@ -221,10 +222,19 @@ inline uint32_t chEvtWaitAnyTimeout(uint32_t mask, uint32_t timeout_ms) {
 inline void chEvtBroadcastFlags(thread_t *tp, uint32_t flags) { chEvtSignalI(tp, flags); }
 
 // UART stubs: minimal non-blocking support
-inline int uartStart(UARTDriver *uart, UARTConfig *config) { if(!uart || !config) return -1; uart->config = config; if(!uart->dmarx) { uart->dmarx = new DmaEmu(); uart->dmarx->stream = new DmaStreamEmu(); } return MSG_OK; }
+inline int uartStart(UARTDriver *uart, UARTConfig *config) { if(!uart || !config) return -1; uart->config = *config; if(!uart->dmarx) { uart->dmarx = new DmaEmu(); uart->dmarx->stream = new DmaStreamEmu(); } return MSG_OK; }
 inline int uartStartReceive(UARTDriver *uart, size_t bufsize, uint8_t *buffer) {
   if (!uart) return -1;
   if (uart->fd < 0) return -1;
+
+  if (uart->rx_thread.joinable()) {
+      uart->rx_active = false;      // Signal the thread loop to exit
+      uart->rx_thread.join();       // Wait for the thread to actually finish
+  }
+
+  uart->rx_active = true;
+  uart->rx_bytes_received = 0;
+
   uart->rx_active = true;
   uart->rx_bytes_received = 0;
   uart->rx_thread = std::thread([uart, bufsize, buffer]() {
@@ -233,7 +243,7 @@ inline int uartStartReceive(UARTDriver *uart, size_t bufsize, uint8_t *buffer) {
       if (r > 0) {
         uart->rx_bytes_received = (size_t)r;
         if (uart->dmarx && uart->dmarx->stream) uart->dmarx->stream->NDTR = bufsize - r;
-        if (uart->config && uart->config->rxend_cb) uart->config->rxend_cb(uart);
+        if (uart->config.rxend_cb) uart->config.rxend_cb(uart);
       } else if (r == 0) {
         uart->rx_active = false;
       } else {
