@@ -53,7 +53,7 @@ int main() {
 	high_level_service.start();
 	ULOG_INFO("Done!");
 
-	mcu_dispatcher_driver.StartDriver("/dev/ttyM1", 115200);
+	mcu_dispatcher_driver.StartDriver("/dev/ttyS3", 115200);
 	ULOG_INFO("MCU Dispatcher started!");
 	while(1){
 		sleep(1);

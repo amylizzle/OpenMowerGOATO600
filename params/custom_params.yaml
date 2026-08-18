@@ -12,7 +12,7 @@ ll:
       volume: -1
     gps:
       baud_rate: 115200
-      port_index: 2
+      port_index: 4
       protocol: "NMEA"
       datum_height: 0
       # mower_simulation always reports a local pose in meters, not real lat/long, so
