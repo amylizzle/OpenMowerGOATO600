@@ -2,7 +2,7 @@
 // them to registered handlers. Frame format follows the ECOVACS reverse
 // engineering notes: start 0x60, ack, len=data_len+2, cmd0, cmd1, data..., crc8, 0x0A
 
-#include "dispatcher.h"
+#include "dispatcher.hpp"
 
 #include <etl/algorithm.h>
 #include "posix_ch.h"
@@ -98,6 +98,7 @@ size_t Dispatcher::ProcessBytes(const uint8_t *buffer, size_t len) {
 		}
 		if (i + 3 >= len) break; // need ack + len
 		uint8_t ack = buffer[i + 1];
+		(void) ack;
 		uint8_t length = buffer[i + 2]; // length = data_len + 2
 		size_t frame_len = static_cast<size_t>(length) + 7; // total
 		if (i + frame_len > len) break; // incomplete
@@ -154,7 +155,7 @@ void Dispatcher::threadFunc() {
 			chSysLock();
 			if (processing_done_) {
 				size_t not_received_len = uartStopReceiveI(uart_);
-				if (not_received_len != UART_ERR_NOT_ACTIVE) {
+				if (not_received_len != (size_t)UART_ERR_NOT_ACTIVE) {
 					processing_buffer_len_ = RECV_BUFFER_SIZE - not_received_len;
 				} else {
 					processing_buffer_len_ = 0;

@@ -11,11 +11,9 @@
 using namespace xbot::service;
 
 class HighLevelService : public HighLevelServiceBase {
- private:
-  THD_WORKING_AREA(wa, 1024){};
 
  public:
-  explicit HighLevelService(uint16_t service_id) : HighLevelServiceBase(service_id, wa, sizeof(wa)) {
+  explicit HighLevelService(uint16_t service_id) : HighLevelServiceBase(service_id) {
   }
 
   HighLevelStatus GetStateId() {

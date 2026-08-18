@@ -37,7 +37,6 @@ int main() {
 	//diff_drive.start();
 	//mower_service.start();
 	//imu_service.start();
-	bms_service.start();
 	power_service.start();
 	gps_service.start();
 	//input_service.start();

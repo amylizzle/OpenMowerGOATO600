@@ -17,10 +17,6 @@
 #include <termios.h>
 #include <fcntl.h>
 
-// Enable static stack constructors expected by generated service base classes
-#ifndef XBOT_ENABLE_STATIC_STACK
-#define XBOT_ENABLE_STATIC_STACK
-#endif
 
 // Priority mapping
 #ifndef NORMALPRIO

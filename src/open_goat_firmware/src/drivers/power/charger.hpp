@@ -6,7 +6,7 @@
 #define CHARGER_HPP
 
 #include <posix_ch.h>
-
+#include <string>
 #include <limits>
 
 
@@ -37,6 +37,19 @@ class ChargerDriver {
       "Comms Error",        // COMMS_ERROR
       "Unknown"             // UNKNOWN
   };
+
+  struct Data {
+    float pack_voltage_v = 0.0f;
+    float pack_current_a = 0.0f;
+    float battery_soc = 0.0f;
+    float remaining_capacity_ah = 0.0f;
+    float full_charge_capacity_ah = 0.0f;
+    uint32_t cycle_count = 0;
+    float temperature_c = 0.0f;
+    uint8_t battery_status = 0;
+    std::string extra_json = "";
+  };
+
 
   static_assert(sizeof(CHARGER_STATUS_STRINGS) / sizeof(CHARGER_STATUS_STRINGS[0]) ==
                     static_cast<size_t>(CHARGER_STATUS::UNKNOWN) + 1,

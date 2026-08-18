@@ -4,99 +4,34 @@
 
 #include "emergency_service.hpp"
 
-#include <xbot-service/Lock.hpp>
-#include <xbot-service/portable/system.hpp>
+using namespace xbot::driver::emergency;
+// How long we tolerate silence from the high level before latching TIMEOUT_HIGH_LEVEL.
+// Matches the firmware's 1 s window.
+static constexpr double HIGH_LEVEL_TIMEOUT_S = 1.0;
 
-using xbot::service::Lock;
+bool EmergencyService::OnStart() {
+
+  // if (driver_ == nullptr) {
+  //   // We don't have a driver running yet, so create one.
+  //   driver_ = EmergencyDriver();
+  // }
+
+  return true;
+}
 
 void EmergencyService::OnStop() {
-  // We won't be getting further updates from high level, so set that flag immediately.
-  UpdateEmergency(EmergencyReason::TIMEOUT_HIGH_LEVEL);
+  // We won't get further updates from the high level, so raise the timeout reason.
+  // robot_.ApplyEmergencyUpdate(EmergencyReason::TIMEOUT_HIGH_LEVEL, 0);
 }
 
-uint32_t EmergencyService::OnLoop(uint32_t now_micros, uint32_t) {
-  return etl::min(CheckInputs(now_micros), etl::min(CheckTimeouts(now_micros), CheckRequiredServices()));
+void EmergencyService::OnHighLevelEmergencyChanged(const uint16_t* /* new_value */, uint32_t /* length*/) {
+  // last_high_level_emergency_message_ = chVTGetSystemTimeX();
 }
 
-uint32_t EmergencyService::CheckInputs(uint32_t now) {
-  // constexpr uint16_t potential_reasons = EmergencyReason::STOP | EmergencyReason::LIFT |
-  //                                        EmergencyReason::LIFT_MULTIPLE | EmergencyReason::COLLISION |
-  //                                        EmergencyReason::COLLISION_MULTIPLE;
-  // auto [reasons, block_time] = input_service.GetEmergencyReasons(now);
-  // UpdateEmergency(reasons, potential_reasons);
-  // return block_time;
-  return now;
-}
+void EmergencyService::tick() {
+  uint16_t emergency_reason = 0;
 
-void EmergencyService::OnHighLevelEmergencyChanged(const uint16_t* new_value, uint32_t length) {
-  (void)length;
-  {
-    Lock lk(&mtx_);
-    last_high_level_emergency_message_ = xbot::service::system::getTimeMicros();
-  }
-  UpdateEmergency(new_value[0], new_value[1] & ~EmergencyReason::SERVICE_NOT_READY);
-}
-
-uint32_t EmergencyService::CheckTimeouts(uint32_t now) {
-  uint16_t reasons = 0;
-  uint32_t block_time = UINT32_MAX;
-  {
-    Lock lk{&mtx_};
-    if (TimeoutReached(now - last_high_level_emergency_message_, 1'000'000, block_time)) {
-      reasons |= EmergencyReason::TIMEOUT_HIGH_LEVEL;
-    }
-  }
-  constexpr uint16_t potential_reasons = EmergencyReason::TIMEOUT_HIGH_LEVEL | EmergencyReason::TIMEOUT_INPUTS;
-  UpdateEmergency(reasons, potential_reasons);
-  return block_time;
-}
-
-void EmergencyService::UpdateEmergency(uint16_t add, uint16_t clear) {
-  {
-    Lock lk{&mtx_};
-    uint16_t old_reason = reasons_;
-    reasons_ &= ~clear;
-    reasons_ |= add;
-    if (reasons_ == old_reason) {
-      return;
-    }
-  }
-  // chEvtBroadcastFlags(&mower_events, MowerEvents::EMERGENCY_CHANGED);
-  SendStatus();
-}
-
-uint16_t EmergencyService::GetEmergencyReasons() {
-  Lock lk{&mtx_};
-  return reasons_;
-}
-
-void EmergencyService::RequireService(ServiceExt* svc) {
-  Lock lk{&mtx_};
-  required_services_.push_back(svc);
-  reasons_ |= EmergencyReason::SERVICE_NOT_READY;
-}
-
-uint32_t EmergencyService::CheckRequiredServices() {
-  if (required_services_.empty()) {
-    // Nothing to do, no re-query
-    return UINT32_MAX;
-  }
-  bool all_ready = true;
-  for (auto* svc : required_services_) {
-    if (!svc->IsHealthy()) {
-      all_ready = false;
-      break;
-    }
-  }
-  // Retry in 100ms
-  constexpr uint32_t retry_interval = 100'000;
-  UpdateEmergency(all_ready ? 0 : EmergencyReason::SERVICE_NOT_READY, EmergencyReason::SERVICE_NOT_READY);
-  return all_ready ? UINT32_MAX : retry_interval;
-}
-
-void EmergencyService::SendStatus() {
-  xbot::service::Lock lk{&mtx_};
   StartTransaction();
-  SendEmergencyReason(reasons_);
+  SendEmergencyReason(emergency_reason);
   CommitTransaction();
 }

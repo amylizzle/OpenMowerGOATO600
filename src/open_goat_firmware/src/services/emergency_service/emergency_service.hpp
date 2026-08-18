@@ -4,49 +4,33 @@
 
 #ifndef EMERGENCY_SERVICE_HPP
 #define EMERGENCY_SERVICE_HPP
-
-#include <etl/string.h>
-#include <etl/vector.h>
-
+#include <drivers/emergency/emergency_driver.hpp>
 #include <EmergencyServiceBase.hpp>
-
-#include "posix_ch.h"
 
 using namespace xbot::service;
 
 class EmergencyService : public EmergencyServiceBase {
  private:
-  THD_WORKING_AREA(wa, 1024){};
-
+  xbot::driver::emergency::EmergencyDriver* driver_;
  public:
-  explicit EmergencyService(uint16_t service_id) : EmergencyServiceBase(service_id, wa, sizeof(wa)) {
+  explicit EmergencyService(uint16_t service_id) : EmergencyServiceBase(service_id) {
   }
-
-  uint16_t GetEmergencyReasons();
-  uint32_t CheckInputs(uint32_t now);
-
-  void RequireService(ServiceExt* svc);
-
-  void UpdateEmergency(uint16_t add, uint16_t clear = 0);
 
  protected:
   void OnStop() override;
-  uint32_t OnLoop(uint32_t now_micros, uint32_t last_tick_micros) override;
-  void OnHighLevelEmergencyChanged(const uint16_t* new_value, uint32_t length) override;
+  bool OnStart() override;
 
  private:
-  uint32_t CheckTimeouts(uint32_t now);
-  uint32_t CheckRequiredServices();
-  void SendStatus();
-  ServiceSchedule status_schedule_{*this, 1'000'000,
-                                   XBOT_FUNCTION_FOR_METHOD(EmergencyService, &EmergencyService::SendStatus, this)};
+  void tick();
+  ManagedSchedule tick_schedule_{scheduler_, IsRunning(), 100'000,
+                                 XBOT_FUNCTION_FOR_METHOD(EmergencyService, &EmergencyService::tick, this)};
 
-  MUTEX_DECL(mtx_);
+  // Time the last high-level emergency message was received. Used to raise
+  // TIMEOUT_HIGH_LEVEL when the high level goes quiet, and clear it once it is back.
+  uint32_t last_high_level_emergency_message_{0};
 
-  uint16_t reasons_ = EmergencyReason::TIMEOUT_INPUTS | EmergencyReason::TIMEOUT_HIGH_LEVEL;
-  uint32_t last_high_level_emergency_message_ = 0;
-
-  etl::vector<ServiceExt*, 16> required_services_{};
+ protected:
+  void OnHighLevelEmergencyChanged(const uint16_t* new_value, uint32_t length) override;
 };
 
 #endif  // EMERGENCY_SERVICE_HPP

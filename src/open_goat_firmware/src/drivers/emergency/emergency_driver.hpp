@@ -3,14 +3,16 @@
 
 #include <cstdint>
 #include <etl/delegate.h>
+#include <drivers/mcu/dispatcher.hpp>
 
 namespace xbot::driver::emergency {
 
 class EmergencyDriver {
- public:
-  using EmergencyCallback = etl::delegate<void(uint16_t reasons)>;
+ private:
+  xbot::driver::mcu::Dispatcher* mcu_driver_; 
 
-  virtual ~EmergencyDriver() = default;
+ public:
+  ~EmergencyDriver() = default;
 
   // Start driver (e.g. open UART/SPI/etc)
   virtual bool Start() = 0;
@@ -20,9 +22,6 @@ class EmergencyDriver {
 
   // Returns true if hardware is present
   virtual bool IsPresent() const = 0;
-
-  // Set callback invoked when driver detects an emergency reason change
-  virtual void SetCallback(const EmergencyCallback& cb) = 0;
 
   // Manually trigger/add or clear emergency bits via the driver
   virtual void UpdateEmergency(uint16_t add, uint16_t clear) = 0;

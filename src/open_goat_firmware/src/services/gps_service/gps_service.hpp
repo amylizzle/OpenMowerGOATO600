@@ -10,11 +10,8 @@
 using namespace xbot::driver::gps;
 
 class GpsService : public GpsServiceBase {
- private:
-  THD_WORKING_AREA(wa, 1536){};
-
- public:
-  explicit GpsService(const uint16_t service_id) : GpsServiceBase(service_id, wa, sizeof(wa)) {
+public:
+  explicit GpsService(const uint16_t service_id) : GpsServiceBase(service_id) {
   }
 
   const GpsDriver::GpsState& GetGpsState() const {

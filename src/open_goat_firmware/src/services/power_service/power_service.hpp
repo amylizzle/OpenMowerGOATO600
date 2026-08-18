@@ -5,161 +5,30 @@
 #ifndef POWER_SERVICE_HPP
 #define POWER_SERVICE_HPP
 
-#include <etl/atomic.h>
-#include <ulog.h>
-
 #include <PowerServiceBase.hpp>
-#include <drivers/power/charger.hpp>
-#include <limits>
-#include <xbot-service/Lock.hpp>
-
-#include "posix_ch.h"
 
 using namespace xbot::service;
 
-using CHARGER_STATUS = ChargerDriver::CHARGER_STATUS;
-
 class PowerService : public PowerServiceBase {
  public:
-  explicit PowerService(uint16_t service_id) : PowerServiceBase(service_id, wa, sizeof(wa)) {
+  explicit PowerService(uint16_t service_id) : PowerServiceBase(service_id) {
   }
-
-  void SetDriver(ChargerDriver* charger_driver);
-
-  float GetDefaultBatteryEmptyVoltage() {
-    return 0.0f;
-  } 
-
-  float GetDefaultBatteryFullVoltage() {
-    return 20.0f;
-  }
-
-  float GetDefaultPreChargeCurrent() { // probably don't need this, I thing GOAT's charging is handled in hardware
-    return 1.0f; 
-  }
-
-  float GetDefaultChargeCurrent() { // probably don't need this, I thing GOAT's charging is handled in hardware
-    return 1.0f; 
-  }
-
-  float GetMaxChargeCurrent() { // probably don't need this, I thing GOAT's charging is handled in hardware
-    return 1.0f; 
-  }
-
-  float GetDefaultChargeVoltage() { // probably don't need this, I thing GOAT's charging is handled in hardware
-    return 1.0f; 
-  }
-
-  ChargerDriver::ReChargeVoltage GetDefaultReChargeVoltage() { // probably don't need this, I thing GOAT's charging is handled in hardware
-    return ChargerDriver::ReChargeVoltage::PERCENT_93_0; 
-  }
-
-  float GetDefaultTerminationCurrent() { // probably don't need this, I thing GOAT's charging is handled in hardware
-    return 1.0f; 
-  }
-
-  [[nodiscard]] float GetChargeCurrent() {
-    xbot::service::Lock lk{&mtx_};
-    return charge_current_;
-  }
-
-  [[nodiscard]] float GetAdapterVolts() {
-    xbot::service::Lock lk{&mtx_};
-    return adapter_volts_;
-  }
-
-  [[nodiscard]] float GetBatteryVolts() {
-    xbot::service::Lock lk{&mtx_};
-    return battery_volts_;
-  }
-
-  [[nodiscard]] float GetBatteryPercent() {
-    xbot::service::Lock lk{&mtx_};
-    return battery_percent_;
-  }
-
-  [[nodiscard]] CHARGER_STATUS GetChargerStatus() {
-    xbot::service::Lock lk{&mtx_};
-    return charger_status_;
-  }
-
-  [[nodiscard]] float GetAdapterCurrent() {
-    xbot::service::Lock lk{&mtx_};
-    return adapter_current_;
-  }
-
-  [[nodiscard]] float GetDCDCCurrent() {
-    xbot::service::Lock lk{&mtx_};
-    return dcdc_current_;
-  }
-
-  [[nodiscard]] float GetAdcAdapterVolts() {
-    xbot::service::Lock lk{&mtx_};
-    return adapter_volts_adc_;
-  }
-
-  [[nodiscard]] float GetAdcBatteryVolts() {
-    xbot::service::Lock lk{&mtx_};
-    return battery_volts_adc_;
-  }
-
-  float GetConfiguredChargeCurrent() const {
-    return ChargeCurrent.valid ? ChargeCurrent.value : std::numeric_limits<float>::quiet_NaN();
-  }
-
-  float GetConfiguredSystemCurrent() const {
-    return SystemCurrent.valid ? SystemCurrent.value : std::numeric_limits<float>::quiet_NaN();
-  }
-
-  bool IsHealthy() override {
-    return IsRunning() && charger_configured_.load();
-  }
-
-  // Logs the given message at INFO level, but only if the "Log Debug" register is valid and set to true.
-  // If the register is invalid or false, this does nothing.
-  template <typename... Args>
-  void LogDebugMessage(const char* fmt, Args... args) {
-    if (!LogDebug.valid || !LogDebug.value) {
-      return;
-    }
-    ULOG_ARG_INFO(&service_id_, fmt, args...);
-  }
-
- protected:
-  bool OnStart() override;
 
  private:
-  MUTEX_DECL(mtx_);
+  static constexpr auto CHARGE_STATUS_ERROR = "Error";
+  static constexpr auto CHARGE_STATUS_FAULT = "Error (Fault)";
+  static constexpr auto CHARGE_STATUS_CHARGER_NOT_FOUND = "Charger Comms Error";
+  static constexpr auto CHARGE_STATUS_NOT_CHARGING = "Not Charging";
+  static constexpr auto CHARGE_STATUS_PRE_CHARGE = "Pre Charge";
+  static constexpr auto CHARGE_STATUS_TRICKLE = "Trickle Charge";
+  static constexpr auto CHARGE_STATUS_CC = "Fast Charge (CC)";
+  static constexpr auto CHARGE_STATUS_CV = "Taper Charge (CV)";
+  static constexpr auto CHARGE_STATUS_TOP_OFF = "Top Off";
+  static constexpr auto CHARGE_STATUS_DONE = "Done";
 
-  static constexpr auto CHARGE_STATUS_NOT_FOUND_STR = "Charger Not Found";
-
-  void service_tick_();
-  void driver_tick_();
-  void update_charger_();
-  void read_adc_();
-
-  ServiceSchedule tick_schedule_{*this, 1'000'000,
-                                 XBOT_FUNCTION_FOR_METHOD(PowerService, &PowerService::service_tick_, this)};
-  Schedule driver_schedule_{scheduler_, true, 1'000'000,
-                            XBOT_FUNCTION_FOR_METHOD(PowerService, &PowerService::driver_tick_, this)};
-
-  etl::atomic<bool> charger_configured_{false};
-  float charge_current_ = 0;
-  float adapter_volts_ = 0;
-  float battery_volts_ = 0;
-  float battery_percent_ = 0;
-
-  // Most designs don't have these
-  float adapter_volts_adc_ = std::numeric_limits<float>::quiet_NaN();
-  float battery_volts_adc_ = std::numeric_limits<float>::quiet_NaN();
-  float adapter_current_ = std::numeric_limits<float>::quiet_NaN();
-  float dcdc_current_ = std::numeric_limits<float>::quiet_NaN();
-
-  int critical_count_ = 0;
-  CHARGER_STATUS charger_status_ = CHARGER_STATUS::COMMS_ERROR;
-  ChargerDriver* charger_ = nullptr;
-
-  THD_WORKING_AREA(wa, 1500){};
+  void tick();
+  ManagedSchedule tick_schedule_{scheduler_, IsRunning(), 200'000,
+                                 XBOT_FUNCTION_FOR_METHOD(PowerService, &PowerService::tick, this)};
 
  protected:
   void OnChargingAllowedChanged(const uint8_t& new_value) override;
