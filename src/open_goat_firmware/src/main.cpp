@@ -33,13 +33,14 @@ int main() {
 	ULOG_SUBSCRIBE(console_logger, ULOG_DEBUG_LEVEL);
 	#endif
 
+	// mcu_dispatcher_driver.StartDriver(CreateUARTDriver("/dev/ttyS3", 115200),115200);
+
 	emergency_service.start();
-	//diff_drive.start();
-	//mower_service.start();
-	//imu_service.start();
+	diff_drive.start();
+	mower_service.start();
+	imu_service.start();
 	power_service.start();
 	gps_service.start();
-	//input_service.start();
 	high_level_service.start();
 
 	xbot::service::Io::start();

@@ -104,9 +104,8 @@ class MotorNode:
     def write_ma_speed(self, brand, speed):
         """Build a single 4-byte SET-SPEED wire control (type 0x0A)."""
         import struct as _s
-        from motor_control import brand_encode  # ROL brand encoding
         dir_ = 0 if speed >= 0 else 1
-        enc = brand_encode(brand, abs(speed)) & 0xFFFF
+        enc = self.brand_encode(brand, abs(speed)) & 0xFFFF
         return bytes([0x0A, dir_]) + _s.pack("<H", enc)
 
     def write_ma_enable(self, motor_type):
@@ -117,6 +116,31 @@ class MotorNode:
         """Build a single 4-byte STOP wire control (type 0x02)."""
         return bytes([0x02, 0x00, 0x00, 0x00])
 
+    def brand_encode(self, brand: str, speed: int) -> int:
+        def rol16(x: int, n: int) -> int:
+            x &= 0xFFFF
+            return ((x << n) | (x >> (16 - n))) & 0xFFFF
+
+        a = abs(speed) & 0xFFFF
+        if brand == "dechang":
+            return rol16(a, 1) & 0xFFFE
+        if brand == "lianyi":
+            return rol16(a, 2) & 0xFFFC
+        return a  # kaihang / default
+
+    def brand_decode(self, brand: str, raw: int) -> int:
+        raw &= 0xFFFF
+        if raw & 0x8000:
+            raw -= 0x10000  # signed int16
+        if brand == "dechang":
+            v = ((raw * 2 | (raw >> 31)) & 1) + raw
+            v &= 0xFFFFFFFF
+            v = ((v << 31) | (v >> 1)) & 0xFFFFFFFF
+            return (v & 0xFFFF)
+        if brand == "lianyi":
+            v = raw + (3 if raw < 0 else 0)
+            return (v >> 2) & 0xFFFF
+        return raw & 0xFFFF  # kaihang
 
 class OnOffInfo:
     """OnOffInfo -- id BC (callback 0x9545a8). Payload region starts at data+6."""

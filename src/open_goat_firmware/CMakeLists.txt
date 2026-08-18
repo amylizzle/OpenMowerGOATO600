@@ -7,14 +7,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
 
-# Set custom port path and extended service classes (only if present)
-if(EXISTS ${CMAKE_SOURCE_DIR}/portable/xbot)
-        set(XBOT_CUSTOM_PORT_PATH ${CMAKE_SOURCE_DIR}/portable/xbot)
-        message(STATUS "Using custom XBOT port path: ${XBOT_CUSTOM_PORT_PATH}")
-endif()
-# set(XBOT_SERVICE_EXT "services/service_ext.hpp")
-
-
 # Include git version script
 include("cmake/GetGitVersion.cmake")
 

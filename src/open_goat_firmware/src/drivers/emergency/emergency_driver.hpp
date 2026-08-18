@@ -11,20 +11,26 @@ class EmergencyDriver {
  private:
   xbot::driver::mcu::Dispatcher* mcu_driver_; 
 
+  uint8_t bump = 0;
+  uint8_t fall = 0;
+  uint8_t chargeState = 0;
+  uint8_t acczero = 0;
+  uint8_t rain = 0;
+  uint8_t grass = 0;
+  uint8_t roll = 0;
+  uint8_t Stop = 0;
+  uint8_t fan = 0;
+  uint8_t ack = 0;
+
  public:
+  EmergencyDriver(xbot::driver::mcu::Dispatcher* dispatcher);
   ~EmergencyDriver() = default;
 
-  // Start driver (e.g. open UART/SPI/etc)
-  virtual bool Start() = 0;
-
-  // Stop driver
-  virtual void Stop() = 0;
-
-  // Returns true if hardware is present
-  virtual bool IsPresent() const = 0;
+  // handle BC messages
+  void OnBCMessage(const uint8_t *payload, size_t length);
 
   // Manually trigger/add or clear emergency bits via the driver
-  virtual void UpdateEmergency(uint16_t add, uint16_t clear) = 0;
+  void UpdateEmergency(uint16_t add, uint16_t clear);
 };
 
 } // namespace xbot::driver::emergency

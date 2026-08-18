@@ -2,6 +2,8 @@
 #ifndef GLOBALS_HPP
 #define GLOBALS_HPP
 
+#include "drivers/mcu/dispatcher.hpp"
+
 #include "services/diff_drive_service/diff_drive_service.hpp"
 #include "services/emergency_service/emergency_service.hpp"
 #include "services/gps_service/gps_service.hpp"
@@ -9,6 +11,8 @@
 #include "services/imu_service/imu_service.hpp"
 #include "services/mower_service/mower_service.hpp"
 #include "services/power_service/power_service.hpp"
+
+extern xbot::driver::mcu::Dispatcher mcu_dispatcher_driver;
 
 extern EmergencyService emergency_service;
 extern DiffDriveService diff_drive;
