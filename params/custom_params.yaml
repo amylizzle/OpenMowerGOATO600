@@ -11,7 +11,8 @@ ll:
       language: "en"
       volume: -1
     gps:
-      baud_rate: 921600
+      baud_rate: 115200
+      port_index: 2
       protocol: "NMEA"
       datum_height: 0
       # mower_simulation always reports a local pose in meters, not real lat/long, so
@@ -21,7 +22,6 @@ ll:
       # Set to coordinates near your docking station, this will be your map origin
       datum_lat: 53.457452
       datum_long: 10.014737
-      port_index: 8
     imu:
       # TODO: Set according to your mainboard orientation. This value is correct for "flat mainboard"
       axis_config: "+X-Y-Z"

@@ -30,6 +30,7 @@ class EmergencyService : public EmergencyServiceBase {
   uint32_t last_high_level_emergency_message_{0};
 
  protected:
+  void OnDriverNotify(const uint16_t emergencyState);
   void OnHighLevelEmergencyChanged(const uint16_t* new_value, uint32_t length) override;
 };
 

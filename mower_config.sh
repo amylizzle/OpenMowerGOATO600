@@ -20,7 +20,7 @@
 # 0_9_X_WT901_INSTEAD_OF_SOUND: Use this if you have soldered the WT901 in the sound module's slot and have a 0.9.x mainboard.
 # 0_9_X_MPU9250: Use this if you have an MPU9250 and have a 0.9.x mainboard (be aware that there are many fake chips on the market. So probably not your hardware version).
 export OM_HARDWARE_VERSION="GOAT0600"
-export HARDWARE_PLATFORM="CUSTOM"
+export HARDWARE_PLATFORM=2
 export MOWER="CUSTOM"
 export PARAMS_PATH="/workspace/params"
 # Uncomment and set to coordinates near your future docking station, this will be your map origin.

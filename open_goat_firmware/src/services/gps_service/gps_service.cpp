@@ -35,10 +35,11 @@ bool GpsService::LoadAndStartGpsDriver(ProtocolType protocol_type, const char *d
 
 bool GpsService::OnStart() {
   using namespace xbot::driver::gps;
-
+  ULOG_WARNING("GPS SERVICE STARTED!");
   if (gps_driver_ == nullptr) {
     // We don't have a gps driver running yet, so create one.
-    return LoadAndStartGpsDriver(Protocol.value, ("/dev/ttyS" + std::to_string(Uart.value)).c_str(), Baudrate.value);
+    ULOG_WARNING(("Starting GPS driver on /dev/ttyM" + std::to_string(Uart.value)).c_str());
+    return LoadAndStartGpsDriver(Protocol.value, ("/dev/ttyM" + std::to_string(Uart.value)).c_str(), Baudrate.value);
   }
 
   return true;

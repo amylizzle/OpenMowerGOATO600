@@ -227,34 +227,28 @@ inline int uartStartReceive(UARTDriver *uart, size_t bufsize, uint8_t *buffer) {
   if (!uart) return -1;
   if (uart->fd < 0) return -1;
 
-  if (uart->rx_thread.joinable()) {
-      uart->rx_active = false;      // Signal the thread loop to exit
-      uart->rx_thread.join();       // Wait for the thread to actually finish
+  if(uart->rx_active) return -1;
+  
+  uart->rx_active = true;
+  uart->rx_bytes_received = 0;
+
+  while (uart->rx_active) {
+    ssize_t r = ::read(uart->fd, buffer, bufsize);
+    if (r > 0) {
+      uart->rx_bytes_received = (size_t)r;
+      if (uart->dmarx && uart->dmarx->stream) uart->dmarx->stream->NDTR = bufsize - r;
+      if (uart->config.rxend_cb) uart->config.rxend_cb(uart);
+    } else if (r == 0) {
+      uart->rx_active = false;
+    } else {
+      if (errno == EAGAIN || errno == EWOULDBLOCK) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        continue;
+      }
+      uart->rx_active = false;
+    }
   }
 
-  uart->rx_active = true;
-  uart->rx_bytes_received = 0;
-
-  uart->rx_active = true;
-  uart->rx_bytes_received = 0;
-  uart->rx_thread = std::thread([uart, bufsize, buffer]() {
-    while (uart->rx_active) {
-      ssize_t r = ::read(uart->fd, buffer, bufsize);
-      if (r > 0) {
-        uart->rx_bytes_received = (size_t)r;
-        if (uart->dmarx && uart->dmarx->stream) uart->dmarx->stream->NDTR = bufsize - r;
-        if (uart->config.rxend_cb) uart->config.rxend_cb(uart);
-      } else if (r == 0) {
-        uart->rx_active = false;
-      } else {
-        if (errno == EAGAIN || errno == EWOULDBLOCK) {
-          std::this_thread::sleep_for(std::chrono::milliseconds(5));
-          continue;
-        }
-        uart->rx_active = false;
-      }
-    }
-  });
   return 0;
 }
 inline int uartStartReceiveI(UARTDriver *uart, size_t bufsize, uint8_t *buffer) { return uartStartReceive(uart, bufsize, buffer); }

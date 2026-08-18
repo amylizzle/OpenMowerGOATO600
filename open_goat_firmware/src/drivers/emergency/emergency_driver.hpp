@@ -23,11 +23,23 @@ class EmergencyDriver {
   uint8_t ack = 0;
 
  public:
+  using NotifyHandler = etl::delegate<void(const uint16_t emergencyState)>;
+  etl::delegate<void(const uint16_t)> registered_handler_{};
+
   EmergencyDriver(xbot::driver::mcu::Dispatcher* dispatcher);
   ~EmergencyDriver() = default;
 
   // handle BC messages
   void OnBCMessage(const uint8_t *payload, size_t length);
+
+  // register a callback to be called when something changes
+  // register a callback to be called when something changes
+  // Accept the delegate by const-ref so callers can pass temporaries
+  // and the driver will make its own copy for storage.
+  void RegisterNotifyCallback(const NotifyHandler& handler);
+
+  // calculate and return the emergency state
+  uint16_t GetEmergencyState();
 
   // Manually trigger/add or clear emergency bits via the driver
   void UpdateEmergency(uint16_t add, uint16_t clear);

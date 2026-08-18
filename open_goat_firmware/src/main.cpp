@@ -28,29 +28,40 @@ void console_logger(ulog_level_t severity, char* msg, const void* arg) {
 
 int main() {
 	xbot::service::system::initSystem();
+	xbot::service::Io::start("0.0.0.0");
+
 	xbot::service::startRemoteLogging();
 	#ifdef ULOG_ENABLED
 	ULOG_SUBSCRIBE(console_logger, ULOG_DEBUG_LEVEL);
 	#endif
 
-	UARTDriver* mcu_uart = CreateUARTDriver("/dev/ttyS3", 115200);
+	UARTDriver* mcu_uart = CreateUARTDriver("/dev/ttyM1", 115200);
 	if (mcu_uart == nullptr){
-		ULOG_ERROR("Failed to get /dev/ttyS3 for MCU!");
+		ULOG_ERROR("Failed to get /dev/ttyM1 for MCU!");
 		exit(1);
 	}
-	mcu_dispatcher_driver.StartDriver(mcu_uart);
-
+	
+	ULOG_INFO("Starting services...");
+	ULOG_INFO("Emergency...");
 	emergency_service.start();
+	ULOG_INFO("Diff drive...");
 	diff_drive.start();
+	ULOG_INFO("Mower...");
 	mower_service.start();
+	ULOG_INFO("IMU...");
 	imu_service.start();
+	ULOG_INFO("Power...");
 	power_service.start();
+	ULOG_INFO("GPS...");
 	gps_service.start();
+	ULOG_INFO("High level...");
 	high_level_service.start();
+	ULOG_INFO("Done!");
 
-	xbot::service::Io::start();
-
-	while (1) {
+	mcu_dispatcher_driver.StartDriver(mcu_uart);
+	ULOG_INFO("MCU Dispatcher started!");
+	while(1){
 		sleep(1);
 	}
+	ULOG_ERROR("Shutdown!!!!");
 }
