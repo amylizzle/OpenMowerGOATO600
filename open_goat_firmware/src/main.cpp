@@ -35,11 +35,6 @@ int main() {
 	ULOG_SUBSCRIBE(console_logger, ULOG_DEBUG_LEVEL);
 	#endif
 
-	UARTDriver* mcu_uart = CreateUARTDriver("/dev/ttyM1", 115200);
-	if (mcu_uart == nullptr){
-		ULOG_ERROR("Failed to get /dev/ttyM1 for MCU!");
-		exit(1);
-	}
 	
 	ULOG_INFO("Starting services...");
 	ULOG_INFO("Emergency...");
@@ -58,7 +53,7 @@ int main() {
 	high_level_service.start();
 	ULOG_INFO("Done!");
 
-	mcu_dispatcher_driver.StartDriver(mcu_uart);
+	mcu_dispatcher_driver.StartDriver("/dev/ttyM1", 115200);
 	ULOG_INFO("MCU Dispatcher started!");
 	while(1){
 		sleep(1);

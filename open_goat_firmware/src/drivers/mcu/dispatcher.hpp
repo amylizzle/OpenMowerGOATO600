@@ -6,6 +6,7 @@
 
 #include <etl/delegate.h>
 #include "posix_ch.h"
+#include "MCU_parser.cpp"
 
 namespace xbot::driver::mcu {
 
@@ -17,37 +18,26 @@ class Dispatcher {
 	~Dispatcher() = default;
 
 	// Start the dispatcher reading from the provided UART at the given baudrate.
-	bool StartDriver(UARTDriver *uart);
+	bool StartDriver(std::string path, int baud);
 
 	// Register a handler for a two-character command id (cmd0, cmd1).
 	void RegisterHandler(uint8_t cmd0, uint8_t cmd1, const MessageHandler &handler);
 
+
  protected:
-	// Called by the processing thread to handle received bytes
-	size_t ProcessBytes(const uint8_t *buffer, size_t len);
-
- private:
-
-	static constexpr size_t RECV_BUFFER_SIZE = 512;
-	uint8_t recv_buffer1_[RECV_BUFFER_SIZE]{};
-	uint8_t recv_buffer2_[RECV_BUFFER_SIZE]{};
-	uint8_t *volatile processing_buffer_ = recv_buffer2_;
-	volatile size_t processing_buffer_len_ = 0;
-
-	UARTDriver *uart_{};
-	UARTConfig uart_config_{};
-
-	thread_t *processing_thread_ = nullptr;
-	volatile bool processing_done_ = true;
+	MCULink* mlink{};
 	bool stopped_ = true;
-
-	void threadFunc();
-	static void threadHelper(void *instance);
-
+	thread_t *processing_thread_ = nullptr;
 	// Handler registry keyed by combined cmd0/cmd1
 	etl::delegate<void(const uint8_t *, size_t)> default_handler_{};
 	// Use a simple fixed map keyed by uint16_t
 	std::vector<std::pair<uint16_t, MessageHandler>> handlers_{};
+
+	// Thread entry for reading frames from the MCU link
+	static void FrameReaderLoop(Dispatcher* instance);
+
+	// Adapter matching createThread(void(*)(void*), void*)
+	static void ThreadEntry(void* arg);
 };
 
 }  // namespace xbot::driver::mcu
