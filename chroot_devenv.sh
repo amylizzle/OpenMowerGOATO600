@@ -237,6 +237,14 @@ build() {
         setup
     }
 
+    info "building goat firmware..."
+    run_chroot "
+        cd ${WORKSPACE_IN_CHROOT}
+        cmake open_goat_firmware/ -B build_fw/
+        cd build_fw/
+        make
+    "
+
     info "running catkin_make inside the chroot"
     # catkin_init_workspace only creates src/CMakeLists.txt if it is absent
     # (it fails when the symlink already exists from a prior build).
@@ -316,7 +324,7 @@ launchom() {
         service mosquitto start
         roslaunch open_mower open_mower.launch &
         roslaunch_pid=\$!
-        rosrun ecovacs_bridge bridge_node.py
+        build_fw/open_goat.elf
         kill \$roslaunch_pid 2>/dev/null
         service nginx stop
         service mosquitto stop

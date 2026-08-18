@@ -4,7 +4,7 @@ ecovacs/**/*.action
 
 devel/
 build/
-build_open_goat/
+build_fw/
 
 #https://github.com/github/gitignore my beloved <3
 
