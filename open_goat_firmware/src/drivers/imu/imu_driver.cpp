@@ -33,7 +33,7 @@ void ImuDriver::ReadAxes(double* axes, size_t length){
         if (length >= 1) {
             size_t i = 0;
             for (; i < length && i < 3; ++i) axes[i] = static_cast<double>(data_.accel[i]) * accel_scale_factor;
-            for (size_t g = 0; i < length && g < 3; ++g, ++i) axes[i] = static_cast<double>(data_.gyro[g]) * gyro_scale_factor;
+            for (size_t g = 0; i < length && g < 3; ++g, ++i) axes[i] = data_.gyro[g] * gyro_scale_factor;
             for (size_t m = 0; i < length && m < 3; ++m, ++i) axes[i] = static_cast<double>(data_.mag[m]);
             // fill remaining with zeros
             for (; i < length; ++i) axes[i] = 0.0;
@@ -55,31 +55,74 @@ static inline uint16_t read_u16_le(const uint8_t* b, size_t idx) {
     return static_cast<uint16_t>(static_cast<uint16_t>(b[idx]) | (static_cast<uint16_t>(b[idx+1]) << 8));
 }
 
+
+
+struct Vec3 { float x, y, z; };
+struct Quat { float w, x, y, z; };
+
+// Converts 2 consecutive quaternions into angular velocity (rad/s)
+Vec3 quatToAngularVel(Quat q1, Quat q2, float dt) {
+    // Relative quaternion: dq = inv(q1) * q2
+    Quat dq = {
+        q1.w*q2.w + q1.x*q2.x + q1.y*q2.y + q1.z*q2.z,
+        q1.w*q2.x - q1.x*q2.w - q1.y*q2.z + q1.z*q2.y,
+        q1.w*q2.y + q1.x*q2.z - q1.y*q2.w - q1.z*q2.x,
+        q1.w*q2.z - q1.x*q2.y + q1.y*q2.x - q1.z*q2.w
+    };
+    if (dq.w < 0.0f) { dq.x = -dq.x; dq.y = -dq.y; dq.z = -dq.z; } // Shortest path
+    return { (2.0f * dq.x) / dt, (2.0f * dq.y) / dt, (2.0f * dq.z) / dt };
+}
+
+void normaliseQuat(Quat& q) {
+    float invLen = 1.0f / std::sqrt(q.w*q.w + q.x*q.x + q.y*q.y + q.z*q.z);
+    q.w *= invLen; q.x *= invLen; q.y *= invLen; q.z *= invLen;
+}
+
 // Handler for GD -> imu/ImuSensor
 void ImuDriver::OnGD(const uint8_t *payload, size_t length) {
     if (!payload || length == 0) return;
     bool valid = (payload[0] == 0);
     data_.valid = valid;
     if (!valid) {
-        data_.gyro[0] = data_.gyro[1] = data_.gyro[2] = data_.gyro[3] = 0;
+        data_.gyro[0] = data_.gyro[1] = data_.gyro[2] = 0;
         data_.accel[0] = data_.accel[1] = data_.accel[2] = 0;
         data_.mag[0] = data_.mag[1] = data_.mag[2] = 0;
         data_.ts = 0;
         return;
     }
-    if (length > 1) {
-        if (length >= 3) data_.gyro[0] = read_i16_le(payload, 1);
-        if (length >= 5) data_.gyro[1] = read_i16_le(payload, 3);
-        if (length >= 7) data_.gyro[2] = read_i16_le(payload, 5);
-        if (length >= 9) data_.gyro[3] = read_i16_le(payload, 7);
+    if (length >= (0x15 + 4)) {
+        Quat q1 = {static_cast<float>(data_.gyro_quat[0]),
+                   static_cast<float>(data_.gyro_quat[1]), 
+                   static_cast<float>(data_.gyro_quat[2]), 
+                   static_cast<float>(data_.gyro_quat[3])};
+        data_.gyro_quat[0] = read_i16_le(payload, 1);
+        data_.gyro_quat[1] = read_i16_le(payload, 3);
+        data_.gyro_quat[2] = read_i16_le(payload, 5);
+        data_.gyro_quat[3] = read_i16_le(payload, 7);
+        Quat q2 = {static_cast<float>(data_.gyro_quat[0]),
+                   static_cast<float>(data_.gyro_quat[1]), 
+                   static_cast<float>(data_.gyro_quat[2]), 
+                   static_cast<float>(data_.gyro_quat[3])};      
+        
+        data_.accel[0] = read_i16_le(payload, 9);
+        data_.accel[1] = read_i16_le(payload, 11);
+        data_.accel[2] = read_i16_le(payload, 13);
+        data_.mag[0] = read_i16_le(payload, 15);
+        data_.mag[1] = read_i16_le(payload, 17);
+        data_.mag[2] = read_i16_le(payload, 19);
+        uint32_t dt = data_.ts;
+        data_.ts = read_u32_le(payload, 0x15);
+        if(dt > 0){
+            dt = data_.ts - dt;
+            //normalise the quats
+            normaliseQuat(q1);
+            normaliseQuat(q2);
+            Vec3 omega = quatToAngularVel(q1,q2,dt/1000.0f);
+            data_.gyro[0] = omega.x;
+            data_.gyro[1] = omega.y;
+            data_.gyro[2] = omega.z;
+        }
     }
-    if (length >= 11) data_.accel[0] = read_i16_le(payload, 9);
-    if (length >= 13) data_.accel[1] = read_i16_le(payload, 11);
-    if (length >= 15) data_.accel[2] = read_i16_le(payload, 13);
-    if (length >= 17) data_.mag[0] = read_i16_le(payload, 15);
-    if (length >= 19) data_.mag[1] = read_i16_le(payload, 17);
-    if (length >= 21) data_.mag[2] = read_i16_le(payload, 19);
-    if (length > 0x15 && (length >= 0x15 + 4)) data_.ts = read_u32_le(payload, 0x15);
 }
 
 // Handler for GF -> imu/GyroBias

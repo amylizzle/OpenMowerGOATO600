@@ -13,7 +13,8 @@ class ImuDriver {
   xbot::driver::mcu::Dispatcher* mcu_driver_; 
   mutable struct Data {
     bool valid = false;
-    int16_t gyro[4] = {0, 0, 0, 0};
+    int16_t gyro_quat[4] = {0, 0, 0, 0};
+    float gyro[3] = {0, 0, 0};
     int16_t accel[3] = {0, 0, 0};
     int16_t mag[3] = {0, 0, 0};
     uint32_t ts = 0;
@@ -45,7 +46,7 @@ class ImuDriver {
 
  private:
   const double accel_scale_factor = 0.01; //cm/s^2 -> m/s^2
-  const double gyro_scale_factor = 0.01745329; // degrees -> radians
+  const double gyro_scale_factor = 1.0; // already in radians/s because we did math
   void OnGD(const uint8_t *payload, size_t length);
   void OnGF(const uint8_t *payload, size_t length);
   void OnGH(const uint8_t *payload, size_t length);
