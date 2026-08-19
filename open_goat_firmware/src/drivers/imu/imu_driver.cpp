@@ -5,9 +5,20 @@
 namespace xbot::driver::imu {
 
 ImuDriver::ImuDriver(xbot::driver::mcu::Dispatcher* dispatcher) : mcu_driver_(dispatcher)  { 
-    // dispatcher->RegisterHandler(
-    //       static_cast<uint8_t>('G'), static_cast<uint8_t>('D'), // GPIO sensor status message
-    //       etl::delegate<void(const uint8_t *, size_t)>::create<EmergencyDriver, &EmergencyDriver::OnGDMessage>(*this));
+        if (dispatcher) {
+            dispatcher->RegisterHandler(static_cast<uint8_t>('G'), static_cast<uint8_t>('D'),
+                                                                    etl::delegate<void(const uint8_t *, size_t)>::create<ImuDriver, &ImuDriver::OnGD>(*this));
+            dispatcher->RegisterHandler(static_cast<uint8_t>('G'), static_cast<uint8_t>('F'),
+                                                                    etl::delegate<void(const uint8_t *, size_t)>::create<ImuDriver, &ImuDriver::OnGF>(*this));
+            dispatcher->RegisterHandler(static_cast<uint8_t>('G'), static_cast<uint8_t>('H'),
+                                                                    etl::delegate<void(const uint8_t *, size_t)>::create<ImuDriver, &ImuDriver::OnGH>(*this));
+            dispatcher->RegisterHandler(static_cast<uint8_t>('G'), static_cast<uint8_t>('I'),
+                                                                    etl::delegate<void(const uint8_t *, size_t)>::create<ImuDriver, &ImuDriver::OnGI>(*this));
+            dispatcher->RegisterHandler(static_cast<uint8_t>('G'), static_cast<uint8_t>('S'),
+                                                                    etl::delegate<void(const uint8_t *, size_t)>::create<ImuDriver, &ImuDriver::OnGS>(*this));
+            dispatcher->RegisterHandler(static_cast<uint8_t>('O'), static_cast<uint8_t>('D'),
+                                                                    etl::delegate<void(const uint8_t *, size_t)>::create<ImuDriver, &ImuDriver::OnOD>(*this));
+        }
 }
 
 void ImuDriver::Start(){
@@ -16,55 +27,114 @@ void ImuDriver::Start(){
 }
 
 void ImuDriver::ReadAxes(double* axes, size_t length){
-    axes[length-1] = 1.0;
+        // fill axes buffer with latest accel, gyro, mag values where available
+        if (!axes || length == 0) return;
+        // order: accel[0..2], gyro[0..w], mag[0..2]
+        if (length >= 1) {
+            size_t i = 0;
+            for (; i < length && i < 3; ++i) axes[i] = static_cast<double>(data_.accel[i]) * accel_scale_factor;
+            for (size_t g = 0; i < length && g < 3; ++g, ++i) axes[i] = static_cast<double>(data_.gyro[g]) * gyro_scale_factor;
+            for (size_t m = 0; i < length && m < 3; ++m, ++i) axes[i] = static_cast<double>(data_.mag[m]);
+            // fill remaining with zeros
+            for (; i < length; ++i) axes[i] = 0.0;
+        }
 }
-};
-//   def parse_GD(self, data, ack):
-//         """GD -> imu/ImuSensor. data[0]=validity (must 0); i16 @1,3,5,7 (scaled
-//         by gyro scale), i16 @9,0xb,0xd (3 floats), i16 @0xf,0x11,0x13 (3 floats),
-//         i32 @0x15 timestamp/counter."""
-//         r = {"ack": ack, "valid": data[0] if data else 1}
-//         if not r["valid"]:
-//             r["gyro"] = [_s16(data, i) for i in (1, 3, 5, 7)]
-//             r["accel"] = [_s16(data, i) for i in (9, 0xB, 0xD)]
-//             r["mag"]   = [_s16(data, i) for i in (0xF, 0x11, 0x13)]
-//             if len(data) > 0x15:
-//                 r["ts"] = _s32(data, 0x15)
-//         return r
 
-//     def parse_GF(self, data, ack):
-//         """GF -> imu/GyroBias: validity data[0] must 0; u16 @1,3,5,7 (3 floats)
-//         and @9,0xb (2 floats)."""
-//         r = {"ack": ack, "valid": data[0] if data else 1}
-//         if not r["valid"]:
-//             r["bias"] = [_u16(data, i) for i in (1, 3, 5, 7, 9, 0xB)]
-//         return r
+ImuDriver::Data ImuDriver::GetData() { return data_; }
 
-//     def parse_GH(self, data, ack):
-//         """GH -> imu/geomag: validity data[0] must 0; u16@1,@3, u8@5."""
-//         r = {"ack": ack, "valid": data[0] if data else 1}
-//         if not r["valid"]:
-//             r["geomag"] = [_u16(data, 1), _u16(data, 3), data[5]]
-//         return r
+static inline int16_t read_i16_le(const uint8_t* b, size_t idx) {
+    return static_cast<int16_t>(static_cast<uint16_t>(b[idx]) | (static_cast<uint16_t>(b[idx+1]) << 8));
+}
 
-//     def parse_GI(self, data, ack):
-//         """GI -> imu/Geomag: no validity; u16 @0,2,4."""
-//         return {"ack": ack, "geomag": [_u16(data, i) for i in (0, 2, 4)]}
+static inline uint32_t read_u32_le(const uint8_t* b, size_t idx) {
+    return static_cast<uint32_t>(static_cast<uint32_t>(b[idx]) | (static_cast<uint32_t>(b[idx+1]) << 8) |
+                                                             (static_cast<uint32_t>(b[idx+2]) << 16) | (static_cast<uint32_t>(b[idx+3]) << 24));
+}
 
-//     def parse_GS(self, data, ack):
-//         """GS state/status: 2-byte payload [state, value] -> ImuState."""
-//         return {"ack": ack,
-//                 "state": data[0] if data else 0,
-//                 "value": data[1] if len(data) > 1 else 0}
+static inline uint16_t read_u16_le(const uint8_t* b, size_t idx) {
+    return static_cast<uint16_t>(static_cast<uint16_t>(b[idx]) | (static_cast<uint16_t>(b[idx+1]) << 8));
+}
 
-//     def parse_OD(self, data, ack):
-//         """OD: [type,value] byte pairs; type 0->UltraSonicState, type 1->GyroType."""
-//         out = {}
-//         for i in range(0, len(data) - 1, 2):
-//             t, v = data[i], data[i+1]
-//             if t == 0:
-//                 out["ultrasonic"] = v
-//             elif t == 1:
-//                 out["gyro_type"] = v
-//         out["ack"] = ack
-//         return out
+// Handler for GD -> imu/ImuSensor
+void ImuDriver::OnGD(const uint8_t *payload, size_t length) {
+    if (!payload || length == 0) return;
+    bool valid = (payload[0] == 0);
+    data_.valid = valid;
+    if (!valid) {
+        data_.gyro[0] = data_.gyro[1] = data_.gyro[2] = data_.gyro[3] = 0;
+        data_.accel[0] = data_.accel[1] = data_.accel[2] = 0;
+        data_.mag[0] = data_.mag[1] = data_.mag[2] = 0;
+        data_.ts = 0;
+        return;
+    }
+    if (length > 1) {
+        if (length >= 3) data_.gyro[0] = read_i16_le(payload, 1);
+        if (length >= 5) data_.gyro[1] = read_i16_le(payload, 3);
+        if (length >= 7) data_.gyro[2] = read_i16_le(payload, 5);
+        if (length >= 9) data_.gyro[3] = read_i16_le(payload, 7);
+    }
+    if (length >= 11) data_.accel[0] = read_i16_le(payload, 9);
+    if (length >= 13) data_.accel[1] = read_i16_le(payload, 11);
+    if (length >= 15) data_.accel[2] = read_i16_le(payload, 13);
+    if (length >= 17) data_.mag[0] = read_i16_le(payload, 15);
+    if (length >= 19) data_.mag[1] = read_i16_le(payload, 17);
+    if (length >= 21) data_.mag[2] = read_i16_le(payload, 19);
+    if (length > 0x15 && (length >= 0x15 + 4)) data_.ts = read_u32_le(payload, 0x15);
+}
+
+// Handler for GF -> imu/GyroBias
+void ImuDriver::OnGF(const uint8_t *payload, size_t length) {
+    if (!payload || length == 0) return;
+    bool valid = (payload[0] == 0);
+    if (!valid) {
+        for (int i = 0; i < 6; ++i) data_.bias[i] = 0;
+        return;
+    }
+    if (length >= 3) data_.bias[0] = read_u16_le(payload, 1);
+    if (length >= 5) data_.bias[1] = read_u16_le(payload, 3);
+    if (length >= 7) data_.bias[2] = read_u16_le(payload, 5);
+    if (length >= 9) data_.bias[3] = read_u16_le(payload, 7);
+    if (length >= 11) data_.bias[4] = read_u16_le(payload, 9);
+    if (length >= 13) data_.bias[5] = read_u16_le(payload, 11);
+}
+
+// Handler for GH -> imu/geomag (validity + u16,u16,u8)
+void ImuDriver::OnGH(const uint8_t *payload, size_t length) {
+    if (!payload || length == 0) return;
+    bool valid = (payload[0] == 0);
+    if (!valid) {
+        data_.geomag_u16[0] = data_.geomag_u16[1] = 0;
+        data_.geomag_u8 = 0;
+        return;
+    }
+    if (length >= 3) data_.geomag_u16[0] = read_u16_le(payload, 1);
+    if (length >= 5) data_.geomag_u16[1] = read_u16_le(payload, 3);
+    if (length >= 6) data_.geomag_u8 = payload[5];
+}
+
+// Handler for GI -> imu/Geomag (no validity; u16 @0,2,4)
+void ImuDriver::OnGI(const uint8_t *payload, size_t length) {
+    if (!payload || length == 0) return;
+    if (length >= 2) data_.geomag3[0] = read_u16_le(payload, 0);
+    if (length >= 4) data_.geomag3[1] = read_u16_le(payload, 2);
+    if (length >= 6) data_.geomag3[2] = read_u16_le(payload, 4);
+}
+
+// Handler for GS -> state/status [state, value]
+void ImuDriver::OnGS(const uint8_t *payload, size_t length) {
+    if (!payload || length == 0) return;
+    data_.state = payload[0];
+    data_.state_value = (length > 1) ? payload[1] : 0;
+}
+
+// Handler for OD -> pairs [type,value]
+void ImuDriver::OnOD(const uint8_t *payload, size_t length) {
+    if (!payload || length < 2) return;
+    for (size_t i = 0; i + 1 < length; i += 2) {
+        uint8_t t = payload[i];
+        uint8_t v = payload[i+1];
+        if (t == 0) data_.ultrasonic = v;
+        else if (t == 1) data_.gyro_type = v;
+    }
+}
+}

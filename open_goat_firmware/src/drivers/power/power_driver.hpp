@@ -17,7 +17,7 @@ namespace xbot::driver::power {
 class PowerDriver {
  public:
   struct Data {
-    uint8_t stateOfCharge = 0; // %
+    uint8_t stateOfCharge = 100; // %
     uint8_t chargingState = 0; // ????
     uint16_t chargeVoltage = 0.0f; //mV
     int16_t chargeCurrent = 0.0f; //mA
