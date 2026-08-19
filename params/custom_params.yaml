@@ -18,7 +18,7 @@ ll:
       # mower_simulation always reports a local pose in meters, not real lat/long, so
       # this must stay false for the simulation stack (datum_lat/long become cosmetic,
       # NMEA-display-only, in this mode).
-      absolute_coords: false
+      absolute_coords: true
       # Set to coordinates near your docking station, this will be your map origin
       datum_lat: 53.457452
       datum_long: 10.014737

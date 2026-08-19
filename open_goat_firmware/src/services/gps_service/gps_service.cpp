@@ -8,15 +8,6 @@
 #include "posix_ch.h"
 
 bool GpsService::LoadAndStartGpsDriver(ProtocolType protocol_type, const char *device, uint32_t baudrate) {
-  // Get the requested UART port (if 0 is specified, ask the robot.cpp for the default port)
-  UARTDriver* uart_driver = CreateUARTDriver(device, baudrate);
-  if (uart_driver == nullptr) {
-    char msg[100]{};
-    snprintf(msg, sizeof(msg), "Could not open UART. Check the provided device: %s", device);
-    ULOG_ARG_ERROR(&service_id_, msg);
-    return false;
-  }
-
   // Create the requested driver
   if (protocol_type == ProtocolType::UBX) {
     gps_driver_ = new UbxGpsDriver();
@@ -28,7 +19,6 @@ bool GpsService::LoadAndStartGpsDriver(ProtocolType protocol_type, const char *d
       etl::delegate<void(const GpsDriver::GpsState&)>::create<GpsService, &GpsService::GpsStateCallback>(*this));
 
   gps_driver_->StartDriver(device, baudrate);
-
 
   return true;
 }
