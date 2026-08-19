@@ -18,7 +18,6 @@ void GpsDriver::RawDataInput(uint8_t *data, size_t size) {
 
 bool GpsDriver::StartDriver(std::string path, int baud) {
   DbgAssert(stopped_, "don't start the driver twice");
-  DbgAssert(uart != nullptr, "need to provide a driver");
   if (!stopped_) {
     return false;
   }
