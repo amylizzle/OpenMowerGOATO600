@@ -143,7 +143,11 @@ public:
     }
 
     std::optional<std::vector<uint8_t>> read_frame(double timeout = 1.0, double poll = 0.05) {
-        if (fd < 0) return std::nullopt;
+        if (fd < 0) {
+            ULOG_ERROR("MCU LOST TTY FILE, REOPENING");
+            open();
+            return std::nullopt;
+        }
 
         std::vector<uint8_t> buf;
         using clock = std::chrono::steady_clock;

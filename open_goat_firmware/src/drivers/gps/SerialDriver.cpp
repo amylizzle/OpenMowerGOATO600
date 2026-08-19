@@ -102,17 +102,17 @@ public:
         }
     }
 
-    ssize_t write(const std::vector<uint8_t>& data) {
+    size_t write(const std::vector<uint8_t>& data) {
         if (fd < 0) return -1;
         return ::write(fd, data.data(), data.size());
     }
 
-    ssize_t write(const uint8_t* data, size_t size) {
+    size_t write(const uint8_t* data, size_t size) {
         if (fd < 0) return -1;
         return ::write(fd, data, size);
     }
 
-    ssize_t read(uint8_t* buffer, size_t size) {
+    size_t read(uint8_t* buffer, size_t size) {
         if (fd < 0) return -1;
         return ::read(fd, buffer, size);
     }

@@ -117,7 +117,7 @@ class GpsDriver {
   uint8_t recv_buffer2_[RECV_BUFFER_SIZE]{};
   // We start by receiving into recv_buffer1, so processing_buffer is the 2 (but empty)
   uint8_t *volatile processing_buffer_ = recv_buffer2_;
-  volatile size_t processing_buffer_len_ = 0;
+  volatile ssize_t processing_buffer_len_ = 0;
 
   SerialDriver* slink{};
 

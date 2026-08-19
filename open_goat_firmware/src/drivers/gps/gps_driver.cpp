@@ -46,7 +46,11 @@ void GpsDriver::threadFunc() {
   while (!stopped_) {
     // Wait for data to arrive
     processing_buffer_len_ = this->slink->read(processing_buffer_, RECV_BUFFER_SIZE);
-
+    if (processing_buffer_len_ == -1) {
+      ULOG_ERROR("GPS DRIVER FAILED TO READ FROM SERIAL PORT");
+      this->slink->close();
+      this->slink->open();
+    }
     if (processing_buffer_len_ > 0) {
       ProcessBytes(processing_buffer_, processing_buffer_len_);
       if (IsRawMode()) {
