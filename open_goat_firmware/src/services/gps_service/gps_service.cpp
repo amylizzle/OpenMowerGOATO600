@@ -27,7 +27,7 @@ bool GpsService::LoadAndStartGpsDriver(ProtocolType protocol_type, const char *d
   gps_driver_->SetStateCallback(
       etl::delegate<void(const GpsDriver::GpsState&)>::create<GpsService, &GpsService::GpsStateCallback>(*this));
 
-  gps_driver_->StartDriver(uart_driver);
+  gps_driver_->StartDriver(device, baudrate);
 
 
   return true;
@@ -39,7 +39,7 @@ bool GpsService::OnStart() {
   if (gps_driver_ == nullptr) {
     // We don't have a gps driver running yet, so create one.
     ULOG_WARNING(("Starting GPS driver on /dev/ttyS" + std::to_string(Uart.value)).c_str());
-    return LoadAndStartGpsDriver(Protocol.value, ("/dev/ttyS" + std::to_string(Uart.value)).c_str(), Baudrate.value);
+    return LoadAndStartGpsDriver(Protocol.value, "/dev/ttyM2", Baudrate.value);
   }
 
   return true;

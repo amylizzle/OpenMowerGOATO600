@@ -10,6 +10,7 @@
 #include "GpsServiceBase.hpp"
 #include "posix_ch.h"
 #include <mutex>
+#include "SerialDriver.cpp"
 
 namespace xbot::driver::gps {
 class GpsDriver {
@@ -60,7 +61,7 @@ class GpsDriver {
   typedef etl::delegate<void(const GpsState &new_state)> StateCallback;
 
  public:
-  bool StartDriver(UARTDriver *uart);
+  bool StartDriver(std::string path, int baud);
   void SetStateCallback(const GpsDriver::StateCallback &function);
 
   void SendRTCM(const uint8_t *data, size_t size);
@@ -82,17 +83,11 @@ class GpsDriver {
   }
 
   virtual ProtocolType GetProtocolType() const = 0;
-  UARTDriver *GetUartDriver() const {
-    return uart_;
-  }
 
   // Optional: when in raw mode, drivers may emit raw output
   virtual bool IsRawMode() const { return false; }
   virtual void RawDataOutput(const uint8_t *data, size_t size) { (void)data; (void)size; }
 
-  uint32_t GetUartBaudrate() const {
-    return uart_config_.speed;
-  }
 
  protected:
   StateCallback state_callback_{};
@@ -105,7 +100,7 @@ class GpsDriver {
    * Send a message to the GPS. This will just output to the serial port
    * directly
    */
-  bool send_raw(const void *data, size_t size);
+  bool send_raw(const uint8_t *data, size_t size);
 
   // Called on serial reconnect
   virtual void ResetParserState() = 0;
@@ -124,8 +119,7 @@ class GpsDriver {
   uint8_t *volatile processing_buffer_ = recv_buffer2_;
   volatile size_t processing_buffer_len_ = 0;
 
-  UARTDriver *uart_{};
-  UARTConfig uart_config_{};
+  SerialDriver* slink{};
 
   thread_t *processing_thread_ = nullptr;
   std::recursive_mutex mutex_;
