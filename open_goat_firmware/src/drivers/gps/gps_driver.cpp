@@ -22,8 +22,33 @@ bool GpsDriver::StartDriver(std::string path, int baud) {
     return false;
   }
   
+  this->rtklink = new SerialDriver("/dev/ttyS2",baud); //TODO should probably make this configurable with a service register
+  // write the commands to start the RTK system
+  for (std::string_view str : { 
+    "rtktype rover\r\n", 
+    "LORALOWPOWER OFF\r\n", 
+    "TRANS ON COM1 COM3\r\n",
+    "setsignalprofile mower\r\n",
+    "qualitylevel 0\r\n"
+   }) {
+      this->rtklink->write(std::vector<uint8_t>(str.begin(), str.end()));
+  }
   this->slink = new SerialDriver(path,baud);
-
+  // and configure the corrections
+  for (std::string_view str : { 
+    "COM3 115200 N 8 1 IN:RTCM OUT:BYNAV\r\n", //COM3 serial = RTCM correction input
+    "interfacemode com3 rtcm bynav\r\n", //COM3 interface = RTCM
+    "SETSIGNALPROFILE MOWER\r\n", //signal profile
+    "QUALITYLEVEL 0\r\n", //quality level
+    "WORKFREQS B1IB2IB3I BEIDOU2\r\n", //enable BD2/BEIDOU2 constellations
+    "fix auto\r\n", //automatic RTK fix mode
+    "log bestposa ontime 1\r\n", //RTK-fixed position
+    "log com1 gpgga ontime 0.1\r\n", //NMEA position (navigation)
+    "log com1 bestposa ontime 0.1\r\n", //best-pos ASCII position
+    "saveconfig\r\n", //persist config
+   }) {
+      this->rtklink->write(std::vector<uint8_t>(str.begin(), str.end()));
+  }
   stopped_ = false;
   processing_thread_ = createThread(threadHelper, this);
 

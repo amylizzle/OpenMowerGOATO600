@@ -120,6 +120,7 @@ class GpsDriver {
   volatile ssize_t processing_buffer_len_ = 0;
 
   SerialDriver* slink{};
+  SerialDriver* rtklink{};
 
   thread_t *processing_thread_ = nullptr;
   std::recursive_mutex mutex_;

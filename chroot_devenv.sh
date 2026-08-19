@@ -320,6 +320,9 @@ cleanup() {
 }
 
 launchom() {
+    # gotta shut down the host ROS if you want it to work
+    service ros stop
+    service roscore stop
     run_chroot "
         source /workspace/devel/setup.bash
         source /workspace/mower_config.sh
