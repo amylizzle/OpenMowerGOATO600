@@ -27,12 +27,11 @@ void PowerService::tick() {
   SendBatteryVoltage(powerdata.batteryVoltage / 1000.0f);
   SendBatteryPercentage(powerdata.stateOfCharge);
   SendChargeCurrent(powerdata.batteryCurrent / 1000.0f);
-  SendChargerEnabled(powerdata.batteryCurrent > 0);
+  SendChargerEnabled(powerdata.chargingState > 0);
 
-  std::string charge_state = "cS " + std::to_string(+powerdata.chargingState) +
-                           " bT " + std::to_string(+powerdata.batteryTemp) +
-                           " ID " + std::to_string(+powerdata.batteryID) +
-                           " st " + std::to_string(+powerdata.chargeStep);
+  std::string charge_state = "state: " + std::to_string(+powerdata.chargingState) +
+                           " temp: " + std::to_string(+powerdata.batteryTemp) +
+                           " step: " + std::to_string(+powerdata.chargeStep);
   SendChargingStatus(charge_state.c_str(), charge_state.length());
   CommitTransaction();
 }
