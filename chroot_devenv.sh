@@ -331,6 +331,8 @@ launchom() {
         kill \$roslaunch_pid 2>/dev/null
         service nginx stop
         service mosquitto stop
+        killall nginx
+        killall mosquitto
         echo Goodbye!
     "
 }
