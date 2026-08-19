@@ -16,7 +16,6 @@ namespace xbot::driver::mcu {
 
 bool Dispatcher::StartDriver(std::string path, int baud) {
 	DbgAssert(stopped_, "don't start the dispatcher twice");
-	DbgAssert(uart != nullptr, "need to provide a driver");
 	if (!stopped_) return false;
 	this->mlink = new MCULink(path,baud);
 	processing_thread_ = createThread(ThreadEntry, this);
