@@ -19,8 +19,8 @@ class PowerDriver {
   struct Data {
     uint8_t stateOfCharge = 100; // %
     uint8_t chargingState = 0; // ????
-    uint16_t chargeVoltage = 0.0f; //mV
-    int16_t chargeCurrent = 0.0f; //mA
+    uint16_t batteryVoltage = 0.0f; //mV
+    int16_t batteryCurrent = 0.0f; //mA
     int8_t batteryTemp = 0; //C
     uint8_t batteryID = 0; // ????
     uint8_t chargeStep = 0; // ????

@@ -24,8 +24,9 @@ void PowerDriver::OnMessage(const uint8_t *payload, size_t length) {
 
   data_.stateOfCharge = payload[0];
   data_.chargingState = payload[1];
-  data_.chargeVoltage = static_cast<uint16_t>(payload[2]) | (static_cast<uint16_t>(payload[3]) << 8);
-  data_.chargeCurrent = static_cast<int16_t>(payload[4]) | (static_cast<int16_t>(payload[5]) << 8);
+  data_.batteryVoltage = static_cast<uint16_t>(payload[2]) | (static_cast<uint16_t>(payload[3]) << 8);
+  //negative for discharging
+  data_.batteryCurrent = -(static_cast<int16_t>(payload[4]) | (static_cast<int16_t>(payload[5]) << 8));
   data_.batteryTemp = static_cast<int8_t>(payload[6]);
   data_.batteryID = payload[7];
   data_.chargeStep = payload[8];

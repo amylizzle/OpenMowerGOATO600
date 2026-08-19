@@ -1,4 +1,5 @@
 #include <string>
+#include <cstdint>
 #include <globals.hpp>
 #include "power_service.hpp"
 
@@ -23,11 +24,16 @@ void PowerService::tick() {
 
   // Send the sensor values
   StartTransaction();
-  SendBatteryVoltage(powerdata.stateOfCharge);
-  SendChargeVoltage(powerdata.chargeVoltage / 1000.0f);
-  SendChargeCurrent(powerdata.chargeCurrent / 1000.0f);
-  SendChargerEnabled(powerdata.chargeVoltage > 0);
-  // SendChargingStatus(charge_state.c_str(), charge_state.length());
+  SendBatteryVoltage(powerdata.batteryVoltage / 1000.0f);
+  SendBatteryPercentage(powerdata.stateOfCharge);
+  SendChargeCurrent(powerdata.batteryCurrent / 1000.0f);
+  SendChargerEnabled(powerdata.batteryCurrent > 0);
+
+  std::string charge_state = "cS " + std::to_string(+powerdata.chargingState) +
+                           " bT " + std::to_string(+powerdata.batteryTemp) +
+                           " ID " + std::to_string(+powerdata.batteryID) +
+                           " st " + std::to_string(+powerdata.chargeStep);
+  SendChargingStatus(charge_state.c_str(), charge_state.length());
   CommitTransaction();
 }
 
