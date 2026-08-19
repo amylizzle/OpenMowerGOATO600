@@ -225,7 +225,7 @@ EOF
         apt install -y mosquitto
     "
     info "copying mosquitto config into chroot"
-    cp "./src/open_mower_ros/docker/assets/mosquitto.conf" "${ROOTFS}/etc/mosquitto/mosquitto.conf"
+    cp "./assets/mosquitto.conf" "${ROOTFS}/etc/mosquitto/mosquitto.conf"
 
     info "setup complete: ${ROOTFS}"
 }
