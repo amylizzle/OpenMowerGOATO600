@@ -45,7 +45,7 @@ class ImuDriver {
 
  private:
   const double accel_scale_factor = 0.01; //cm/s^2 -> m/s^2
-  const double gyro_scale_factor = 1.0; //0.01745329; // degrees -> radians
+  const double gyro_scale_factor = 0.01745329; // degrees -> radians
   void OnGD(const uint8_t *payload, size_t length);
   void OnGF(const uint8_t *payload, size_t length);
   void OnGH(const uint8_t *payload, size_t length);
