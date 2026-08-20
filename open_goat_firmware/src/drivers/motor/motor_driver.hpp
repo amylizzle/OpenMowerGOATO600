@@ -41,9 +41,9 @@ class MotorDriver {
 
  private:
   xbot::driver::mcu::Dispatcher* mcu_driver_{};
-  ESCState left_state_{};
-  ESCState right_state_{};
-  ESCState mow_state_{};
+  ESCState left_state_;
+  ESCState right_state_;
+  ESCState mow_state_;
   // a few of the messages seem to report 5 values, not 3. I'm guessing one of those is the LIDAR motor on other models
   // plus maybe a cooling fan or something?
   static uint16_t BrandEncode(const ESCState::MotorBrand brand, int speed);

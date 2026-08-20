@@ -85,7 +85,7 @@ void MotorDriver::SetDuty(std::optional<float> left, std::optional<float> right,
   }
 
 
-  ULOG_INFO("Setting to target rpm: %u, %u, %u",left_state_.target_rpm, right_state_.target_rpm ,mow_state_.target_rpm);
+  ULOG_INFO("Setting to target rpm: %u, %u, %u", left_state_.target_rpm, right_state_.target_rpm, mow_state_.target_rpm);
   std::vector<uint8_t> ctl_message;
   auto left_cmd = EncodeSpeedCommand(left_state_.brand, left_state_.target_rpm);
   auto right_cmd = EncodeSpeedCommand(right_state_.brand, right_state_.target_rpm);
