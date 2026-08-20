@@ -158,7 +158,7 @@ EOF
         apt-get update
         apt-get install -y --no-install-recommends \
             sudo git zsh gdb rsync ssh lsb-release gnupg ca-certificates libgtest-dev \
-            libgmock-dev cmake 
+            libgmock-dev cmake psmisc
     " # python3-empy python3-nose
 
     if host_ros_enabled; then
@@ -320,6 +320,9 @@ cleanup() {
 }
 
 launchom() {
+    # kill the process monitor so it stops beeping at you
+    killall hydra.sh
+    killall hydra
     # gotta shut down the host ROS if you want it to work
     service ros stop
     service roscore stop
