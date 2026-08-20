@@ -7,17 +7,17 @@ namespace xbot::driver::imu {
 ImuDriver::ImuDriver(xbot::driver::mcu::Dispatcher* dispatcher) : mcu_driver_(dispatcher)  { 
         if (dispatcher) {
             dispatcher->RegisterHandler(static_cast<uint8_t>('G'), static_cast<uint8_t>('D'),
-                                                                    etl::delegate<void(const uint8_t *, size_t)>::create<ImuDriver, &ImuDriver::OnGD>(*this));
+                                                                    etl::delegate<void(const uint8_t *, size_t, uint8_t)>::create<ImuDriver, &ImuDriver::OnGD>(*this));
             dispatcher->RegisterHandler(static_cast<uint8_t>('G'), static_cast<uint8_t>('F'),
-                                                                    etl::delegate<void(const uint8_t *, size_t)>::create<ImuDriver, &ImuDriver::OnGF>(*this));
+                                                                    etl::delegate<void(const uint8_t *, size_t, uint8_t)>::create<ImuDriver, &ImuDriver::OnGF>(*this));
             dispatcher->RegisterHandler(static_cast<uint8_t>('G'), static_cast<uint8_t>('H'),
-                                                                    etl::delegate<void(const uint8_t *, size_t)>::create<ImuDriver, &ImuDriver::OnGH>(*this));
+                                                                    etl::delegate<void(const uint8_t *, size_t, uint8_t)>::create<ImuDriver, &ImuDriver::OnGH>(*this));
             dispatcher->RegisterHandler(static_cast<uint8_t>('G'), static_cast<uint8_t>('I'),
-                                                                    etl::delegate<void(const uint8_t *, size_t)>::create<ImuDriver, &ImuDriver::OnGI>(*this));
+                                                                    etl::delegate<void(const uint8_t *, size_t, uint8_t)>::create<ImuDriver, &ImuDriver::OnGI>(*this));
             dispatcher->RegisterHandler(static_cast<uint8_t>('G'), static_cast<uint8_t>('S'),
-                                                                    etl::delegate<void(const uint8_t *, size_t)>::create<ImuDriver, &ImuDriver::OnGS>(*this));
+                                                                    etl::delegate<void(const uint8_t *, size_t, uint8_t)>::create<ImuDriver, &ImuDriver::OnGS>(*this));
             dispatcher->RegisterHandler(static_cast<uint8_t>('O'), static_cast<uint8_t>('D'),
-                                                                    etl::delegate<void(const uint8_t *, size_t)>::create<ImuDriver, &ImuDriver::OnOD>(*this));
+                                                                    etl::delegate<void(const uint8_t *, size_t, uint8_t)>::create<ImuDriver, &ImuDriver::OnOD>(*this));
         }
 }
 
@@ -79,7 +79,8 @@ void normaliseQuat(Quat& q) {
 }
 
 // Handler for GD -> imu/ImuSensor
-void ImuDriver::OnGD(const uint8_t *payload, size_t length) {
+void ImuDriver::OnGD(const uint8_t *payload, size_t length, uint8_t ack) {
+    (void) ack;
     if (!payload || length == 0) return;
     bool valid = (payload[0] == 0);
     data_.valid = valid;
@@ -126,7 +127,8 @@ void ImuDriver::OnGD(const uint8_t *payload, size_t length) {
 }
 
 // Handler for GF -> imu/GyroBias
-void ImuDriver::OnGF(const uint8_t *payload, size_t length) {
+void ImuDriver::OnGF(const uint8_t *payload, size_t length, uint8_t ack) {
+    (void) ack;
     if (!payload || length == 0) return;
     bool valid = (payload[0] == 0);
     if (!valid) {
@@ -142,7 +144,8 @@ void ImuDriver::OnGF(const uint8_t *payload, size_t length) {
 }
 
 // Handler for GH -> imu/geomag (validity + u16,u16,u8)
-void ImuDriver::OnGH(const uint8_t *payload, size_t length) {
+void ImuDriver::OnGH(const uint8_t *payload, size_t length, uint8_t ack) {
+    (void) ack;
     if (!payload || length == 0) return;
     bool valid = (payload[0] == 0);
     if (!valid) {
@@ -156,7 +159,8 @@ void ImuDriver::OnGH(const uint8_t *payload, size_t length) {
 }
 
 // Handler for GI -> imu/Geomag (no validity; u16 @0,2,4)
-void ImuDriver::OnGI(const uint8_t *payload, size_t length) {
+void ImuDriver::OnGI(const uint8_t *payload, size_t length, uint8_t ack) {
+    (void) ack;
     if (!payload || length == 0) return;
     if (length >= 2) data_.geomag3[0] = read_u16_le(payload, 0);
     if (length >= 4) data_.geomag3[1] = read_u16_le(payload, 2);
@@ -164,14 +168,16 @@ void ImuDriver::OnGI(const uint8_t *payload, size_t length) {
 }
 
 // Handler for GS -> state/status [state, value]
-void ImuDriver::OnGS(const uint8_t *payload, size_t length) {
+void ImuDriver::OnGS(const uint8_t *payload, size_t length, uint8_t ack) {
+    (void) ack;
     if (!payload || length == 0) return;
     data_.state = payload[0];
     data_.state_value = (length > 1) ? payload[1] : 0;
 }
 
 // Handler for OD -> pairs [type,value]
-void ImuDriver::OnOD(const uint8_t *payload, size_t length) {
+void ImuDriver::OnOD(const uint8_t *payload, size_t length, uint8_t ack) {
+    (void) ack;
     if (!payload || length < 2) return;
     for (size_t i = 0; i + 1 < length; i += 2) {
         uint8_t t = payload[i];

@@ -57,14 +57,14 @@ class MotorDriver {
   uint8_t ack_ = 0;
 
   void NotifyState();
-  void OnMA(const uint8_t* payload, size_t length);
-  void OnMB(const uint8_t* payload, size_t length);
-  void OnMC(const uint8_t* payload, size_t length);
-  void OnMD(const uint8_t* payload, size_t length);
-  void OnME(const uint8_t* payload, size_t length);
-  void OnMF(const uint8_t* payload, size_t length);
-  void OnMS(const uint8_t* payload, size_t length);
-  void OnMT(const uint8_t* payload, size_t length);
+  void OnMA(const uint8_t* payload, size_t length, uint8_t ack);
+  void OnMB(const uint8_t* payload, size_t length, uint8_t ack);
+  void OnMC(const uint8_t* payload, size_t length, uint8_t ack);
+  void OnMD(const uint8_t* payload, size_t length, uint8_t ack);
+  void OnME(const uint8_t* payload, size_t length, uint8_t ack);
+  void OnMF(const uint8_t* payload, size_t length, uint8_t ack);
+  void OnMS(const uint8_t* payload, size_t length, uint8_t ack);
+  void OnMT(const uint8_t* payload, size_t length, uint8_t ack);
 };
 
 } // namespace xbot::driver::motor

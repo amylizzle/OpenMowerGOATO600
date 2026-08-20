@@ -47,12 +47,12 @@ class ImuDriver {
  private:
   const double accel_scale_factor = 0.01; //cm/s^2 -> m/s^2
   const double gyro_scale_factor = 1.0; // already in radians/s because we did math
-  void OnGD(const uint8_t *payload, size_t length);
-  void OnGF(const uint8_t *payload, size_t length);
-  void OnGH(const uint8_t *payload, size_t length);
-  void OnGI(const uint8_t *payload, size_t length);
-  void OnGS(const uint8_t *payload, size_t length);
-  void OnOD(const uint8_t *payload, size_t length);
+  void OnGD(const uint8_t *payload, size_t length, uint8_t ack);
+  void OnGF(const uint8_t *payload, size_t length, uint8_t ack);
+  void OnGH(const uint8_t *payload, size_t length, uint8_t ack);
+  void OnGI(const uint8_t *payload, size_t length, uint8_t ack);
+  void OnGS(const uint8_t *payload, size_t length, uint8_t ack);
+  void OnOD(const uint8_t *payload, size_t length, uint8_t ack);
 };
 
 } // namespace xbot::driver::imu

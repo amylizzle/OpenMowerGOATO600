@@ -7,7 +7,7 @@ namespace xbot::driver::emergency{
 EmergencyDriver::EmergencyDriver(xbot::driver::mcu::Dispatcher* dispatcher) : mcu_driver_(dispatcher)  { 
     dispatcher->RegisterHandler(
           static_cast<uint8_t>('B'), static_cast<uint8_t>('C'), // GPIO sensor status message
-          etl::delegate<void(const uint8_t *, size_t)>::create<EmergencyDriver, &EmergencyDriver::OnBCMessage>(*this));
+          etl::delegate<void(const uint8_t *, size_t, uint8_t)>::create<EmergencyDriver, &EmergencyDriver::OnBCMessage>(*this));
 }
 
 uint16_t EmergencyDriver::GetEmergencyState() {
@@ -19,7 +19,8 @@ uint16_t EmergencyDriver::GetEmergencyState() {
     return state;
 }
 
-void EmergencyDriver::OnBCMessage(const uint8_t *payload, size_t length) {
+void EmergencyDriver::OnBCMessage(const uint8_t *payload, size_t length, uint8_t ack) {
+    (void) ack;
     bool change = false;
     // Loop through the data in steps of 2, first byte is index, second is value
     for (size_t i = 0; i + 1 < length; i += 2) {

@@ -32,7 +32,7 @@ class PowerDriver {
 
  private:
   mutable Data data_{};
-  void OnMessage(const uint8_t *payload, size_t length);
+  void OnMessage(const uint8_t *payload, size_t length, uint8_t ack);
 };
 };
 #endif  // CHARGER_HPP

@@ -20,21 +20,21 @@ MotorDriver::MotorDriver(xbot::driver::mcu::Dispatcher* dispatcher)
     : mcu_driver_(dispatcher) {
   if (dispatcher) {
     dispatcher->RegisterHandler(static_cast<uint8_t>('M'), static_cast<uint8_t>('A'),
-                               etl::delegate<void(const uint8_t*, size_t)>::create<MotorDriver, &MotorDriver::OnMA>(*this));
+                               etl::delegate<void(const uint8_t*, size_t, uint8_t)>::create<MotorDriver, &MotorDriver::OnMA>(*this));
     dispatcher->RegisterHandler(static_cast<uint8_t>('M'), static_cast<uint8_t>('B'),
-                               etl::delegate<void(const uint8_t*, size_t)>::create<MotorDriver, &MotorDriver::OnMB>(*this));
+                               etl::delegate<void(const uint8_t*, size_t, uint8_t)>::create<MotorDriver, &MotorDriver::OnMB>(*this));
     dispatcher->RegisterHandler(static_cast<uint8_t>('M'), static_cast<uint8_t>('C'),
-                               etl::delegate<void(const uint8_t*, size_t)>::create<MotorDriver, &MotorDriver::OnMC>(*this));
+                               etl::delegate<void(const uint8_t*, size_t, uint8_t)>::create<MotorDriver, &MotorDriver::OnMC>(*this));
     dispatcher->RegisterHandler(static_cast<uint8_t>('M'), static_cast<uint8_t>('D'),
-                               etl::delegate<void(const uint8_t*, size_t)>::create<MotorDriver, &MotorDriver::OnMD>(*this));
+                               etl::delegate<void(const uint8_t*, size_t, uint8_t)>::create<MotorDriver, &MotorDriver::OnMD>(*this));
     dispatcher->RegisterHandler(static_cast<uint8_t>('M'), static_cast<uint8_t>('E'),
-                               etl::delegate<void(const uint8_t*, size_t)>::create<MotorDriver, &MotorDriver::OnME>(*this));
+                               etl::delegate<void(const uint8_t*, size_t, uint8_t)>::create<MotorDriver, &MotorDriver::OnME>(*this));
     dispatcher->RegisterHandler(static_cast<uint8_t>('M'), static_cast<uint8_t>('F'),
-                               etl::delegate<void(const uint8_t*, size_t)>::create<MotorDriver, &MotorDriver::OnMF>(*this));
+                               etl::delegate<void(const uint8_t*, size_t, uint8_t)>::create<MotorDriver, &MotorDriver::OnMF>(*this));
     dispatcher->RegisterHandler(static_cast<uint8_t>('M'), static_cast<uint8_t>('S'),
-                               etl::delegate<void(const uint8_t*, size_t)>::create<MotorDriver, &MotorDriver::OnMS>(*this));
+                               etl::delegate<void(const uint8_t*, size_t, uint8_t)>::create<MotorDriver, &MotorDriver::OnMS>(*this));
     dispatcher->RegisterHandler(static_cast<uint8_t>('M'), static_cast<uint8_t>('T'),
-                               etl::delegate<void(const uint8_t*, size_t)>::create<MotorDriver, &MotorDriver::OnMT>(*this));
+                               etl::delegate<void(const uint8_t*, size_t, uint8_t)>::create<MotorDriver, &MotorDriver::OnMT>(*this));
   }
 }
 
@@ -157,7 +157,8 @@ std::vector<uint8_t> MotorDriver::EncodeStopCommand() {
           static_cast<uint8_t>(0x00), static_cast<uint8_t>(0x00)};
 }
 
-void MotorDriver::OnMA(const uint8_t* payload, size_t length) {
+void MotorDriver::OnMA(const uint8_t* payload, size_t length, uint8_t ack) {
+    (void) ack;
   if (!payload || length == 0) {
     return;
   }
@@ -177,7 +178,8 @@ void MotorDriver::OnMA(const uint8_t* payload, size_t length) {
   NotifyState();
 }
 
-void MotorDriver::OnMB(const uint8_t* payload, size_t length) {
+void MotorDriver::OnMB(const uint8_t* payload, size_t length, uint8_t ack) {
+    (void) ack;
   if (!payload || length == 0) {
     return;
   }
@@ -195,7 +197,8 @@ void MotorDriver::OnMB(const uint8_t* payload, size_t length) {
   NotifyState();
 }
 
-void MotorDriver::OnMC(const uint8_t* payload, size_t length) {
+void MotorDriver::OnMC(const uint8_t* payload, size_t length, uint8_t ack) {
+    (void) ack;
   if (!payload || length <= 2) {
     return;
   }
@@ -205,7 +208,8 @@ void MotorDriver::OnMC(const uint8_t* payload, size_t length) {
   NotifyState();
 }
 
-void MotorDriver::OnMD(const uint8_t* payload, size_t length) {
+void MotorDriver::OnMD(const uint8_t* payload, size_t length, uint8_t ack) {
+    (void) ack;
   if (!payload || length == 0) {
     return;
   }
@@ -220,7 +224,8 @@ void MotorDriver::OnMD(const uint8_t* payload, size_t length) {
   NotifyState();
 }
 
-void MotorDriver::OnME(const uint8_t* payload, size_t length) {
+void MotorDriver::OnME(const uint8_t* payload, size_t length, uint8_t ack) {
+    (void) ack;
   if (!payload || length == 0) {
     return;
   }
@@ -238,7 +243,8 @@ void MotorDriver::OnME(const uint8_t* payload, size_t length) {
   NotifyState();
 }
 
-void MotorDriver::OnMF(const uint8_t* payload, size_t length) {
+void MotorDriver::OnMF(const uint8_t* payload, size_t length, uint8_t ack) {
+    (void) ack;
   if (!payload || length == 0) {
     return;
   }
@@ -250,7 +256,8 @@ void MotorDriver::OnMF(const uint8_t* payload, size_t length) {
   NotifyState();
 }
 
-void MotorDriver::OnMS(const uint8_t* payload, size_t length) {
+void MotorDriver::OnMS(const uint8_t* payload, size_t length, uint8_t ack) {
+    (void) ack;
   if (!payload || length <= 1) {
     return;
   }
@@ -267,7 +274,8 @@ void MotorDriver::OnMS(const uint8_t* payload, size_t length) {
   NotifyState();
 }
 
-void MotorDriver::OnMT(const uint8_t* payload, size_t length) {
+void MotorDriver::OnMT(const uint8_t* payload, size_t length, uint8_t ack) {
+    (void) ack;
   if (!payload || length == 0) {
     return;
   }

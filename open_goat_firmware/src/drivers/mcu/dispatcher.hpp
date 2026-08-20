@@ -12,7 +12,7 @@ namespace xbot::driver::mcu {
 
 class Dispatcher {
  public:
-	using MessageHandler = etl::delegate<void(const uint8_t *payload, size_t length)>;
+	using MessageHandler = etl::delegate<void(const uint8_t *payload, size_t length, uint8_t ack)>;
 
 	Dispatcher() = default;
 	~Dispatcher() = default;
@@ -29,7 +29,7 @@ class Dispatcher {
 	bool stopped_ = true;
 	thread_t *processing_thread_ = nullptr;
 	// Handler registry keyed by combined cmd0/cmd1
-	etl::delegate<void(const uint8_t *, size_t)> default_handler_{};
+	MessageHandler default_handler_{};
 	// Use a simple fixed map keyed by uint16_t
 	std::vector<std::pair<uint16_t, MessageHandler>> handlers_{};
 

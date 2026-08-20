@@ -13,12 +13,13 @@ PowerDriver::PowerDriver(mcu::Dispatcher *dispatcher) {
   if (dispatcher) {
     dispatcher->RegisterHandler(
         static_cast<uint8_t>('C'), static_cast<uint8_t>('C'),
-        etl::delegate<void(const uint8_t *, size_t)>::create<PowerDriver, &PowerDriver::OnMessage>(*this));
+        etl::delegate<void(const uint8_t *, size_t, uint8_t)>::create<PowerDriver, &PowerDriver::OnMessage>(*this));
   }
 }
 
 // Handler called by Dispatcher when cmd0='C', cmd1='C' message arrives
-void PowerDriver::OnMessage(const uint8_t *payload, size_t length) {
+void PowerDriver::OnMessage(const uint8_t *payload, size_t length, uint8_t ack) {
+    (void) ack;
   static constexpr size_t EXPECTED_LEN = 9;
   if (length < EXPECTED_LEN) return;
 

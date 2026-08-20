@@ -30,7 +30,7 @@ class EmergencyDriver {
   ~EmergencyDriver() = default;
 
   // handle BC messages
-  void OnBCMessage(const uint8_t *payload, size_t length);
+  void OnBCMessage(const uint8_t *payload, size_t length, uint8_t ack);
 
   // register a callback to be called when something changes
   // register a callback to be called when something changes

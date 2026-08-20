@@ -32,6 +32,7 @@ void Dispatcher::FrameReaderLoop(Dispatcher* instance) {
 	while(true){
 		if (auto buffer = instance->mlink->read_frame()) {
 
+			uint8_t ack = buffer.value()[2];
 			uint8_t cmd0 = buffer.value()[3];
 			uint8_t cmd1 = buffer.value()[4];
 			size_t data_len = buffer.value().size() - 2;
@@ -41,7 +42,7 @@ void Dispatcher::FrameReaderLoop(Dispatcher* instance) {
 			uint16_t key = static_cast<uint16_t>((cmd0 << 8) | cmd1);
 			for (auto &p : instance->handlers_) {
 				if (p.first == key) {
-					if (p.second) p.second(data_ptr, data_len);
+					if (p.second) p.second(data_ptr, data_len, ack);
 				}
 			}
 		}
