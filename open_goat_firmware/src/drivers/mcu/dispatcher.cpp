@@ -32,7 +32,7 @@ void Dispatcher::FrameReaderLoop(Dispatcher* instance) {
 	while(true){
 		if (auto buffer = instance->mlink->read_frame()) {
 
-			uint8_t ack = buffer.value()[2];
+			uint8_t ack = buffer.value()[1];
 			uint8_t cmd0 = buffer.value()[3];
 			uint8_t cmd1 = buffer.value()[4];
 			size_t data_len = buffer.value().size() - 2;
