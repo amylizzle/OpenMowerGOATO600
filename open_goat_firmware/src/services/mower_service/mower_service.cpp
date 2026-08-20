@@ -17,7 +17,7 @@ bool MowerService::OnStart() {
 }
 
 void MowerService::tick() {
-  const auto& state = driver_->GetState();
+  const auto& state = driver_->GetMowState();
 
   StartTransaction();
   SendMowerRunning(state.rpm > 0);
@@ -33,6 +33,6 @@ void MowerService::tick() {
 void MowerService::OnMowerSpeedChanged(const float& new_value) {
   mower_running_ = new_value != 0.0f;
   if (driver_ != nullptr) {
-    driver_->SetDuty(mower_running_ ? new_value : 0.0f);
+    driver_->SetDuty(0.0f, 0.0f, mower_running_ ? new_value : 0.0f);
   }
 }
