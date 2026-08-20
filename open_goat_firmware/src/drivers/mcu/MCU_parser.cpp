@@ -142,6 +142,29 @@ public:
         return ::write(fd, data, size);
     }
 
+    void write_frame(uint8_t cmd0, uint8_t cmd1, const uint8_t* data, size_t size, uint8_t ack) {
+        // write [0x60][ack][len][cmd0][cmd1][data...][crc][0x0A]
+        // len is payload bytes + cmd0 + cmd1 (i.e. data size + 2)
+        std::vector<uint8_t> frame;
+        frame.reserve(1 + 1 + 1 + 1 + 1 + size + 1 + 1);
+
+        frame.push_back(0x60);
+        frame.push_back(ack);
+        frame.push_back(static_cast<uint8_t>(size + 2u));
+        frame.push_back(cmd0);
+        frame.push_back(cmd1);
+
+        if (data != nullptr && size > 0) {
+            frame.insert(frame.end(), data, data + size);
+        }
+
+        uint8_t crc = crc8(frame.data(), frame.size());
+        frame.push_back(crc);
+        frame.push_back(0x0A);
+
+        this->write(frame);
+    }
+
     std::optional<std::vector<uint8_t>> read_frame(double timeout = 1.0, double poll = 0.05) {
         if (fd < 0) {
             ULOG_ERROR("MCU LOST TTY FILE, REOPENING");

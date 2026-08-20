@@ -83,7 +83,7 @@ void DiffDriveService::OnControlTwistChanged(const double* new_value, uint32_t l
   rightval = std::clamp(rightval, -1.0f, 1.0f);
 
   // Send normalized values to motor driver
-  driver_->SetDuty(leftval, rightval, 0.0f);
+  driver_->SetDuty(leftval, rightval, std::nullopt);
 }
 
 bool DiffDriveService::OnStart() {

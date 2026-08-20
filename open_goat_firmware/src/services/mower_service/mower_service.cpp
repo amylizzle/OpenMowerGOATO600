@@ -33,6 +33,6 @@ void MowerService::tick() {
 void MowerService::OnMowerSpeedChanged(const float& new_value) {
   mower_running_ = new_value != 0.0f;
   if (driver_ != nullptr) {
-    driver_->SetDuty(0.0f, 0.0f, mower_running_ ? new_value : 0.0f);
+    driver_->SetDuty(std::nullopt , std::nullopt, mower_running_ ? new_value : 0.0f);
   }
 }

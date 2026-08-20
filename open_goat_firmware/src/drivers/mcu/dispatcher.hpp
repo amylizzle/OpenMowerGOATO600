@@ -23,6 +23,8 @@ class Dispatcher {
 	// Register a handler for a two-character command id (cmd0, cmd1).
 	void RegisterHandler(uint8_t cmd0, uint8_t cmd1, const MessageHandler &handler);
 
+	// Encode and send a frame, return ack byte
+	uint8_t SendMessage(uint8_t cmd0, uint8_t cmd1, const uint8_t *payload, size_t length);
 
  protected:
 	MCULink* mlink{};

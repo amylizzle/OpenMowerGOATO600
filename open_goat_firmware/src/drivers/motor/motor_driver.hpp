@@ -33,7 +33,7 @@ class MotorDriver {
   ~MotorDriver() = default;
 
   void Start();
-  void SetDuty(float left, float right, float mow); // duty in [-1,1]
+  void SetDuty(std::optional<float> left, std::optional<float> right, std::optional<float> mow); // duty in [-1,1], std::nullopt for don't change
   const ESCState& GetLeftState() const;
   const ESCState& GetRightState() const;
   const ESCState& GetMowState() const;

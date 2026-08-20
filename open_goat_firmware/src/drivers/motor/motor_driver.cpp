@@ -58,17 +58,22 @@ void MotorDriver::Start() {
 }
 
 
-void MotorDriver::SetDuty(float left, float right, float mow) {
-  left_state_.target_duty_ = std::clamp(left, -1.0f, 1.0f);
-  right_state_.target_duty_ = std::clamp(right, -1.0f, 1.0f);
-  mow_state_.target_duty_ = std::clamp(mow, -1.0f, 1.0f);
-
-  left_state_.direction = (left_state_.target_duty_ >= 0.0f) ? 0.0f : 1.0f;
-  right_state_.direction = (right_state_.target_duty_ >= 0.0f) ? 0.0f : 1.0f;
-  mow_state_.direction = (mow_state_.target_duty_ >= 0.0f) ? 0.0f : 1.0f;
-  left_state_.rpm = std::fabs(left_state_.target_duty_) * left_state_.max_rpm;
-  right_state_.rpm = std::fabs(right_state_.target_duty_) * right_state_.max_rpm;
-  mow_state_.rpm = std::fabs(mow_state_.target_duty_) * mow_state_.max_rpm;
+void MotorDriver::SetDuty(std::optional<float> left, std::optional<float> right, std::optional<float> mow) {
+  if (left.has_value()){
+    left_state_.target_duty_ = std::clamp(left.value(), -1.0f, 1.0f);
+    left_state_.direction = (left_state_.target_duty_ >= 0.0f) ? 0.0f : 1.0f;
+    left_state_.rpm = std::fabs(left_state_.target_duty_) * left_state_.max_rpm;
+  }
+  if (right.has_value()){
+    right_state_.target_duty_ = std::clamp(right.value(), -1.0f, 1.0f);
+    right_state_.direction = (right_state_.target_duty_ >= 0.0f) ? 0.0f : 1.0f;
+    right_state_.rpm = std::fabs(right_state_.target_duty_) * right_state_.max_rpm;
+  }
+  if (mow.has_value()){
+    mow_state_.target_duty_ = std::clamp(mow.value(), -1.0f, 1.0f);
+    mow_state_.direction = (mow_state_.target_duty_ >= 0.0f) ? 0.0f : 1.0f;
+    mow_state_.rpm = std::fabs(mow_state_.target_duty_) * mow_state_.max_rpm;
+  }
   if (std::fabs(left_state_.target_duty_) < 0.0001f) {
     left_state_.rpm = 0.0f;
   }
@@ -77,8 +82,19 @@ void MotorDriver::SetDuty(float left, float right, float mow) {
   }
   if (std::fabs(mow_state_.target_duty_) < 0.0001f) {
     mow_state_.rpm = 0.0f;
-  }    
+  }
   
+    std::vector<uint8_t> ctl_message;
+    auto left_cmd = EncodeSpeedCommand(left_state_.brand, left_state_.rpm);
+    auto right_cmd = EncodeSpeedCommand(right_state_.brand, right_state_.rpm);
+    auto mow_cmd = EncodeSpeedCommand(mow_state_.brand, mow_state_.rpm);
+
+    ctl_message.reserve(left_cmd.size() + right_cmd.size() + mow_cmd.size());
+    ctl_message.insert(ctl_message.end(), left_cmd.begin(), left_cmd.end());
+    ctl_message.insert(ctl_message.end(), right_cmd.begin(), right_cmd.end());
+    ctl_message.insert(ctl_message.end(), mow_cmd.begin(), mow_cmd.end());
+
+  mcu_driver_->SendMessage('M','A',ctl_message.data(), ctl_message.size());
 }
 
 const MotorDriver::ESCState& MotorDriver::GetLeftState() const {
@@ -164,12 +180,34 @@ void MotorDriver::OnMA(const uint8_t* payload, size_t length, uint8_t ack) {
     const uint8_t dir_or_brand = payload[i + 1];
     const int16_t value = ReadI16Le(payload, i + 2);
     ack_ = ack_;
-    if (type == 0x0A) {
-      left_state_.direction = ((dir_or_brand & 0x01u) != 0u) ? 1.0f : 0.0f;
-      left_state_.rpm = std::fabs(static_cast<float>(value));
-    } else if (type == 0x0B) {
-      left_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
-    }
+    switch(i){
+        case 0:
+            if (type == 0x0A) {
+                left_state_.direction = ((dir_or_brand & 0x01u) != 0u) ? 1.0f : 0.0f;
+                left_state_.rpm = std::fabs(static_cast<float>(value));
+            } else if (type == 0x0B) {
+                left_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
+            }
+            break;
+        case 4:
+            if (type == 0x0A) {
+                left_state_.direction = ((dir_or_brand & 0x01u) != 0u) ? 1.0f : 0.0f;
+                left_state_.rpm = std::fabs(static_cast<float>(value));
+            } else if (type == 0x0B) {
+                left_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
+            }
+            break;
+        case 8:
+            if (type == 0x0A) {
+                left_state_.direction = ((dir_or_brand & 0x01u) != 0u) ? 1.0f : 0.0f;
+                left_state_.rpm = std::fabs(static_cast<float>(value));
+            } else if (type == 0x0B) {
+                left_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
+            }
+            break;  
+        default:
+            ULOG_INFO("[MOTOR] MA Signal i:%i dir: %u rpm: %u",i, dir_or_brand, value); break; 
+        }                 
   }
   
 }
@@ -180,14 +218,15 @@ void MotorDriver::OnMB(const uint8_t* payload, size_t length, uint8_t ack) {
     return;
   }
   ULOG_INFO("[MOTOR] MB Signal ack %u len %zu", ack, length);
-  const size_t max_words = std::min<size_t>(length / 2, 5u);
+  const size_t max_words = std::min<size_t>(length / 2, 6u);
   for (size_t i = 0; i < max_words; ++i) {
     const int16_t value = ReadI16Le(payload, i * 2);
+    ULOG_WARNING("[MOTOR] MB i:%zu val: %d", i, value);
     switch(i) {
-        case 1: left_state_.current_input += static_cast<float>(value); break;
-        case 2: right_state_.current_input += static_cast<float>(value); break;
-        case 3: mow_state_.current_input += static_cast<float>(value); break;
-        default: ULOG_WARNING("[MOTOR] MB i:%zu val: %d", i, value); break;
+        case 0: left_state_.current_input += static_cast<float>(value); break;
+        case 1: right_state_.current_input += static_cast<float>(value); break;
+        case 2: mow_state_.current_input += static_cast<float>(value); break;
+        default: break;
     }
   }
   
