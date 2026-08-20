@@ -54,7 +54,7 @@ void MotorDriver::Start() {
   left_state_.status = ESCState::ESCStatus::ESC_STATUS_DISCONNECTED;
   right_state_.status = ESCState::ESCStatus::ESC_STATUS_DISCONNECTED;
   mow_state_.status = ESCState::ESCStatus::ESC_STATUS_DISCONNECTED;
-  NotifyState();
+  
 }
 
 
@@ -78,7 +78,7 @@ void MotorDriver::SetDuty(float left, float right, float mow) {
   if (std::fabs(mow_state_.target_duty_) < 0.0001f) {
     mow_state_.rpm = 0.0f;
   }    
-  NotifyState();
+  
 }
 
 const MotorDriver::ESCState& MotorDriver::GetLeftState() const {
@@ -89,10 +89,6 @@ const MotorDriver::ESCState& MotorDriver::GetRightState() const {
 }
 const MotorDriver::ESCState& MotorDriver::GetMowState() const {
   return mow_state_;
-}
-
-void MotorDriver::NotifyState() {
-  // Currently no-op placeholder to publish state updates if needed.
 }
 
 uint16_t MotorDriver::BrandEncode(const ESCState::MotorBrand brand, int speed) {
@@ -175,7 +171,7 @@ void MotorDriver::OnMA(const uint8_t* payload, size_t length, uint8_t ack) {
       left_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
     }
   }
-  NotifyState();
+  
 }
 
 void MotorDriver::OnMB(const uint8_t* payload, size_t length, uint8_t ack) {
@@ -194,7 +190,7 @@ void MotorDriver::OnMB(const uint8_t* payload, size_t length, uint8_t ack) {
         default: ULOG_WARNING("[MOTOR] MB i:%zu val: %d", i, value); break;
     }
   }
-  NotifyState();
+  
 }
 
 void MotorDriver::OnMC(const uint8_t* payload, size_t length, uint8_t ack) {
@@ -205,7 +201,7 @@ void MotorDriver::OnMC(const uint8_t* payload, size_t length, uint8_t ack) {
   ULOG_WARNING("[MOTOR] MC: %u", static_cast<unsigned>(payload[2]));
 //   state_.current_input = static_cast<float>(payload[2]);
 //   state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
-  NotifyState();
+  
 }
 
 void MotorDriver::OnMD(const uint8_t* payload, size_t length, uint8_t ack) {
@@ -221,7 +217,7 @@ void MotorDriver::OnMD(const uint8_t* payload, size_t length, uint8_t ack) {
     case 2: left_state_.status = ESCState::ESCStatus::ESC_STATUS_ERROR; break;
     default: left_state_.status = ESCState::ESCStatus::ESC_STATUS_DISCONNECTED; break;
   }
-  NotifyState();
+  
 }
 
 void MotorDriver::OnME(const uint8_t* payload, size_t length, uint8_t ack) {
@@ -240,7 +236,7 @@ void MotorDriver::OnME(const uint8_t* payload, size_t length, uint8_t ack) {
 //     case 6: state_.status = ESCState::ESCStatus::ESC_STATUS_OK; break;
 //     default: state_.status = ESCState::ESCStatus::ESC_STATUS_DISCONNECTED; break;
 //   }
-  NotifyState();
+  
 }
 
 void MotorDriver::OnMF(const uint8_t* payload, size_t length, uint8_t ack) {
@@ -253,7 +249,7 @@ void MotorDriver::OnMF(const uint8_t* payload, size_t length, uint8_t ack) {
 //   if (warning == 4 || warning == 5 || warning == 10) {
 //     state_.status = ESCState::ESCStatus::ESC_STATUS_ERROR;
 //   }
-  NotifyState();
+  
 }
 
 void MotorDriver::OnMS(const uint8_t* payload, size_t length, uint8_t ack) {
@@ -271,7 +267,7 @@ void MotorDriver::OnMS(const uint8_t* payload, size_t length, uint8_t ack) {
     left_state_.rpm = std::fabs(static_cast<float>(rpm1 + rpm2 + rpm3) / 3.0f);
     left_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
   }
-  NotifyState();
+  
 }
 
 void MotorDriver::OnMT(const uint8_t* payload, size_t length, uint8_t ack) {
@@ -286,7 +282,7 @@ void MotorDriver::OnMT(const uint8_t* payload, size_t length, uint8_t ack) {
   }
   ULOG_WARNING("[MOTOR] MT: %s", info.c_str());
 //   state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
-  NotifyState();
+  
 }
 
 }  // namespace xbot::driver::motor

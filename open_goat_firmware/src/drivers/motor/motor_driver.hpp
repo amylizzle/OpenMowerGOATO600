@@ -56,7 +56,6 @@ class MotorDriver {
 
   uint8_t ack_ = 0;
 
-  void NotifyState();
   void OnMA(const uint8_t* payload, size_t length, uint8_t ack);
   void OnMB(const uint8_t* payload, size_t length, uint8_t ack);
   void OnMC(const uint8_t* payload, size_t length, uint8_t ack);
