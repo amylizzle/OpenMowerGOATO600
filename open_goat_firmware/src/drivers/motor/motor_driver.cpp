@@ -83,7 +83,7 @@ void MotorDriver::SetDuty(std::optional<float> left, std::optional<float> right,
   if (std::fabs(mow_state_.target_duty_) < 0.0001f) {
     mow_state_.rpm = 0.0f;
   }
-  
+
     std::vector<uint8_t> ctl_message;
     auto left_cmd = EncodeSpeedCommand(left_state_.brand, left_state_.rpm);
     auto right_cmd = EncodeSpeedCommand(right_state_.brand, right_state_.rpm);
@@ -223,9 +223,9 @@ void MotorDriver::OnMB(const uint8_t* payload, size_t length, uint8_t ack) {
     const int16_t value = ReadI16Le(payload, i * 2);
     ULOG_WARNING("[MOTOR] MB i:%zu val: %d", i, value);
     switch(i) {
-        case 0: left_state_.current_input += static_cast<float>(value); break;
-        case 1: right_state_.current_input += static_cast<float>(value); break;
-        case 2: mow_state_.current_input += static_cast<float>(value); break;
+        case 0: left_state_.current_input = static_cast<float>(value); break;
+        case 1: right_state_.current_input = static_cast<float>(value); break;
+        case 2: mow_state_.current_input = static_cast<float>(value); break;
         default: break;
     }
   }

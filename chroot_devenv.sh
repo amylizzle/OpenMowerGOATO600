@@ -321,8 +321,8 @@ cleanup() {
 
 launchom() {
     # kill the process monitor so it stops beeping at you
-    killall hydra.sh
-    killall hydra
+    killall hydra.sh || true
+    killall hydra || true
     # gotta shut down the host ROS if you want it to work
     service ros stop
     service roscore stop
