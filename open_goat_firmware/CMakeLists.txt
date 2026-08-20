@@ -67,6 +67,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         src/drivers/emergency/emergency_driver.cpp
         # IMU driver
         src/drivers/imu/imu_driver.cpp
+        # Motor driver
+        src/drivers/motor/motor_driver.cpp
 )
 
 # Add include paths

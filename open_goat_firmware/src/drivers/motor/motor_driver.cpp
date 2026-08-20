@@ -134,11 +134,13 @@ std::vector<uint8_t> MotorDriver::EncodeSpeedCommand(const std::string& brand, i
 }
 
 std::vector<uint8_t> MotorDriver::EncodeEnableCommand(uint8_t motor_type) {
-  return {0x0B, 0x01, motor_type & 0xFFu, 0x00u};
+  return {static_cast<uint8_t>(0x0B), static_cast<uint8_t>(0x01),
+          static_cast<uint8_t>(motor_type & 0xFFu), static_cast<uint8_t>(0x00)};
 }
 
 std::vector<uint8_t> MotorDriver::EncodeStopCommand() {
-  return {0x02, 0x00, 0x00, 0x00};
+  return {static_cast<uint8_t>(0x02), static_cast<uint8_t>(0x00),
+          static_cast<uint8_t>(0x00), static_cast<uint8_t>(0x00)};
 }
 
 void MotorDriver::NotifyState() {

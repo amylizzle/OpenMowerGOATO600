@@ -6,6 +6,7 @@
 #define DIFF_DRIVE_SERVICE_HPP
 
 #include <DiffDriveServiceBase.hpp>
+#include <drivers/motor/motor_driver.hpp>
 
 using namespace xbot::service;
 
@@ -21,6 +22,8 @@ class DiffDriveService : public DiffDriveServiceBase {
   void OnStop() override;
 
  private:
+  xbot::driver::motor::MotorDriver* driver_ = nullptr;
+
   void tick();
   ManagedSchedule tick_schedule_{scheduler_, IsRunning(), 20'000,
                                  XBOT_FUNCTION_FOR_METHOD(DiffDriveService, &DiffDriveService::tick, this)};
