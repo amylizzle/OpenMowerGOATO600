@@ -16,7 +16,7 @@ class DiffDriveService : public DiffDriveServiceBase {
   }
 
   void OnMowerStatusChanged(uint32_t new_status);
-
+  xbot::driver::motor::MotorDriver* GetDriverInstance();
  protected:
   bool OnStart() override;
   void OnStop() override;

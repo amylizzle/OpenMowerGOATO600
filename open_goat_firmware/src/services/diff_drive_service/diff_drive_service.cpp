@@ -55,3 +55,10 @@ bool DiffDriveService::OnStart() {
   driver_->Start();
   return true;
 }
+
+xbot::driver::motor::MotorDriver* DiffDriveService::GetDriverInstance() {
+  if (driver_ == nullptr) {
+    driver_ = new xbot::driver::motor::MotorDriver(&mcu_dispatcher_driver);
+  }
+  return driver_; 
+}

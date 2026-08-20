@@ -6,6 +6,7 @@
 #define MOWER_SERVICE_HPP
 
 #include <MowerServiceBase.hpp>
+#include <drivers/motor/motor_driver.hpp>
 
 using namespace xbot::service;
 
@@ -15,6 +16,7 @@ class MowerService : public MowerServiceBase {
   }
 
  private:
+  xbot::driver::motor::MotorDriver* driver_ = nullptr;
   bool mower_running_ = false;
   void tick();
   ManagedSchedule tick_schedule_{scheduler_, IsRunning(), 1'000'000,

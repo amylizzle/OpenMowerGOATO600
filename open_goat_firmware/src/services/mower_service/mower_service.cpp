@@ -4,28 +4,35 @@
 
 #include "mower_service.hpp"
 
+#include <globals.hpp>
+
 bool MowerService::OnStart() {
+  if (driver_ == nullptr) {
+    driver_ = diff_drive.GetDriverInstance(); //can't really have multiple instances of the same driver, use the diff drive's copy
+  }
+
+  driver_->Start();
   mower_running_ = false;
   return true;
 }
 
 void MowerService::tick() {
+  const auto& state = driver_->GetState();
+
   StartTransaction();
-  bool emergency = false;
-  // bool unused1;
-  // uint16_t unused2;
-  // robot_.GetEmergencyState(unused1, emergency, unused2);
-  bool running = !emergency && mower_running_;
-  SendMowerRunning(running);
+  SendMowerRunning(state.rpm > 0);
   SendRainDetected(false);
-  SendMowerMotorCurrent(running ? 1.0 : 0.0);
-  SendMowerMotorRPM(running ? 4500.0 : 0);
-  SendMowerStatus(200);
-  SendMowerMotorTemperature(25.0);
-  SendMowerESCTemperature(35.0);
+  SendMowerMotorCurrent(static_cast<double>(state.current_input));
+  SendMowerMotorRPM(static_cast<double>(state.rpm));
+  SendMowerStatus(static_cast<uint16_t>(state.status == xbot::driver::motor::MotorDriver::ESCState::ESCStatus::ESC_STATUS_OK ? 200u : 0u));
+  SendMowerMotorTemperature(static_cast<double>(state.temperature_motor));
+  SendMowerESCTemperature(static_cast<double>(state.temperature_pcb));
   CommitTransaction();
 }
 
 void MowerService::OnMowerSpeedChanged(const float& new_value) {
   mower_running_ = new_value != 0.0f;
+  if (driver_ != nullptr) {
+    driver_->SetDuty(mower_running_ ? new_value : 0.0f);
+  }
 }
