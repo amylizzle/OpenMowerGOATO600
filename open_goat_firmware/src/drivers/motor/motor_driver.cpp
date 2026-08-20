@@ -60,39 +60,41 @@ void MotorDriver::Start() {
 
 void MotorDriver::SetDuty(std::optional<float> left, std::optional<float> right, std::optional<float> mow) {
   if (left.has_value()){
-    left_state_.target_duty_ = std::clamp(left.value(), -1.0f, 1.0f);
-    left_state_.direction = (left_state_.target_duty_ >= 0.0f) ? 0.0f : 1.0f;
-    left_state_.rpm = std::fabs(left_state_.target_duty_) * left_state_.max_rpm;
+    left_state_.target_duty = std::clamp(left.value(), -1.0f, 1.0f);
+    left_state_.direction = (left_state_.target_duty >= 0.0f) ? 0.0f : 1.0f;
+    left_state_.target_rpm = std::fabs(left_state_.target_duty) * left_state_.max_rpm;
   }
   if (right.has_value()){
-    right_state_.target_duty_ = std::clamp(right.value(), -1.0f, 1.0f);
-    right_state_.direction = (right_state_.target_duty_ >= 0.0f) ? 0.0f : 1.0f;
-    right_state_.rpm = std::fabs(right_state_.target_duty_) * right_state_.max_rpm;
+    right_state_.target_duty = std::clamp(right.value(), -1.0f, 1.0f);
+    right_state_.direction = (right_state_.target_duty >= 0.0f) ? 0.0f : 1.0f;
+    right_state_.target_rpm = std::fabs(right_state_.target_duty) * right_state_.max_rpm;
   }
   if (mow.has_value()){
-    mow_state_.target_duty_ = std::clamp(mow.value(), -1.0f, 1.0f);
-    mow_state_.direction = (mow_state_.target_duty_ >= 0.0f) ? 0.0f : 1.0f;
-    mow_state_.rpm = std::fabs(mow_state_.target_duty_) * mow_state_.max_rpm;
+    mow_state_.target_duty = std::clamp(mow.value(), -1.0f, 1.0f);
+    mow_state_.direction = (mow_state_.target_duty >= 0.0f) ? 0.0f : 1.0f;
+    mow_state_.target_rpm = std::fabs(mow_state_.target_duty) * mow_state_.max_rpm;
   }
-  if (std::fabs(left_state_.target_duty_) < 0.0001f) {
-    left_state_.rpm = 0.0f;
+  if (std::fabs(left_state_.target_duty) < 0.0001f) {
+    left_state_.target_rpm = 0.0f;
   }
-  if (std::fabs(right_state_.target_duty_) < 0.0001f) {
-    right_state_.rpm = 0.0f;
+  if (std::fabs(right_state_.target_duty) < 0.0001f) {
+    right_state_.target_rpm = 0.0f;
   }
-  if (std::fabs(mow_state_.target_duty_) < 0.0001f) {
-    mow_state_.rpm = 0.0f;
+  if (std::fabs(mow_state_.target_duty) < 0.0001f) {
+    mow_state_.target_rpm = 0.0f;
   }
 
-    std::vector<uint8_t> ctl_message;
-    auto left_cmd = EncodeSpeedCommand(left_state_.brand, left_state_.rpm);
-    auto right_cmd = EncodeSpeedCommand(right_state_.brand, right_state_.rpm);
-    auto mow_cmd = EncodeSpeedCommand(mow_state_.brand, mow_state_.rpm);
 
-    ctl_message.reserve(left_cmd.size() + right_cmd.size() + mow_cmd.size());
-    ctl_message.insert(ctl_message.end(), left_cmd.begin(), left_cmd.end());
-    ctl_message.insert(ctl_message.end(), right_cmd.begin(), right_cmd.end());
-    ctl_message.insert(ctl_message.end(), mow_cmd.begin(), mow_cmd.end());
+  ULOG_INFO("Setting to target rpm: %u, %u, %u",left_state_.target_rpm, right_state_.target_rpm ,mow_state_.target_rpm);
+  std::vector<uint8_t> ctl_message;
+  auto left_cmd = EncodeSpeedCommand(left_state_.brand, left_state_.target_rpm);
+  auto right_cmd = EncodeSpeedCommand(right_state_.brand, right_state_.target_rpm);
+  auto mow_cmd = EncodeSpeedCommand(mow_state_.brand, mow_state_.target_rpm);
+
+  ctl_message.reserve(left_cmd.size() + right_cmd.size() + mow_cmd.size());
+  ctl_message.insert(ctl_message.end(), left_cmd.begin(), left_cmd.end());
+  ctl_message.insert(ctl_message.end(), right_cmd.begin(), right_cmd.end());
+  ctl_message.insert(ctl_message.end(), mow_cmd.begin(), mow_cmd.end());
 
   mcu_driver_->SendMessage('M','A',ctl_message.data(), ctl_message.size());
 }
