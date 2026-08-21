@@ -44,20 +44,17 @@ class MotorDriver {
   ESCState left_state_;
   ESCState right_state_;
   ESCState mow_state_;
-  // a few of the messages seem to report 5 values, not 3. I'm guessing one of those is the LIDAR motor on other models
-  // plus maybe a cooling fan or something?
-  static uint16_t BrandEncode(const ESCState::MotorBrand brand, int speed);
-  static int16_t BrandDecode(const ESCState::MotorBrand brand, uint16_t raw);
-  static std::vector<uint8_t> EncodeMAControl(uint8_t type, uint8_t dir_or_brand, int16_t value);
-  static std::vector<uint8_t> EncodeSpeedCommand(const ESCState::MotorBrand brand, int speed);
-  static std::vector<uint8_t> EncodeEnableCommand(uint8_t motor_type);
-  static std::vector<uint8_t> EncodeStopCommand();
+
+  uint16_t BrandEncode(const ESCState::MotorBrand brand, int speed);
+  std::vector<uint8_t> EncodeMowSpeedCommand(const ESCState::MotorBrand brand, int speed);
+  std::vector<uint8_t> EncodeWheelSpeedCommand(int left, int right);
+  std::vector<uint8_t> EncodeEnableCommand(uint8_t motor_type);
+  std::vector<uint8_t> EncodeStopCommand();
   static inline int16_t ReadI16Le(const uint8_t* data, size_t offset);
   static inline uint16_t ReadU16Le(const uint8_t* data, size_t offset);
 
   uint8_t ack_ = 0;
 
-  void OnMA(const uint8_t* payload, size_t length, uint8_t ack);
   void OnMB(const uint8_t* payload, size_t length, uint8_t ack);
   void OnMC(const uint8_t* payload, size_t length, uint8_t ack);
   void OnMD(const uint8_t* payload, size_t length, uint8_t ack);
@@ -65,6 +62,9 @@ class MotorDriver {
   void OnMF(const uint8_t* payload, size_t length, uint8_t ack);
   void OnMS(const uint8_t* payload, size_t length, uint8_t ack);
   void OnMT(const uint8_t* payload, size_t length, uint8_t ack);
+
+  void OnWD(const uint8_t* payload, size_t length, uint8_t ack);
+  void OnWR(const uint8_t* payload, size_t length, uint8_t ack);
 };
 
 } // namespace xbot::driver::motor

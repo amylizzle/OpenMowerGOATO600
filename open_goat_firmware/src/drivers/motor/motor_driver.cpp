@@ -18,9 +18,7 @@ uint16_t rol16(uint16_t value, uint8_t bits) {
 
 MotorDriver::MotorDriver(xbot::driver::mcu::Dispatcher* dispatcher)
     : mcu_driver_(dispatcher) {
-  if (dispatcher) {
-    dispatcher->RegisterHandler(static_cast<uint8_t>('M'), static_cast<uint8_t>('A'),
-                               etl::delegate<void(const uint8_t*, size_t, uint8_t)>::create<MotorDriver, &MotorDriver::OnMA>(*this));
+    // mow motor
     dispatcher->RegisterHandler(static_cast<uint8_t>('M'), static_cast<uint8_t>('B'),
                                etl::delegate<void(const uint8_t*, size_t, uint8_t)>::create<MotorDriver, &MotorDriver::OnMB>(*this));
     dispatcher->RegisterHandler(static_cast<uint8_t>('M'), static_cast<uint8_t>('C'),
@@ -35,7 +33,13 @@ MotorDriver::MotorDriver(xbot::driver::mcu::Dispatcher* dispatcher)
                                etl::delegate<void(const uint8_t*, size_t, uint8_t)>::create<MotorDriver, &MotorDriver::OnMS>(*this));
     dispatcher->RegisterHandler(static_cast<uint8_t>('M'), static_cast<uint8_t>('T'),
                                etl::delegate<void(const uint8_t*, size_t, uint8_t)>::create<MotorDriver, &MotorDriver::OnMT>(*this));
-  }
+
+    // wheel motor
+    dispatcher->RegisterHandler(static_cast<uint8_t>('W'), static_cast<uint8_t>('D'),
+                            etl::delegate<void(const uint8_t*, size_t, uint8_t)>::create<MotorDriver, &MotorDriver::OnWD>(*this));
+    dispatcher->RegisterHandler(static_cast<uint8_t>('W'), static_cast<uint8_t>('R'),
+                            etl::delegate<void(const uint8_t*, size_t, uint8_t)>::create<MotorDriver, &MotorDriver::OnWD>(*this));
+
 }
 
 inline int16_t MotorDriver::ReadI16Le(const uint8_t* data, size_t offset) {
@@ -84,19 +88,17 @@ void MotorDriver::SetDuty(std::optional<float> left, std::optional<float> right,
     mow_state_.target_rpm = 0.0f;
   }
 
+  auto enable_cmd = EncodeEnableCommand(0x0A); //mow moter enable
+  mcu_driver_->SendMessage('M','A',enable_cmd.data(), enable_cmd.size());
+  enable_cmd = EncodeEnableCommand(0x0C); //wheel moter enable
+  mcu_driver_->SendMessage('W','A',enable_cmd.data(), enable_cmd.size());
 
   ULOG_INFO("Setting to target rpm: %f, %f, %f", left_state_.target_rpm, right_state_.target_rpm, mow_state_.target_rpm);
-  std::vector<uint8_t> ctl_message;
-  auto left_cmd = EncodeSpeedCommand(left_state_.brand, left_state_.target_rpm);
-  auto right_cmd = EncodeSpeedCommand(right_state_.brand, right_state_.target_rpm);
-  auto mow_cmd = EncodeSpeedCommand(mow_state_.brand, mow_state_.target_rpm);
-
-  ctl_message.reserve(left_cmd.size() + right_cmd.size() + mow_cmd.size());
-  ctl_message.insert(ctl_message.end(), left_cmd.begin(), left_cmd.end());
-  ctl_message.insert(ctl_message.end(), right_cmd.begin(), right_cmd.end());
-  ctl_message.insert(ctl_message.end(), mow_cmd.begin(), mow_cmd.end());
-
-  mcu_driver_->SendMessage('M','A',ctl_message.data(), ctl_message.size());
+  auto mow_cmd = EncodeMowSpeedCommand(mow_state_.brand, mow_state_.target_rpm);
+  auto wheel_cmd = EncodeWheelSpeedCommand(left_state_.target_rpm, right_state_.target_rpm);
+  
+  mcu_driver_->SendMessage('M','A',mow_cmd.data(), mow_cmd.size());
+  mcu_driver_->SendMessage('W','A',wheel_cmd.data(), wheel_cmd.size());
 }
 
 const MotorDriver::ESCState& MotorDriver::GetLeftState() const {
@@ -120,37 +122,8 @@ uint16_t MotorDriver::BrandEncode(const ESCState::MotorBrand brand, int speed) {
   return magnitude;
 }
 
-int16_t MotorDriver::BrandDecode(const ESCState::MotorBrand brand, uint16_t raw) {
-  int32_t signed_raw = static_cast<int32_t>(raw & 0xFFFFu);
-  if (signed_raw & 0x8000) {
-    signed_raw -= 0x10000;
-  }
-
-  if (brand == ESCState::MotorBrand::BRAND_DECHANG) {
-    const uint32_t v = (static_cast<uint32_t>(signed_raw * 2u) | (static_cast<uint32_t>(signed_raw >> 31))) & 0xFFFFFFFFu;
-    const uint32_t rolled = ((v << 31) | (v >> 1)) & 0xFFFFFFFFu;
-    return static_cast<int16_t>(rolled & 0xFFFFu);
-  }
-
-  if (brand == ESCState::MotorBrand::BRAND_LIANYI) {
-    int32_t v = signed_raw + (signed_raw < 0 ? 3 : 0);
-    v = v >> 2;
-    return static_cast<int16_t>(v & 0xFFFF);
-  }
-
-  return static_cast<int16_t>(signed_raw & 0xFFFF);
-}
-
-std::vector<uint8_t> MotorDriver::EncodeMAControl(uint8_t type, uint8_t dir_or_brand, int16_t value) {
-  std::vector<uint8_t> control(4);
-  control[0] = type;
-  control[1] = dir_or_brand;
-  control[2] = static_cast<uint8_t>(value & 0xFF);
-  control[3] = static_cast<uint8_t>((value >> 8) & 0xFF);
-  return control;
-}
-
-std::vector<uint8_t> MotorDriver::EncodeSpeedCommand(const ESCState::MotorBrand brand, int speed) {
+// mow speed message
+std::vector<uint8_t> MotorDriver::EncodeMowSpeedCommand(const ESCState::MotorBrand brand, int speed) {
   const bool dir = speed >= 0 ? false : true;
   const uint16_t encoded = BrandEncode(brand, std::abs(speed)) & 0xFFFFu;
   std::vector<uint8_t> out(4);
@@ -161,59 +134,33 @@ std::vector<uint8_t> MotorDriver::EncodeSpeedCommand(const ESCState::MotorBrand 
   return out;
 }
 
+// wheel speed message (mm/s maybe?)
+std::vector<uint8_t> MotorDriver::EncodeWheelSpeedCommand(int left, int right) {
+    std::vector<uint8_t> p(19, 0x00);
+    auto put = [&p](int speed, size_t signOff, size_t valOff) {
+        int mag = std::abs(speed);
+        uint16_t m = (uint16_t)(mag & 0xFFFF);
+        p[signOff] = (speed < 0) ? 1 : 0;
+        p[valOff]     = (uint8_t)(m & 0xFF);
+        p[valOff + 1] = (uint8_t)(m >> 8);
+    };
+    put(left, 1, 2);
+    put(right, 10, 11);
+    return p;
+}
+
 std::vector<uint8_t> MotorDriver::EncodeEnableCommand(uint8_t motor_type) {
   return {static_cast<uint8_t>(0x0B), static_cast<uint8_t>(0x01),
           static_cast<uint8_t>(motor_type & 0xFFu), static_cast<uint8_t>(0x00)};
 }
 
+// motor type not specified for some reason?
 std::vector<uint8_t> MotorDriver::EncodeStopCommand() {
   return {static_cast<uint8_t>(0x02), static_cast<uint8_t>(0x00),
           static_cast<uint8_t>(0x00), static_cast<uint8_t>(0x00)};
 }
 
-void MotorDriver::OnMA(const uint8_t* payload, size_t length, uint8_t ack) {
-    (void) ack;
-  if (!payload || length == 0) {
-    return;
-  }
-  ULOG_INFO("[MOTOR] MA Signal ack %u len %zu", ack, length);
-  for (size_t i = 0; i + 3 < length; i += 4) {
-    const uint8_t type = payload[i];
-    const uint8_t dir_or_brand = payload[i + 1];
-    const int16_t value = ReadI16Le(payload, i + 2);
-    ack_ = ack_;
-    switch(i){
-        case 0:
-            if (type == 0x0A) {
-                left_state_.direction = ((dir_or_brand & 0x01u) != 0u) ? 1.0f : 0.0f;
-                left_state_.rpm = std::fabs(static_cast<float>(value));
-            } else if (type == 0x0B) {
-                left_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
-            }
-            break;
-        case 4:
-            if (type == 0x0A) {
-                left_state_.direction = ((dir_or_brand & 0x01u) != 0u) ? 1.0f : 0.0f;
-                left_state_.rpm = std::fabs(static_cast<float>(value));
-            } else if (type == 0x0B) {
-                left_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
-            }
-            break;
-        case 8:
-            if (type == 0x0A) {
-                left_state_.direction = ((dir_or_brand & 0x01u) != 0u) ? 1.0f : 0.0f;
-                left_state_.rpm = std::fabs(static_cast<float>(value));
-            } else if (type == 0x0B) {
-                left_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
-            }
-            break;  
-        default:
-            ULOG_INFO("[MOTOR] MA Signal i:%i dir: %u rpm: %u",i, dir_or_brand, value); break; 
-        }                 
-  }
-  
-}
-
+// all motor current report
 void MotorDriver::OnMB(const uint8_t* payload, size_t length, uint8_t ack) {
     (void) ack;
   if (!payload || length == 0) {
@@ -228,23 +175,23 @@ void MotorDriver::OnMB(const uint8_t* payload, size_t length, uint8_t ack) {
         case 0: left_state_.current_input = static_cast<float>(value); break;
         case 1: right_state_.current_input = static_cast<float>(value); break;
         case 2: mow_state_.current_input = static_cast<float>(value); break;
-        default: break;
+        default: break; //5 channels, one packing gap, channels 0,1,2 are current (maybe) 
     }
   }
   
 }
 
+// MOW motor current response from request? Weird. MB messages stream current though.
 void MotorDriver::OnMC(const uint8_t* payload, size_t length, uint8_t ack) {
     (void) ack;
   if (!payload || length <= 2) {
     return;
   }
   ULOG_WARNING("[MOTOR] MC: ack %u val: %u", ack, static_cast<unsigned>(payload[2]));
-//   state_.current_input = static_cast<float>(payload[2]);
-//   state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
-  
+  mow_state_.current_input = static_cast<float>(payload[2]);   
 }
 
+// MOW motor distance report? 
 void MotorDriver::OnMD(const uint8_t* payload, size_t length, uint8_t ack) {
     (void) ack;
   if (!payload || length == 0) {
@@ -252,15 +199,15 @@ void MotorDriver::OnMD(const uint8_t* payload, size_t length, uint8_t ack) {
   }
   const uint8_t flag = payload[0];
   ULOG_WARNING("[MOTOR] MD: ack %u flag: %u", ack, static_cast<unsigned>(flag));
-  switch (flag) {
-    case 0: left_state_.status = ESCState::ESCStatus::ESC_STATUS_DISCONNECTED; break;
-    case 1: left_state_.status = ESCState::ESCStatus::ESC_STATUS_OK; break;
-    case 2: left_state_.status = ESCState::ESCStatus::ESC_STATUS_ERROR; break;
-    default: left_state_.status = ESCState::ESCStatus::ESC_STATUS_DISCONNECTED; break;
-  }
-  
+//   switch (flag) {
+//     case 0: left_state_.status = ESCState::ESCStatus::ESC_STATUS_DISCONNECTED; break;
+//     case 1: left_state_.status = ESCState::ESCStatus::ESC_STATUS_OK; break;
+//     case 2: left_state_.status = ESCState::ESCStatus::ESC_STATUS_ERROR; break;
+//     default: left_state_.status = ESCState::ESCStatus::ESC_STATUS_ERROR; break;
+//   } 
 }
 
+// MOW motor error? TODO
 void MotorDriver::OnME(const uint8_t* payload, size_t length, uint8_t ack) {
     (void) ack;
   if (!payload || length == 0) {
@@ -280,6 +227,7 @@ void MotorDriver::OnME(const uint8_t* payload, size_t length, uint8_t ack) {
   
 }
 
+// MOW motor warning states? TODO
 void MotorDriver::OnMF(const uint8_t* payload, size_t length, uint8_t ack) {
     (void) ack;
   if (!payload || length == 0) {
@@ -290,32 +238,23 @@ void MotorDriver::OnMF(const uint8_t* payload, size_t length, uint8_t ack) {
 //   if (warning == 4 || warning == 5 || warning == 10) {
 //     state_.status = ESCState::ESCStatus::ESC_STATUS_ERROR;
 //   }
-  
 }
 
+// MOW motor status 
 void MotorDriver::OnMS(const uint8_t* payload, size_t length, uint8_t ack) {
     (void) ack;
   if (!payload || length <= 1) {
     return;
   }
   const uint8_t motor_type = payload[0];
-  ULOG_WARNING("[MOTOR] MS: ack %u type %u", ack, static_cast<unsigned>(motor_type));
-  if (motor_type == 10 && length >= 7) {
-    const int16_t rpm1 = ReadI16Le(payload, 1);
-    const int16_t rpm2 = ReadI16Le(payload, 3);
-    const int16_t rpm3 = ReadI16Le(payload, 5);
-    ULOG_WARNING("[MOTOR] RPM - %d %d %d", rpm1, rpm2, rpm3);
-    left_state_.rpm = static_cast<float>(rpm1);
-    right_state_.rpm = static_cast<float>(rpm2);
-    mow_state_.rpm = static_cast<float>(rpm3);
-    left_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
-    right_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
-    mow_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
-    
-  }
-  
+  const int16_t rpm1 = ReadI16Le(payload, 1);
+  const int16_t rpm2 = ReadI16Le(payload, 3);
+  ULOG_WARNING("[MOTOR] MS: ack %u type %u RPM - %d %d", ack, motor_type, rpm1, rpm2);
+  mow_state_.rpm = static_cast<float>(rpm1);
+  mow_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
 }
 
+// MOW motor text logging from the MCU? weird
 void MotorDriver::OnMT(const uint8_t* payload, size_t length, uint8_t ack) {
     (void) ack;
   if (!payload || length == 0) {
@@ -326,9 +265,38 @@ void MotorDriver::OnMT(const uint8_t* payload, size_t length, uint8_t ack) {
   if (count < length) {
     info.resize(static_cast<size_t>(count));
   }
-  ULOG_WARNING("[MOTOR] MT: ack %u info: %s", ack, info.c_str());
-//   state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
-  
+  ULOG_WARNING("[MOTOR] MT: ack %u info: %s", ack, info.c_str());  
+}
+
+
+// Wheel motor distance report? 
+void MotorDriver::OnWD(const uint8_t* payload, size_t length, uint8_t ack) {
+    (void) ack;
+  if (!payload || length == 0) {
+    return;
+  }
+  const uint8_t flag = payload[0];
+  ULOG_WARNING("[MOTOR] WD: ack %u flag: %u", ack, static_cast<unsigned>(flag));
+//   switch (flag) {
+//     case 0: left_state_.status = ESCState::ESCStatus::ESC_STATUS_DISCONNECTED; break;
+//     case 1: left_state_.status = ESCState::ESCStatus::ESC_STATUS_OK; break;
+//     case 2: left_state_.status = ESCState::ESCStatus::ESC_STATUS_ERROR; break;
+//     default: left_state_.status = ESCState::ESCStatus::ESC_STATUS_ERROR; break;
+//   } 
+}
+
+// Wheel motor status 
+void MotorDriver::OnWR(const uint8_t* payload, size_t length, uint8_t ack) {
+    (void) ack;
+  if (!payload || length <= 1) {
+    return;
+  }
+  const uint8_t motor_type = payload[0];
+  const int16_t rpm1 = ReadI16Le(payload, 9);
+  const int16_t rpm2 = ReadI16Le(payload, 13);
+  ULOG_WARNING("[MOTOR] WR: ack %u type %u RPM - %d %d", ack, motor_type, rpm1, rpm2);
+  mow_state_.rpm = static_cast<float>(rpm1);
+  mow_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
 }
 
 }  // namespace xbot::driver::motor
