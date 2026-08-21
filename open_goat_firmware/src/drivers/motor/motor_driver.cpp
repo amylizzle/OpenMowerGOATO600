@@ -55,9 +55,9 @@ inline uint16_t MotorDriver::ReadU16Le(const uint8_t* data, size_t offset) {
 }
 
 void MotorDriver::Start() {
-  left_state_.status = ESCState::ESCStatus::ESC_STATUS_DISCONNECTED;
-  right_state_.status = ESCState::ESCStatus::ESC_STATUS_DISCONNECTED;
-  mow_state_.status = ESCState::ESCStatus::ESC_STATUS_DISCONNECTED;
+  left_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
+  right_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
+  mow_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
   
 }
 

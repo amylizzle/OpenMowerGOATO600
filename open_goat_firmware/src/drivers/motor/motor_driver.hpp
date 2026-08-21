@@ -25,8 +25,8 @@ class MotorDriver {
     float direction = 0.0f; // 0..1
     float target_duty = 0.0f;
     float target_rpm = 0.0f;
-    float max_rpm = 1.0f;
-    ESCStatus status = ESCStatus::ESC_STATUS_DISCONNECTED;
+    float max_rpm = 1000.0f;
+    ESCStatus status = ESCStatus::ESC_STATUS_OK;
     MotorBrand brand = MotorBrand::BRAND_KAIHANG;
   };
 
