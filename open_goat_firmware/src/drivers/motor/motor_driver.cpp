@@ -160,7 +160,7 @@ std::vector<uint8_t> MotorDriver::EncodeStopCommand() {
           static_cast<uint8_t>(0x00), static_cast<uint8_t>(0x00)};
 }
 
-// all motor current report
+// all motor current report (mA I'm assuming)
 void MotorDriver::OnMB(const uint8_t* payload, size_t length, uint8_t ack) {
     (void) ack;
   if (!payload || length == 0) {
@@ -172,9 +172,9 @@ void MotorDriver::OnMB(const uint8_t* payload, size_t length, uint8_t ack) {
     const int16_t value = ReadI16Le(payload, i * 2);
     ULOG_WARNING("[MOTOR] MB i:%zu val: %d", i, value);
     switch(i) {
-        case 0: left_state_.current_input = static_cast<float>(value); break;
-        case 1: right_state_.current_input = static_cast<float>(value); break;
-        case 2: mow_state_.current_input = static_cast<float>(value); break;
+        case 0: left_state_.current_input = static_cast<float>(value)/1000.0f; break; 
+        case 1: right_state_.current_input = static_cast<float>(value)/1000.0f; break;
+        case 2: mow_state_.current_input = static_cast<float>(value)/1000.0f; break;
         default: break; //5 channels, one packing gap, channels 0,1,2 are current (maybe) 
     }
   }

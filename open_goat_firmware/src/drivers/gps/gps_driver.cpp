@@ -47,7 +47,7 @@ bool GpsDriver::StartDriver(std::string path, int baud) {
     "log com1 bestposa ontime 0.1\r\n", //best-pos ASCII position
     "saveconfig\r\n", //persist config
    }) {
-      this->rtklink->write(std::vector<uint8_t>(str.begin(), str.end()));
+      this->slink->write(std::vector<uint8_t>(str.begin(), str.end()));
   }
   stopped_ = false;
   processing_thread_ = createThread(threadHelper, this);
