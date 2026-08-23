@@ -10,6 +10,7 @@
 #include <condition_variable>
 #include <cstdint>
 #include <cstdlib>
+#include <etl/algorithm.h>
 
 // System time helpers (milliseconds since steady clock)
 #include <chrono>
@@ -40,6 +41,16 @@ inline thread_t *createThread(void (*fn)(void *), void *arg) {
   thread_t *t = new thread_t();
   t->native_thread = std::thread([t,fn,arg]() { t->id = std::this_thread::get_id(); fn(arg); });
   return t;
+}
+
+
+inline bool TimeoutReached(uint32_t duration, uint32_t delay, uint32_t& block_time) {
+  if (duration >= delay) {
+    return true;
+  } else {
+    block_time = etl::min(block_time, delay - duration);
+    return false;
+  }
 }
 
 #endif // POSIX_CH_H

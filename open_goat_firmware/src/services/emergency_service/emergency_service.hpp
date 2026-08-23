@@ -15,23 +15,26 @@ class EmergencyService : public EmergencyServiceBase {
  public:
   explicit EmergencyService(uint16_t service_id) : EmergencyServiceBase(service_id) {
   }
+  uint16_t GetEmergencyReasons();
 
  protected:
   void OnStop() override;
+  uint32_t OnLoop(uint32_t now_micros, uint32_t last_tick_micros) override;
   bool OnStart() override;
+  void OnHighLevelEmergencyChanged(const uint16_t* new_value, uint32_t length) override;
+  void OnDriverNotify(const uint16_t emergencyState);
 
  private:
   void tick();
   ManagedSchedule tick_schedule_{scheduler_, IsRunning(), 100'000,
                                  XBOT_FUNCTION_FOR_METHOD(EmergencyService, &EmergencyService::tick, this)};
 
-  // Time the last high-level emergency message was received. Used to raise
-  // TIMEOUT_HIGH_LEVEL when the high level goes quiet, and clear it once it is back.
-  uint32_t last_high_level_emergency_message_{0};
+  void UpdateEmergency(uint16_t add, uint16_t clear = 0);
+  void SendStatus();
+  uint32_t CheckTimeouts(uint32_t now);
+  uint16_t reasons_ = EmergencyReason::TIMEOUT_INPUTS | EmergencyReason::TIMEOUT_HIGH_LEVEL;
+  uint32_t last_high_level_emergency_message_ = 0;
 
- protected:
-  void OnDriverNotify(const uint16_t emergencyState);
-  void OnHighLevelEmergencyChanged(const uint16_t* new_value, uint32_t length) override;
 };
 
 #endif  // EMERGENCY_SERVICE_HPP
