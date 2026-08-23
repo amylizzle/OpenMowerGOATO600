@@ -66,17 +66,17 @@ void MotorDriver::SetDuty(std::optional<float> left, std::optional<float> right,
   if (left.has_value()){
     left_state_.target_duty = std::clamp(left.value(), -1.0f, 1.0f);
     left_state_.direction = (left_state_.target_duty >= 0.0f) ? 0.0f : 1.0f;
-    left_state_.target_rpm = std::fabs(left_state_.target_duty) * left_state_.max_rpm;
+    left_state_.target_rpm = left_state_.target_duty * left_state_.max_rpm;
   }
   if (right.has_value()){
     right_state_.target_duty = std::clamp(right.value(), -1.0f, 1.0f);
     right_state_.direction = (right_state_.target_duty >= 0.0f) ? 0.0f : 1.0f;
-    right_state_.target_rpm = std::fabs(right_state_.target_duty) * right_state_.max_rpm;
+    right_state_.target_rpm = right_state_.target_duty * right_state_.max_rpm;
   }
   if (mow.has_value()){
     mow_state_.target_duty = std::clamp(mow.value(), -1.0f, 1.0f);
     mow_state_.direction = (mow_state_.target_duty >= 0.0f) ? 0.0f : 1.0f;
-    mow_state_.target_rpm = std::fabs(mow_state_.target_duty) * mow_state_.max_rpm;
+    mow_state_.target_rpm = mow_state_.target_duty * mow_state_.max_rpm;
   }
   if (std::fabs(left_state_.target_duty) < 0.0001f) {
     left_state_.target_rpm = 0.0f;
