@@ -170,7 +170,6 @@ void MotorDriver::OnMB(const uint8_t* payload, size_t length, uint8_t ack) {
   const size_t max_words = std::min<size_t>(length / 2, 6u);
   for (size_t i = 0; i < max_words; ++i) {
     const int16_t value = ReadI16Le(payload, i * 2);
-    ULOG_WARNING("[MOTOR] MB i:%zu val: %d", i, value);
     switch(i) {
         case 0: left_state_.current_input = static_cast<float>(value)/1000.0f; break; 
         case 1: right_state_.current_input = static_cast<float>(value)/1000.0f; break;
@@ -198,7 +197,7 @@ void MotorDriver::OnMD(const uint8_t* payload, size_t length, uint8_t ack) {
     return;
   }
   const uint8_t flag = payload[0];
-  ULOG_WARNING("[MOTOR] MD: ack %u flag: %u", ack, static_cast<unsigned>(flag));
+  ULOG_WARNING("[MOTOR] MD: ack %u flag: %u len: %u", ack, static_cast<unsigned>(flag), length);
 //   switch (flag) {
 //     case 0: left_state_.status = ESCState::ESCStatus::ESC_STATUS_DISCONNECTED; break;
 //     case 1: left_state_.status = ESCState::ESCStatus::ESC_STATUS_OK; break;
@@ -214,7 +213,7 @@ void MotorDriver::OnME(const uint8_t* payload, size_t length, uint8_t ack) {
     return;
   }
   const uint8_t kind = payload[0];
-  ULOG_WARNING("[MOTOR] ME: ack %u kind %u", ack, static_cast<unsigned>(kind));
+  ULOG_ERROR("[MOTOR] ME: ack %u kind %u", ack, static_cast<unsigned>(kind));
 //   switch (kind) {
 //     case 1: state_.status = ESCState::ESCStatus::ESC_STATUS_OK; break;
 //     case 2: state_.status = ESCState::ESCStatus::ESC_STATUS_OK; break;
@@ -234,10 +233,10 @@ void MotorDriver::OnMF(const uint8_t* payload, size_t length, uint8_t ack) {
     return;
   }
   const uint8_t warning = payload[0];
-  ULOG_WARNING("[MOTOR] MF: ack %u warn: %u", ack, static_cast<unsigned>(warning));
-//   if (warning == 4 || warning == 5 || warning == 10) {
-//     state_.status = ESCState::ESCStatus::ESC_STATUS_ERROR;
-//   }
+  ULOG_ERROR("[MOTOR] MF: ack %u warn: %u", ack, static_cast<unsigned>(warning));
+  // if (warning == 4 || warning == 5 || warning == 10) {
+  //   state_.status = ESCState::ESCStatus::ESC_STATUS_ERROR;
+  // }
 }
 
 // MOW motor status 
@@ -276,7 +275,7 @@ void MotorDriver::OnWD(const uint8_t* payload, size_t length, uint8_t ack) {
     return;
   }
   const uint8_t flag = payload[0];
-  ULOG_WARNING("[MOTOR] WD: ack %u flag: %u", ack, static_cast<unsigned>(flag));
+  ULOG_WARNING("[MOTOR] WD: ack %u flag: %u len: %u", ack, static_cast<unsigned>(flag), length);
 //   switch (flag) {
 //     case 0: left_state_.status = ESCState::ESCStatus::ESC_STATUS_DISCONNECTED; break;
 //     case 1: left_state_.status = ESCState::ESCStatus::ESC_STATUS_OK; break;
@@ -294,7 +293,7 @@ void MotorDriver::OnWR(const uint8_t* payload, size_t length, uint8_t ack) {
   const uint8_t motor_type = payload[0];
   const int16_t rpm1 = ReadI16Le(payload, 9);
   const int16_t rpm2 = ReadI16Le(payload, 13);
-  ULOG_WARNING("[MOTOR] WR: ack %u type %u RPM - %d %d", ack, motor_type, rpm1, rpm2);
+  ULOG_DEBUG("[MOTOR] WR: ack %u type %u RPM - %d %d", ack, motor_type, rpm1, rpm2);
   mow_state_.rpm = static_cast<float>(rpm1);
   mow_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
 }
