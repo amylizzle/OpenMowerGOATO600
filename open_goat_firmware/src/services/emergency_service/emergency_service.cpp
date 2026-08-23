@@ -17,7 +17,7 @@ bool EmergencyService::OnStart() {
   }
 
   driver_->RegisterNotifyCallback(etl::delegate<void(const uint16_t)>::create<EmergencyService, &EmergencyService::OnDriverNotify>(*this));
-
+  SendStatus();
   return true;
 }
 
@@ -33,7 +33,6 @@ void EmergencyService::OnStop() {
 
 uint32_t EmergencyService::OnLoop(uint32_t now_micros, uint32_t) {
   return CheckTimeouts(now_micros);
-  SendStatus();
 }
 
 void EmergencyService::OnHighLevelEmergencyChanged(const uint16_t* new_value, uint32_t length) {
