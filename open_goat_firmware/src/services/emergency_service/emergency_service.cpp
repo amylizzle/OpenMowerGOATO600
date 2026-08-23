@@ -75,7 +75,5 @@ void EmergencyService::SendStatus() {
 }
 
 void EmergencyService::tick() {
-  uint16_t emergency_reason = driver_->GetEmergencyState();
-
-  UpdateEmergency(emergency_reason);
+  SendStatus();
 }
