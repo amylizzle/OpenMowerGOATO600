@@ -324,8 +324,8 @@ launchom() {
     killall hydra.sh || true
     killall hydra || true
     # gotta shut down the host ROS if you want it to work
-    service ros stop
-    service roscore stop
+    service ros stop || true
+    service roscore stop || true
     run_chroot "
         source /workspace/devel/setup.bash
         source /workspace/mower_config.sh

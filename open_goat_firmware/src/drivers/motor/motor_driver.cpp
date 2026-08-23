@@ -93,7 +93,7 @@ void MotorDriver::SetDuty(std::optional<float> left, std::optional<float> right,
   enable_cmd = EncodeEnableCommand(0x0C); //wheel moter enable
   mcu_driver_->SendMessage('W','A',enable_cmd.data(), enable_cmd.size());
 
-  ULOG_INFO("Setting to target rpm: %f, %f, %f", left_state_.target_rpm, right_state_.target_rpm, mow_state_.target_rpm);
+  ULOG_DEBUG("Setting to target rpm: %f, %f, %f", left_state_.target_rpm, right_state_.target_rpm, mow_state_.target_rpm);
   auto mow_cmd = EncodeMowSpeedCommand(mow_state_.brand, mow_state_.target_rpm);
   auto wheel_cmd = EncodeWheelSpeedCommand(left_state_.target_rpm, right_state_.target_rpm);
   
@@ -166,7 +166,7 @@ void MotorDriver::OnMB(const uint8_t* payload, size_t length, uint8_t ack) {
   if (!payload || length == 0) {
     return;
   }
-  ULOG_INFO("[MOTOR] MB Signal ack %u len %zu", ack, length);
+  ULOG_DEBUG("[MOTOR] MB Signal ack %u len %zu", ack, length);
   const size_t max_words = std::min<size_t>(length / 2, 6u);
   for (size_t i = 0; i < max_words; ++i) {
     const int16_t value = ReadI16Le(payload, i * 2);
@@ -249,7 +249,7 @@ void MotorDriver::OnMS(const uint8_t* payload, size_t length, uint8_t ack) {
   const uint8_t motor_type = payload[0];
   const int16_t rpm1 = ReadI16Le(payload, 1);
   const int16_t rpm2 = ReadI16Le(payload, 3);
-  ULOG_WARNING("[MOTOR] MS: ack %u type %u RPM - %d %d", ack, motor_type, rpm1, rpm2);
+  ULOG_DEBUG("[MOTOR] MS: ack %u type %u RPM - %d %d", ack, motor_type, rpm1, rpm2);
   mow_state_.rpm = static_cast<float>(rpm1);
   mow_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
 }

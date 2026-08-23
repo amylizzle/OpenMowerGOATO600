@@ -135,26 +135,8 @@ public:
     }
 
 
-    void print_hex(const std::vector<uint8_t>& data) {
-        // Save original formatting flags so we don't pollute std::cout later
-        std::ios state(nullptr);
-        state.copyfmt(std::cout);
-
-        std::cout << std::hex << std::setfill('0');
-        
-        for (uint8_t byte : data) {
-            // Cast to unsigned to prevent char printing and avoid sign extension
-            std::cout << std::setw(2) << static_cast<unsigned>(byte) << ' ';
-        }
-        std::cout << '\n';
-
-        // Restore original formatting
-        std::cout.copyfmt(state);
-    }
-
     ssize_t write(const std::vector<uint8_t>& data) {
         if (fd < 0) return -1;
-        print_hex(data);
         return ::write(fd, data.data(), data.size());
     }
 
