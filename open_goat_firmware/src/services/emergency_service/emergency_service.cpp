@@ -15,7 +15,7 @@ bool EmergencyService::OnStart() {
     // We don't have a driver running yet, so create one.
     driver_ = new EmergencyDriver(&mcu_dispatcher_driver);
   }
-
+  reasons_ = 0;
   driver_->RegisterNotifyCallback(etl::delegate<void(const uint16_t)>::create<EmergencyService, &EmergencyService::OnDriverNotify>(*this));
   SendStatus();
   return true;
