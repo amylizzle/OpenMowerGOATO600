@@ -26,6 +26,9 @@ class Dispatcher {
 	// Encode and send a frame, return ack byte
 	uint8_t SendMessage(uint8_t cmd0, uint8_t cmd1, const uint8_t *payload, size_t length);
 
+ private:
+ 	void OnTBMessage(const uint8_t *payload, size_t length, uint8_t ack);
+
  protected:
 	MCULink* mlink{};
 	bool stopped_ = true;

@@ -80,7 +80,7 @@ void Dispatcher::ThreadEntry(void* arg) {
 	if (inst) FrameReaderLoop(inst);
 }
 
-void EmergencyDriver::OnTBMessage(const uint8_t *payload, size_t length, uint8_t ack) {
+void Dispatcher::OnTBMessage(const uint8_t *payload, size_t length, uint8_t ack) {
     (void) ack;
 	ULOG_INFO("MCU Message: %.*s", static_cast<int>(length), reinterpret_cast<const char*>(payload));
 }
