@@ -233,7 +233,7 @@ EOF
 # ----------------------------------------------------------------------------
 # build
 # ----------------------------------------------------------------------------
-build() {
+build_fw() {
     require_root
     [[ -d "${ROOTFS}" && -f "${ROOTFS}/usr/bin/bash" ]] || {
         warn "rootfs missing; running setup first"
@@ -247,6 +247,11 @@ build() {
         cd build_fw/
         make
     "
+    info "firmware built!"
+}
+
+build() {
+    build_fw
 
     info "running catkin_make inside the chroot"
     # catkin_init_workspace only creates src/CMakeLists.txt if it is absent
@@ -320,12 +325,6 @@ cleanup() {
 }
 
 launchom() {
-    # kill the process monitor so it stops beeping at you
-    killall hydra.sh || true
-    killall hydra || true
-    # gotta shut down the host ROS if you want it to work
-    service ros stop || true
-    service roscore stop || true
     run_chroot "
         source /workspace/devel/setup.bash
         source /workspace/mower_config.sh
@@ -351,6 +350,7 @@ case "${1:-}" in
     build)   build ;;
     shell)   shell ;;
     run)     launchom   ;;
+    buildfw)   build_fw ;;
     cleanup) cleanup "${2:-}" ;;
     "" )     info "no command given; running setup, build, run"; setup; build; launchom ;;
     *)       fatal "unknown command '${1}'; expected setup|build|shell|cleanup" ;;
