@@ -45,6 +45,13 @@ void DiffDriveService::tick() {
 
 void DiffDriveService::OnControlTwistChanged(const double* new_value, uint32_t length) {
   if (length != 6) return;
+  bool emergency = emergency_service.GetEmergencyReasons() != 0;
+  if (emergency) {
+    if (driver_ != nullptr) {
+      driver_->SetDuty(0.0f,0.0f,0.0f);
+    }
+    return;
+  }
   // data[0] = msg->linear.x;
   // data[1] = msg->linear.y;
   // data[2] = msg->linear.z;
@@ -97,6 +104,18 @@ bool DiffDriveService::OnStart() {
 
   driver_->Start();
   return true;
+}
+
+// called by emergency service
+void DiffDriveService::OnEmergencyChangedEvent() {
+  bool emergency = emergency_service.GetEmergencyReasons() != 0;
+  if (!emergency) {
+    // only set speed to 0 if the emergency happens, not if it's cleared
+    return;
+  }
+  if (driver_ != nullptr) {
+    driver_->SetDuty(0.0f,0.0f,0.0f);
+  }
 }
 
 xbot::driver::motor::MotorDriver* DiffDriveService::GetDriverInstance() {

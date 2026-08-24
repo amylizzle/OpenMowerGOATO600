@@ -15,7 +15,7 @@
 extern xbot::driver::mcu::Dispatcher mcu_dispatcher_driver;
 
 extern EmergencyService emergency_service;
-extern DiffDriveService diff_drive;
+extern DiffDriveService diff_drive_service;
 extern MowerService mower_service;
 extern ImuService imu_service;
 extern PowerService power_service;

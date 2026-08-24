@@ -30,7 +30,7 @@ int main() {
 	ULOG_INFO("Emergency...");
 	emergency_service.start();
 	ULOG_INFO("Diff drive...");
-	diff_drive.start();
+	diff_drive_service.start();
 	ULOG_INFO("Mower...");
 	mower_service.start();
 	ULOG_INFO("IMU...");

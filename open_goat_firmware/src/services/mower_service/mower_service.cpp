@@ -8,7 +8,7 @@
 
 bool MowerService::OnStart() {
   if (driver_ == nullptr) {
-    driver_ = diff_drive.GetDriverInstance(); //can't really have multiple instances of the same driver, use the diff drive's copy
+    driver_ = diff_drive_service.GetDriverInstance(); //can't really have multiple instances of the same driver, use the diff drive's copy
   }
 
   driver_->Start();
