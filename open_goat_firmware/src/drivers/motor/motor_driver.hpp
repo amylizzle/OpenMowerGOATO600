@@ -44,6 +44,10 @@ class MotorDriver {
   ESCState left_state_;
   ESCState right_state_;
   ESCState mow_state_;
+  
+  thread_t *processing_thread_ = nullptr;
+  static void MotorMessageLoop(MotorDriver* instance);
+  static void ThreadEntry(void* arg);
 
   uint16_t BrandEncode(const ESCState::MotorBrand brand, int speed);
   std::vector<uint8_t> EncodeMowSpeedCommand(const ESCState::MotorBrand brand, int speed);

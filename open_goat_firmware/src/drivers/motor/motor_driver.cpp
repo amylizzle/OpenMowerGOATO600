@@ -58,9 +58,31 @@ void MotorDriver::Start() {
   left_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
   right_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
   mow_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
-  
+
+  auto enable_cmd = EncodeEnableCommand(0x0A); //mow moter enable
+  mcu_driver_->SendMessage('M','A',enable_cmd.data(), enable_cmd.size());
+  enable_cmd = EncodeEnableCommand(0x0C); //wheel moter enable
+  mcu_driver_->SendMessage('W','A',enable_cmd.data(), enable_cmd.size());
+  processing_thread_ = createThread(ThreadEntry, this);
 }
 
+void MotorDriver::ThreadEntry(void* arg) {
+	auto inst = static_cast<MotorDriver*>(arg);
+	if (inst) MotorMessageLoop(inst);
+}
+
+void MotorDriver::MotorMessageLoop(MotorDriver* instance) {
+  while(true){
+    auto mow_cmd = instance->EncodeMowSpeedCommand(instance->mow_state_.brand, instance->mow_state_.target_rpm);
+    auto wheel_cmd = instance->EncodeWheelSpeedCommand(instance->left_state_.target_rpm, instance->right_state_.target_rpm);
+    
+    instance->mcu_driver_->SendMessage('M','A',mow_cmd.data(), mow_cmd.size());
+    instance->mcu_driver_->SendMessage('W','A',wheel_cmd.data(), wheel_cmd.size());
+    std::this_thread::sleep_for(
+      std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::duration<double>(0.02)) //50Hz
+    );
+  }
+}
 
 void MotorDriver::SetDuty(std::optional<float> left, std::optional<float> right, std::optional<float> mow) {
   if (left.has_value()){
@@ -88,17 +110,8 @@ void MotorDriver::SetDuty(std::optional<float> left, std::optional<float> right,
     mow_state_.target_rpm = 0.0f;
   }
 
-  auto enable_cmd = EncodeEnableCommand(0x0A); //mow moter enable
-  mcu_driver_->SendMessage('M','A',enable_cmd.data(), enable_cmd.size());
-  enable_cmd = EncodeEnableCommand(0x0C); //wheel moter enable
-  mcu_driver_->SendMessage('W','A',enable_cmd.data(), enable_cmd.size());
-
   ULOG_DEBUG("Setting to target rpm: %f, %f, %f", left_state_.target_rpm, right_state_.target_rpm, mow_state_.target_rpm);
-  auto mow_cmd = EncodeMowSpeedCommand(mow_state_.brand, mow_state_.target_rpm);
-  auto wheel_cmd = EncodeWheelSpeedCommand(left_state_.target_rpm, right_state_.target_rpm);
   
-  mcu_driver_->SendMessage('M','A',mow_cmd.data(), mow_cmd.size());
-  mcu_driver_->SendMessage('W','A',wheel_cmd.data(), wheel_cmd.size());
 }
 
 const MotorDriver::ESCState& MotorDriver::GetLeftState() const {
