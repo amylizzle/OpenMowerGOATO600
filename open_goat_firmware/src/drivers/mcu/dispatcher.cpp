@@ -34,12 +34,13 @@ void Dispatcher::FrameReaderLoop(Dispatcher* instance) {
 	// Scan for frames. We return the number of bytes consumed from the front
 	while(true){
 		if (auto buffer = instance->mlink->read_frame()) {
-
-			uint8_t ack = buffer.value()[1];
-			uint8_t cmd0 = buffer.value()[3];
-			uint8_t cmd1 = buffer.value()[4];
-			size_t data_len = buffer.value().size() - 2;
-			const uint8_t *data_ptr = &buffer.value()[5];
+			auto val = buffer.value();
+			uint8_t ack = val[1];
+			uint8_t cmd0 = val[3];
+			uint8_t cmd1 = val[4];
+			// last two bytes are crc, terminator (0x0A)
+			size_t data_len = val.size() - 2;
+			const uint8_t *data_ptr = &val[5];
 
 			// dispatch
 			bool dispatched = false;
@@ -47,8 +48,7 @@ void Dispatcher::FrameReaderLoop(Dispatcher* instance) {
 			for (auto &p : instance->handlers_) {
 				if (p.first == key) {
 					if (p.second) {
-						// last two bytes are crc, terminator (0x0A)
-						p.second(data_ptr, data_len-2, ack);
+						p.second(data_ptr, data_len, ack);
 						dispatched = true;
 					}
 						
@@ -82,7 +82,7 @@ void Dispatcher::ThreadEntry(void* arg) {
 
 void Dispatcher::OnTBMessage(const uint8_t *payload, size_t length, uint8_t ack) {
     (void) ack;
-	ULOG_INFO("MCU Message: %.*s", static_cast<int>(length), reinterpret_cast<const char*>(payload));
+	ULOG_INFO("MCU Message: %s", std::string(reinterpret_cast<const char*>(payload), length).c_str());
 }
 
 }  // namespace xbot::driver::mcu
