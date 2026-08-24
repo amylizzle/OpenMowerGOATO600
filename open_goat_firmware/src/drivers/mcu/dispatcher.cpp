@@ -38,8 +38,8 @@ void Dispatcher::FrameReaderLoop(Dispatcher* instance) {
 			uint8_t ack = val[1];
 			uint8_t cmd0 = val[3];
 			uint8_t cmd1 = val[4];
-			// last two bytes are crc, terminator (0x0A)
-			size_t data_len = val.size() - 2;
+			// first 3 bytes are ack and cmd, last two bytes are crc, terminator (0x0A)
+			size_t data_len = (val.size() -3) - 2;
 			const uint8_t *data_ptr = &val[5];
 
 			// dispatch

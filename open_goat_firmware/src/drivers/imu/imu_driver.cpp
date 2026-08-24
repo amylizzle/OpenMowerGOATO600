@@ -89,6 +89,7 @@ void ImuDriver::OnGD(const uint8_t *payload, size_t length, uint8_t ack) {
         data_.accel[0] = data_.accel[1] = data_.accel[2] = 0;
         data_.mag[0] = data_.mag[1] = data_.mag[2] = 0;
         data_.ts = 0;
+        ULOG_WARNING("INVALID IMU DATA")
         return;
     }
     if (length >= (0x15 + 4)) {
