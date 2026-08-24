@@ -39,12 +39,20 @@ void Dispatcher::FrameReaderLoop(Dispatcher* instance) {
 			const uint8_t *data_ptr = &buffer.value()[5];
 
 			// dispatch
+			bool dispatched = false;
 			uint16_t key = static_cast<uint16_t>((cmd0 << 8) | cmd1);
 			for (auto &p : instance->handlers_) {
 				if (p.first == key) {
-					// last two bytes are crc, terminator (0x0A)
-					if (p.second) p.second(data_ptr, data_len-2, ack);
+					if (p.second) {
+						// last two bytes are crc, terminator (0x0A)
+						p.second(data_ptr, data_len-2, ack);
+						dispatched = true;
+					}
+						
 				}
+			}
+			if!(dispatched){
+				ULOG_WARNING("UNHANDLED MCU MESSAGE %c%c",cmd0,cmd1);
 			}
 		}
 	}

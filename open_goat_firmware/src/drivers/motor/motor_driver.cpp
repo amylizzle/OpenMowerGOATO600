@@ -274,8 +274,8 @@ void MotorDriver::OnWD(const uint8_t* payload, size_t length, uint8_t ack) {
   if (!payload || length == 0) {
     return;
   }
-  const uint8_t flag = payload[0];
-  ULOG_WARNING("[MOTOR] WD: ack %u flag: %u len: %u", ack, static_cast<unsigned>(flag), length);
+  // const uint8_t flag = payload[0];
+  // ULOG_WARNING("[MOTOR] WD: ack %u flag: %u len: %u", ack, static_cast<unsigned>(flag), length);
 //   switch (flag) {
 //     case 0: left_state_.status = ESCState::ESCStatus::ESC_STATUS_DISCONNECTED; break;
 //     case 1: left_state_.status = ESCState::ESCStatus::ESC_STATUS_OK; break;
