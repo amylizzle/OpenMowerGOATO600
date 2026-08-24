@@ -51,7 +51,7 @@ void Dispatcher::FrameReaderLoop(Dispatcher* instance) {
 						
 				}
 			}
-			if!(dispatched){
+			if(!dispatched){
 				ULOG_WARNING("UNHANDLED MCU MESSAGE %c%c",cmd0,cmd1);
 			}
 		}
