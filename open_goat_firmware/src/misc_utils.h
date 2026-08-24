@@ -1,8 +1,8 @@
 // POSIX compatibility for ChibiOS-like APIs used in this project.
 // This header provides a minimal set of macros/types/functions so existing
 // firmware code referencing ch* and HAL UART APIs can compile on Linux.
-#ifndef POSIX_CH_H
-#define POSIX_CH_H
+#ifndef MISC_UTILS_H
+#define MISC_UTILS_H
 
 #include <pthread.h>
 #include <thread>
@@ -53,4 +53,4 @@ inline bool TimeoutReached(uint32_t duration, uint32_t delay, uint32_t& block_ti
   }
 }
 
-#endif // POSIX_CH_H
+#endif // MISC_UTILS_H

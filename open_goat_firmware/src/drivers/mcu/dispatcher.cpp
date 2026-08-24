@@ -9,7 +9,7 @@
 #include <vector>
 #include <utility>
 #include <etl/algorithm.h>
-#include "posix_ch.h"
+#include "misc_utils.h"
 
 namespace xbot::driver::mcu {
 
@@ -42,7 +42,8 @@ void Dispatcher::FrameReaderLoop(Dispatcher* instance) {
 			uint16_t key = static_cast<uint16_t>((cmd0 << 8) | cmd1);
 			for (auto &p : instance->handlers_) {
 				if (p.first == key) {
-					if (p.second) p.second(data_ptr, data_len, ack);
+					// last two bytes are crc, terminator (0x0A)
+					if (p.second) p.second(data_ptr, data_len-2, ack);
 				}
 			}
 		}

@@ -8,7 +8,7 @@
 #include <etl/delegate.h>
 
 #include "GpsServiceBase.hpp"
-#include "posix_ch.h"
+#include "misc_utils.h"
 #include <mutex>
 #include "SerialDriver.cpp"
 

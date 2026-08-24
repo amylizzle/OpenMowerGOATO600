@@ -5,7 +5,7 @@
 #include <ulog.h>
 
 #include <cstdio>
-#include "posix_ch.h"
+#include "misc_utils.h"
 
 bool GpsService::LoadAndStartGpsDriver(ProtocolType protocol_type, const char *device, uint32_t baudrate) {
   // Create the requested driver
