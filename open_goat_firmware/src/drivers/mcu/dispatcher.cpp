@@ -19,6 +19,9 @@ bool Dispatcher::StartDriver(std::string path, int baud) {
 	if (!stopped_) return false;
 	this->mlink = new MCULink(path,baud);
 	processing_thread_ = createThread(ThreadEntry, this);
+	this->RegisterHandler(
+          static_cast<uint8_t>('T'), static_cast<uint8_t>('B'), // Log text message
+          etl::delegate<void(const uint8_t *, size_t, uint8_t)>::create<Dispatcher, &Dispatcher::OnTBMessage>(*this));
 	return true;
 }
 
@@ -75,6 +78,11 @@ uint8_t Dispatcher::SendMessage(uint8_t cmd0, uint8_t cmd1, const uint8_t *paylo
 void Dispatcher::ThreadEntry(void* arg) {
 	auto inst = static_cast<Dispatcher*>(arg);
 	if (inst) FrameReaderLoop(inst);
+}
+
+void EmergencyDriver::OnTBMessage(const uint8_t *payload, size_t length, uint8_t ack) {
+    (void) ack;
+	ULOG_INFO("MCU Message: %.*s", static_cast<int>(length), reinterpret_cast<const char*>(payload));
 }
 
 }  // namespace xbot::driver::mcu
