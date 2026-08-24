@@ -86,7 +86,8 @@ void Dispatcher::ThreadEntry(void* arg) {
 
 void Dispatcher::OnTBMessage(const uint8_t *payload, size_t length, uint8_t ack) {
     (void) ack;
-	ULOG_INFO("MCU Message: %s", std::string(reinterpret_cast<const char*>(payload), length).c_str());
+	//-2 for the \r\n which ULOG already provides
+	ULOG_INFO("MCU Message: %s", std::string(reinterpret_cast<const char*>(payload), length-2).c_str());
 }
 
 }  // namespace xbot::driver::mcu
