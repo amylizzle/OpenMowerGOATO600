@@ -12,8 +12,8 @@ EmergencyDriver::EmergencyDriver(xbot::driver::mcu::Dispatcher* dispatcher) : mc
 
 uint16_t EmergencyDriver::GetEmergencyState() {
     uint16_t state = 0;
-    if(this->bump) state |= EmergencyReason::COLLISION;
-    if(this->fall) state |= EmergencyReason::LIFT;
+    if(this->bump > 128) state |= EmergencyReason::COLLISION;
+    if(this->fall > 128) state |= EmergencyReason::LIFT;
     if(this->roll) state |= EmergencyReason::LIFT_MULTIPLE;
     if(this->Stop) state |= EmergencyReason::STOP;
     if(state != 0) ULOG_ERROR("EMERGENCY STATE: bump: %u, fall: %u, charge: %u, acczero: %u, rain: %u, grass: %u, roll: %u, stop: %u, fan: %u", this->bump, this->fall, this->chargeState, this->acczero, this->rain, this->grass, this->roll, this->Stop, this->fan);
