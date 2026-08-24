@@ -13,6 +13,7 @@ class PowerService : public PowerServiceBase {
   explicit PowerService(uint16_t service_id) : PowerServiceBase(service_id) {
   }
   bool OnStart();
+  uint8_t GetBatteryPercentage();
 
  private:
   void tick();

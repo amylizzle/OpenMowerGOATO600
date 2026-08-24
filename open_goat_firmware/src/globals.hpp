@@ -11,6 +11,7 @@
 #include "services/imu_service/imu_service.hpp"
 #include "services/mower_service/mower_service.hpp"
 #include "services/power_service/power_service.hpp"
+#include "services/screen_service/screen_service.hpp"
 
 extern xbot::driver::mcu::Dispatcher mcu_dispatcher_driver;
 
@@ -21,5 +22,6 @@ extern ImuService imu_service;
 extern PowerService power_service;
 extern GpsService gps_service;
 extern HighLevelService high_level_service;
+extern ScreenService screen_service;
 
 #endif // GLOBALS_HPP

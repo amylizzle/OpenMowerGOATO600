@@ -1,0 +1,11 @@
+{
+  "type": "ScreenService",
+  "version": 1,
+  "outputs": [
+    {
+      "id": 0,
+      "name": "Display State",
+      "type": "uint8_t"
+    }
+  ]
+}

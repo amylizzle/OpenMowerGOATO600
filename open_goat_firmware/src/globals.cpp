@@ -9,3 +9,4 @@ ImuService imu_service{xbot::service_ids::IMU};
 PowerService power_service{xbot::service_ids::POWER};
 GpsService gps_service{xbot::service_ids::GPS};
 HighLevelService high_level_service{xbot::service_ids::HIGH_LEVEL};
+ScreenService screen_service{xbot::service_ids::SCREEN};

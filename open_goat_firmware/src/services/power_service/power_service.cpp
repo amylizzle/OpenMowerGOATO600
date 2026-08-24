@@ -15,6 +15,13 @@ bool PowerService::OnStart() {
   return true;
 }
 
+uint8_t PowerService::GetBatteryPercentage() {
+  if (driver_ == nullptr) {
+    return 0;
+  }
+  return driver_->GetData().stateOfCharge;
+}
+
 void PowerService::tick() {
   PowerDriver::Data powerdata = driver_->GetData();
   // powerdata.chargingState;

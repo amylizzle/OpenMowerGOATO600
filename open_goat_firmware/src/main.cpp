@@ -41,6 +41,8 @@ int main() {
 	gps_service.start();
 	ULOG_INFO("High level...");
 	high_level_service.start();
+	ULOG_INFO("Screen...");
+	screen_service.start();
 	ULOG_INFO("Done!");
 
 	mcu_dispatcher_driver.StartDriver("/dev/ttyS3", 115200);
