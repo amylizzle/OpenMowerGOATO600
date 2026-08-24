@@ -38,8 +38,8 @@ void Dispatcher::FrameReaderLoop(Dispatcher* instance) {
 			uint8_t ack = val[1];
 			uint8_t cmd0 = val[3];
 			uint8_t cmd1 = val[4];
-			// first 3 bytes are ack and cmd, last two bytes are crc, terminator (0x0A)
-			size_t data_len = (val.size() -3) - 2;
+			// first 5 bytes are [0x60][ack][len][cmd0][cmd1], last two bytes are [crc],[0x0A]
+			size_t data_len = (val.size() - 5) - 2;
 			const uint8_t *data_ptr = &val[5];
 
 			// dispatch
@@ -57,6 +57,10 @@ void Dispatcher::FrameReaderLoop(Dispatcher* instance) {
 			if(!dispatched){
 				ULOG_WARNING("UNHANDLED MCU MESSAGE %c%c",cmd0,cmd1);
 			}
+		} else {
+			std::this_thread::sleep_for(
+                std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::duration<double>(0.05))
+            );
 		}
 	}
 }
