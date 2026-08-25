@@ -47,7 +47,7 @@ std::vector<uint8_t> ScreenDriver::EncodePowerModeCommand(ScreenPowerState mode)
 }
 
 void ScreenDriver::Start() {
-  SetPowerMode(ScreenPowerState::DISPLAY);
+  SetPowerMode(ScreenPowerState::PIN_INPUT);
   SetScreenState(0,0,0,0,0,0,0,0);
 }
 
