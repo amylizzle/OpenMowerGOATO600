@@ -7,6 +7,7 @@
 // instances / board-specific names must be supplied by the board layer.
 #include <cstdint>
 #include "../../src/open_mower_ros/services/service_ids.h"
+#include "../../src/goat_ros/services/service_ids.h"
 #include <globals.cpp>
 
 

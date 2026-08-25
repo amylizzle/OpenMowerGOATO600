@@ -111,7 +111,10 @@ Two frame families on the same MCU UART (/dev/ttyS3):
 
 Motor "M?" subtypes:
 - MA (0x41) control ack: node verifies each motor command was acked; if not, resetMotorControl + restart SteadyTimer. Payload 4-byte groups {type,brand,value}.
-- MB (0x42) motor current feedback: 5x16-bit per-motor values -> topic motor/MotorCurrent (ptr+16).
+- MB (0x42) motor current feedback (CORRECTED, on_sa_recv.c:120-168 / 0x931c50-0x931ec0): carries **6 int16 values** at data offsets 0,2,4,6,8,10 (12 bytes). Values at +0,+2,+4,+6 always read; +8 (v64) only if size>9; +10 (v63) only if size>11.
+  - Published motor/MotorCurrent (5-elem vector ptr+48): [0]=+0, [1]=+2, [2]=+4, [3]=+6, **[4]=+10 (v63)**. NOTE: the 5th payload value (+8, v64) is NOT published — element[4] uses the 6th value instead (0x931e40 reads sp+0x16c=data+10 for index 4).
+  - Cached copy at ptr+0x150..0x15a (ptr+336..346) holds ALL 6: +0,+2,+4,+6,+8,+10 (0x931eac stores sp+0x16e=data+8 to ptr+0x158, 0x931eb8 stores sp+0x16c=data+10 to ptr+0x15a).
+  - Change-diff log on the last value v63(+10) vs cached ptr[424] (this+0x1a8): abs(diff)>99 triggers log + cache update (0x931d2c-0x931d48) — a logging threshold, not a clamp.
 - MC (0x43) current value: byte@+2, MotorType=7 -> motor/MotorCurrentValue (ptr+304).
 - MD (0x44) state report: flag{0,1,2}->state, type=11 -> motor/MotorStateReport (ptr+208).
 - ME (0x45) motor type: choice{1,2,10,4,5,6}->type -> motor/MotorType (ptr+32).
@@ -167,7 +170,7 @@ The `std::map` at McuManager+104 is populated by 12 distinct registration wrappe
 | OTA/Debug | 0x968694 | 0x960190 | VS,VB |
 | RtcNode | 0xa96ac8 | 0xa94b48 | RC,RT |
 | ScreenInfo | 0xaa38b0 | 0xa9fb04 | ZC,ZE,ZR,ZT |
-| TemperatureReport/Alert | 0xaca534 | 0xac7ef4 | DB |
+| UrgentAlarm | 0xaca534 | 0xac7ef4 | DB |
 | WheelNode | 0xadd0b8 | 0xad94c8 | WD,WF,WE,WR |
 
 Node identities were confirmed from the handler rodata (topic/source strings each callback references):
@@ -187,7 +190,7 @@ Exhaustive search (all 28 `bl #0x8ec34c` onCommMsgSend call sites, plus every `#
 - OTA/Debug 0x960190→0xb6f000/0xb70000: `ota/Ota`, `debug/UartDebug`, `/tmp/mcu_version.txt`, `ROBOT_IS_OTA/ROBOT_IS_NORMAL`, `UART-DEBUG:req`, `receive-VB`, `line laser state`.
 - RtcNode 0xa94b48→0xbb3000: `RtcNode.cpp`, `got rtc time`, `got utc`, `rtc_tick`, `TIMEZONE`.
 - ScreenInfo 0xa9fb04→0xbb5000/0xbb6000: `ScreenInfo.cpp`, screen lock/err-code/pin, `screen/ScreenResetEvent`, `screen key reset`, `BigDataFactoryReset`, `factory_reset.sh`.
-- TemperatureReport/Alert 0xac7ef4→0xbc4000: `TemperatureReport`, `coreTemp`, `start calibrate imu`, `alertmcu/pubalert`, `alertMotor/pubalert`.
+- UrgentAlarm 0xac7ef4→0xbc4000: `UrgentAlarm.cpp`, `alertmcu/pubalert`, `alertMotor/pubalert`, `alertGrassMotor/pubalert`, `alertmcu/canalert`, `EMERGENCY_*` names, `MOTOR_FAULT_*` codes. (The same 0xbc4000 rodata also holds the separate `TemperatureReport` class strings — `coreTemp`, `start calibrate imu` — but DB is UrgentAlarm.)
 - WheelNode 0xad94c8→0xbc7000: `wheel/WheelDistanceReport`, `wheel/SetWheelSpeed`, `wheel/WheelBackProtection`, `wheel/WheelHubMotorProtection`, `wheel/WheelSpeedReport`, `wheel/SetLinearAngularSpeed`, `amp:%f`.
 
 CORRECTED (vs earlier): BC and CC ARE in the dispatch map (OnOffInfo/BigData register their own wrappers 0x9566b0/0x9b0628); there is no second dispatch mechanism. The receive map is far larger than the 8 M? ids alone.
@@ -222,6 +225,14 @@ Cmd bytes 0x52('R'),0x41('A'); data = 1 byte `0x00` (sp+0x38, end=+1); SAData by
 ### rtc/Synchronize handler 0xa94fdc (subscriber → MCU)
 Reads msg data ptr (0xa96860): if msg[0]==0 → send RA; if msg[0]==1 → log `set time:%lld` with u32 at msg+4, call 0xa95568(unix secs)→send RB, then send RA. Wrapper 0xa95e0c → 0xa94fdc is the subscribe callback.
 
+### How/when RTC messages are sent (implementation note)
+- `rtc/Synchronize` is a subscriber using **`protocol::SAData`** (the shared MCU-transport message type also used by IMU/Key/ClockSync; see mangled `St5_BindIFMN6common7RtcNode4ImplEFvRKN5boost10shared_ptrIN8protocol6SADataEEEE...`). The handler reads the SAData buffer directly:
+  - `buf[0]==0` → send **RA** (request MCU RTC sync).
+  - `buf[0]==1` → log, take unix-seconds as **u32 at `buf+4`**, convert to calendar, send **RB**, then send **RA**.
+  - So the practical message layout is `uint8 cmd` + `uint32 unix_time` (cmd 0 = "sync me", cmd 1 = "set MCU clock to this unix time, then sync").
+- RTC RB/RA/RC/RT = **absolute wall-clock sync**, purely event-driven by `rtc/Synchronize` publishes (on boot send RA once; to set clock publish cmd=1 + unix seconds).
+- ClockSync **UC** (`0x55`,`0x43`) path (receive 0x91396c, send 0x914100) is a **separate continuous 1s/30s drift sync** (`mainboard/Deltats`, `receive/send U C every 1s`); it never sends RB/RA and does not drive the RTC calendar messages.
+
 ## 9. ScreenInfo — Z? receive formats + ZA/CI send formats
 
 Class `ScreenInfo` (rodata 0xbb5000/0xbb6000: `ScreenInfo.cpp`, screen lock/err-code/pin, `screen/ScreenResetEvent`, `screen key reset`, `BigDataFactoryReset`, `factory_reset.sh`). Registration wrapper 0xaa38b0 registers ids `ZC`=`Z`,`C`, `ZE`=`Z`,`E`, `ZR`=`Z`,`R`, `ZT`=`Z`,`T` — ALL → receive callback **0xa9fb04**, on this+0x148. Callback requires buf[0]=0x5A('Z') else bail 0xaa04cc; dispatches subCmd buf[1]: 'T'(0x54)→0xa9fb4c, non-T→0xa9ff98 (ZC 0xa9ffa8, ZR 0xaa001c, ZE 0xaa0148). Payload = msg->buffer + 8 (vector data). Frame = standard `[0x60][ack][len=data+2][Z][?][data][crc8][0x0A]`.
@@ -245,6 +256,49 @@ Class `ScreenInfo` (rodata 0xbb5000/0xbb6000: `ScreenInfo.cpp`, screen lock/err-
 - ScreenInfo **ROS ScreenPageControl** subscriber 0xa9da1c: if obj+0x134 set → log shield, skip; else reads param u32: byte0→obj+0x138, ldrh low→obj+0x139, high→obj+0x13a; log `err_code=E%d` if halfword!=0; calls 0xa9d7b8 (ZA send).
 
 Note: RtcNode's RB/RA sends (0xa95760/0xa95838, ## 8) use this+0x140, NOT ScreenInfo; ScreenInfo sends are only ZA and CI on this+0x148.
+
+## 10. UrgentAlarm — DB message (MCU alert report)
+
+Class `UrgentAlarm` (rodata 0xbc4000: `UrgentAlarm.cpp`, `alertmcu/pubalert`, `alertMotor/pubalert`, `alertGrassMotor/pubalert`, `alertmcu/canalert`, `EMERGENCY_*` bit names, `MOTOR_FAULT_*` codes). Receive callback **0xac7ef4** (reg-wrapper 0xaca534 registers id **DB**=`D`,`B` (0x44,0x42) on this+0x68). Callback reads buffer ptr (0x915110), requires buf[0]=0x44('D') and buf[1]=0x42('B') else bail 0xac872c. Payload = msg->buffer + 8 (vector data). Frame = standard `[0x60][ack][len=data+2][D][B][data][crc8][0x0A]`.
+
+### DB payload (from buf+8)
+```
+off 0-3   u32 mcuAlarmCode     (bitmask; each set bit = one EMERGENCY_* condition)
+off 4-7   u32 motorFaultCode   (4 u8: l_motor_err_code, r_motor_err_code, l_cut_err_code, r_cut_err_code)
+off 8-9   u16 liftFaultCode    (read only if data.size > 9)
+off 10-11 u16 grassFaultCode   (read only if data.size > 11)
+```
+
+### mcuAlarmCode bit map (bit -> EMERGENCY_* name, rodata)
+```
+0  EMERGENCY_INCLINE    1  EMERGENCY_ELEVATE    2  EMERGENCY_TURNOVER  3 EMERGENCY_BUMP
+4  EMERGENCY_BACK       5  EMERGENCY_STOP       6  EMERGENCY_LSPEED   7 EMERGENCY_RSPEED
+8  EMERGENCY_LWERR      9  EMERGENCY_RWERR     10 EMERGENCY_BATTEMP 11 EMERGENCY_HEART
+12 EMERGENCY_GYRO      13 EMERGENCY_CORE_P    14 EMERGENCY_M12_P   15 EMERGENCY_LCERR
+16 EMERGENCY_RCERR     17 EMERGENCY_LIFTMOT  18 EMERGENCY_BUMP_D  19 EMERGENCY_ELEVATE_D
+20 EMERGENCY_CHARGEERR 21 EMERGENCY_GRASS_MOT 22 EMERGENCY_FANERR  23 EMERGENCY_INCLINE_D
+24 EMERGENCY_BATERR
+```
+Each set bit logs `alert from mcu %s=0x%08x` (0xbc4818, name via 0x8ac250) and is published via 0xacc60c into obj+0x70 → `alertmcu/pubalert` (AlertMcu). Iterates bits 0..31 (`0xac8378` loop, `1<<bit` & mcuAlarmCode).
+
+### motorFaultCode byte codes (each byte = MOTOR_FAULT_*, rodata 0xbc4b10..)
+```
+0 MOTOR_FAULT_NONE               1 MOTOR_FAULT_PHASE_LOSS
+2 MOTOR_FAULT_HARDWARE_OVER_CURRENT  3 MOTOR_FAULT_SOFTWARE_OVER_CURRENT
+4 MOTOR_FAULT_STALL              5 MOTOR_FAULT_HALL_SENSOR
+6 MOTOR_FAULT_UNDER_VOLTAGE      7 MOTOR_FAULT_OVER_TEMPERATURE
+8 MOTOR_FAULT_POWER_INTEGRAL_LIMIT
+```
+
+### Receive behavior (0xac7ef4)
+1. If all four fields == 0 → log `any none alert from mcu` (0xbc47e8), skip alert publishing.
+2. Else publish each set mcuAlarmCode bit (above) and log `alert mcuAlarmCode:0x%08x motorFaultCode:0x%08x` (0xbc4730) when mcuAlarmCode changed vs this+0x98.
+3. If motorFaultCode changed vs this+0x9c: log `alert from motor motorFaultCode:0x%08x` (0xbc4850), split into 4 u8 (this+0x48 publisher → `alertMotor/pubalert`, AlertMotor), log `l_motor_err_code=0x%02x r_motor_err_code=0x%02x l_cut_err_code=0x%02x r_cut_err_code=0x%02x` (0xbc4890).
+4. If liftFaultCode changed vs this+0xa0: log `alert liftFaultCode:0x%04x` (0xbc4778), publish this+0x28 → `alertGrassMotor/pubalert`.
+5. If grassFaultCode changed vs this+0xa2: log `alert grassFaultCode:0x%04x` (0xbc47b0), publish this+0x38.
+6. Store new values into this+0x98 (mcuAlarmCode), +0x9c (motorFaultCode), +0xa0 (liftFaultCode), +0xa2 (grassFaultCode).
+7. `alertmcu/canalert` topic (0xbc4700) is the outbound clear-alert channel (send path 0xaca534/0xaca644 uses 0xd0e000+0x870); 0xaca534 is NOT TemperatureReport — it is a UrgentAlarm helper (send/clear), same rodata region.
+- This is the **MCU→host alert/emergency report** (the "D/B" alert frame). Any EMERGENCY_* bit or non-zero motorFaultCode means the mower is in an emergency state — directly relevant to the EmergencyDriver-vs-real-mower question: an alert arriving from MCU is a real on-mower emergency, distinct from the host-side EmergencyDriver recreation.
 
 ## 8. RTK/Lora command architecture (rover-enable sequence)
 
