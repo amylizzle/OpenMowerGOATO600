@@ -23,8 +23,8 @@ ll:
       axis_config: "+Y+X-Z"
     power:
       battery_full_voltage: 20.0
-      battery_empty_voltage: 17.0
-      battery_critical_voltage: 16.5
+      battery_empty_voltage: 16.5
+      battery_critical_voltage: 16.0
       battery_critical_high_voltage: 25.0
       charge_critical_high_voltage: 34.0
       charge_critical_high_current: 3.0
