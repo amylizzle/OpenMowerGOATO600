@@ -8,4 +8,4 @@ enum : uint16_t {
 };
 }
 
-#endif  // SERVICE_IDS_H
+#endif  // GOAT_SERVICE_IDS_H

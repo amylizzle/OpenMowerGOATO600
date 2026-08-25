@@ -42,13 +42,13 @@ std::vector<uint8_t> ScreenDriver::EncodeScreenStateCommand() {
 }
 
 // CI power mode: 1-byte payload.
-std::vector<uint8_t> ScreenDriver::EncodePowerModeCommand(uint8_t mode) {
+std::vector<uint8_t> ScreenDriver::EncodePowerModeCommand(ScreenPowerState mode) {
   return {static_cast<uint8_t>(mode & 0xFFu)};
 }
 
 void ScreenDriver::Start() {
-  auto cmd = EncodeScreenStateCommand();
-  mcu_driver_->SendMessage('Z', 'A', cmd.data(), cmd.size());
+  SetPowerMode(ScreenPowerState::DISPLAY);
+  SetScreenState(0,0,0,0,0,0,0,0);
 }
 
 void ScreenDriver::SetScreenState(uint8_t lock, uint8_t sim, uint8_t wifi, uint8_t page_num,
@@ -66,7 +66,7 @@ void ScreenDriver::SetScreenState(uint8_t lock, uint8_t sim, uint8_t wifi, uint8
   mcu_driver_->SendMessage('Z', 'A', cmd.data(), cmd.size());
 }
 
-void ScreenDriver::SetPowerMode(uint8_t mode) {
+void ScreenDriver::SetPowerMode(ScreenPowerState mode) {
   state_.power_mode = mode;
   auto cmd = EncodePowerModeCommand(mode);
   mcu_driver_->SendMessage('C', 'I', cmd.data(), cmd.size());
@@ -149,9 +149,9 @@ void ScreenDriver::OnCI(const uint8_t* payload, size_t length, uint8_t ack) {
   const uint8_t mode = payload[0];
   ULOG_WARNING("[SCREEN] CI: ack %u screen power mode: %u", ack, static_cast<unsigned>(mode));
   if (mode == 3) {
-    SetPowerMode(2);
+    SetPowerMode(ScreenPowerState::DISPLAY);
   } else if (mode == 2) {
-    SetPowerMode(1);
+    SetPowerMode(ScreenPowerState::PIN_INPUT);
   }
 }
 

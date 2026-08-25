@@ -16,6 +16,11 @@ namespace xbot::driver::screen {
 
 class ScreenDriver {
  public:
+  enum ScreenPowerState : uint8_t {
+    POWER_OFF = 0,
+    PIN_INPUT = 1,
+    DISPLAY = 2
+  };
   // Mirrors the ScreenInfo state kept by the original node (obj+0x135..0x13c).
   struct ScreenState {
     uint8_t screen_lock = 0;      // [0] screen lock
@@ -29,7 +34,7 @@ class ScreenDriver {
     // Derived receive state
     uint8_t rain = 0;             // ZR rain detect (1 = raining)
     uint16_t unlock_code = 0;     // ZC screen unlock code (16-bit signed)
-    uint8_t power_mode = 0;       // CI power mode (1 = ?, 2 = ?)
+    ScreenPowerState power_mode = ScreenPowerState::POWER_OFF;       // CI power mode 
   };
 
   // Optional callback for touch/control events from the screen (ZT).
@@ -46,7 +51,7 @@ class ScreenDriver {
                       uint8_t err_low, uint8_t err_high, uint8_t b6 = 0, uint8_t b7 = 0);
 
   // CI send: screen power mode (1-byte payload).
-  void SetPowerMode(uint8_t mode);
+  void SetPowerMode(ScreenPowerState mode);
 
   // ZT sub-code 6 clears the screen lock (obj+0x135 = 0).
   void ClearScreenLock();
@@ -64,7 +69,7 @@ class ScreenDriver {
   static inline int16_t ReadI16Le(const uint8_t* data, size_t offset);
 
   std::vector<uint8_t> EncodeScreenStateCommand();
-  std::vector<uint8_t> EncodePowerModeCommand(uint8_t mode);
+  std::vector<uint8_t> EncodePowerModeCommand(ScreenPowerState mode);
 
   // Z? receive handlers (all dispatched by the 'Z' main command)
   void OnZC(const uint8_t* payload, size_t length, uint8_t ack);  // screen unlock code
