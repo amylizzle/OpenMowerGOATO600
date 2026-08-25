@@ -27,17 +27,17 @@ inline int16_t ScreenDriver::ReadI16Le(const uint8_t* data, size_t offset) {
                               (static_cast<uint16_t>(data[offset + 1]) << 8));
 }
 
-// ZA send: 8 bytes [lock][sim][wifi][page_num][err_low][err_high][b6][b7].
+// ZA send: 8 bytes [lock][internet][wifi][page_num][err_low][err_high][pincode_confirm][pincode_first].
 std::vector<uint8_t> ScreenDriver::EncodeScreenStateCommand() {
   std::vector<uint8_t> out(8);
   out[0] = state_.screen_lock;
-  out[1] = state_.sim;
+  out[1] = state_.internet;
   out[2] = state_.wifi;
   out[3] = state_.page_num;
   out[4] = state_.err_code_low;
   out[5] = state_.err_code_high;
-  out[6] = state_.b6;
-  out[7] = state_.b7;
+  out[6] = state_.pincode_confirm;
+  out[7] = state_.pincode_first;
   return out;
 }
 
@@ -47,20 +47,28 @@ std::vector<uint8_t> ScreenDriver::EncodePowerModeCommand(ScreenPowerState mode)
 }
 
 void ScreenDriver::Start() {
-  SetPowerMode(ScreenPowerState::PIN_INPUT);
-  SetScreenState(0,0,0,0,0,0,0,0);
+  SetPowerMode(ScreenPowerState::POWER_NORMAL);
+  SetScreenState(
+    ScreenIconState::ICON_OFF,
+    ScreenIconState::ICON_OFF,
+    ScreenIconState::ICON_OFF,
+    ScreenPage::ON,
+    0,
+    0,
+    0,
+    0);
 }
 
-void ScreenDriver::SetScreenState(uint8_t lock, uint8_t sim, uint8_t wifi, uint8_t page_num,
-                                  uint8_t err_low, uint8_t err_high, uint8_t b6, uint8_t b7) {
+void ScreenDriver::SetScreenState(ScreenIconState lock, ScreenIconState internet, ScreenIconState wifi, ScreenPage page_num,
+                                  uint8_t err_low, uint8_t err_high, uint8_t pincode_confirm, uint8_t pincode_first) {
   state_.screen_lock = lock;
-  state_.sim = sim;
+  state_.internet = internet;
   state_.wifi = wifi;
   state_.page_num = page_num;
   state_.err_code_low = err_low;
   state_.err_code_high = err_high;
-  state_.b6 = b6;
-  state_.b7 = b7;
+  state_.pincode_confirm = pincode_confirm;
+  state_.pincode_first = pincode_first;
 
   auto cmd = EncodeScreenStateCommand();
   mcu_driver_->SendMessage('Z', 'A', cmd.data(), cmd.size());
@@ -72,15 +80,39 @@ void ScreenDriver::SetPowerMode(ScreenPowerState mode) {
   mcu_driver_->SendMessage('C', 'I', cmd.data(), cmd.size());
 }
 
-void ScreenDriver::ClearScreenLock() {
-  state_.screen_lock = 0;
+void ScreenDriver::SetLockIcon(ScreenIconState value){
+  state_.screen_lock = value;
   auto cmd = EncodeScreenStateCommand();
-  mcu_driver_->SendMessage('Z', 'A', cmd.data(), cmd.size());
+  mcu_driver_->SendMessage('Z', 'A', cmd.data(), cmd.size());  
 }
 
-const ScreenDriver::ScreenState& ScreenDriver::GetState() const {
-  return state_;
+void ScreenDriver::SetInternetIcon(ScreenIconState value){
+  state_.internet = value;
+  auto cmd = EncodeScreenStateCommand();
+  mcu_driver_->SendMessage('Z', 'A', cmd.data(), cmd.size());  
 }
+
+void ScreenDriver::SetWifiIcon(ScreenIconState value){
+  state_.wifi = value;
+  auto cmd = EncodeScreenStateCommand();
+  mcu_driver_->SendMessage('Z', 'A', cmd.data(), cmd.size());  
+}
+
+void ScreenDriver::SetScreenPage(ScreenPage value){
+  state_.page_num = value;
+  auto cmd = EncodeScreenStateCommand();
+  mcu_driver_->SendMessage('Z', 'A', cmd.data(), cmd.size());  
+}
+
+void ScreenDriver::SetErrorCode(uint16_t num, bool show_error_page){
+  state_.err_code_high = (num & 0xFF00) >> 8;
+  state_.err_code_low = (num & 0x00FF);
+  auto cmd = EncodeScreenStateCommand();
+  mcu_driver_->SendMessage('Z', 'A', cmd.data(), cmd.size()); 
+  if(show_error_page)
+    SetScreenPage(ScreenPage::ERROR); 
+}
+
 
 void ScreenDriver::RegisterNotifyCallback(const NotifyHandler& handler) {
   registered_handler_ = handler;
@@ -96,14 +128,14 @@ void ScreenDriver::OnZT(const uint8_t* payload, size_t length, uint8_t ack) {
   const uint8_t code = payload[0];
   ULOG_WARNING("[SCREEN] ZT: ack %u code: %u", ack, static_cast<unsigned>(code));
 
-  // Sub-code 6 clears the screen lock (obj+0x135 = 0)
-  if (code == 6) {
-    state_.screen_lock = 0;
-  }
+//   // Sub-code 6 clears the screen lock (obj+0x135 = 0)
+//   if (code == 6) {
+//     state_.screen_lock = 0;
+//   }
 
-  if (registered_handler_) {
-    registered_handler_(code);
-  }
+//   if (registered_handler_) {
+//     registered_handler_(code);
+//   }
 }
 
 // ZC screen lock/unlock code: 16-bit signed code from data[0..1].
@@ -137,7 +169,6 @@ void ScreenDriver::OnZE(const uint8_t* payload, size_t length, uint8_t ack) {
   (void) payload;
   (void) length;
   ULOG_WARNING("[SCREEN] ZE: ack %u screen key reset event", ack);
-  state_.screen_lock = 0;
 }
 
 // CI power mode: received data[0]==3 -> send 'I' + byte 2; ==2 -> send 'I' + byte 1; else skip.
@@ -148,11 +179,6 @@ void ScreenDriver::OnCI(const uint8_t* payload, size_t length, uint8_t ack) {
   }
   const uint8_t mode = payload[0];
   ULOG_WARNING("[SCREEN] CI: ack %u screen power mode: %u", ack, static_cast<unsigned>(mode));
-  if (mode == 3) {
-    SetPowerMode(ScreenPowerState::DISPLAY);
-  } else if (mode == 2) {
-    SetPowerMode(ScreenPowerState::PIN_INPUT);
-  }
 }
 
 }  // namespace xbot::driver::screen
