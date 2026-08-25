@@ -70,3 +70,44 @@ sudo socat pty,link=/dev/ttyM1,raw,echo=0 tcp:goat.lan:2000; sudo socat pty,link
 ```
 
 You can test it's working by running `mcu_parser.py /dev/ttyM1` from `/hardware_control_RE`
+
+# Make it permanent!
+Make sure to remount the root as rewritable: `mount -o remount,rw /`
+Disable all the ecovacs stuff (all of this is trivially reversible, and there's a backup partition you can restore if you really mess it up):
+```
+systemctl disable process_monitor.service
+systemctl disable roscore.service
+systemctl disable ros.service
+systemctl disable eco_main_tools.service
+systemctl disable boot_complete.service
+systemctl disable memcpu_monitor.service
+systemctl disable check_sensor_type.service
+systemctl disable audioDeamon.service
+systemctl disable auto_ota_check.service
+systemctl disable auto_ota_check.timer
+systemctl disable log_clean.service
+systemctl disable log_clean.timer
+systemctl disable cameraProvider.service 
+mv /usr/bin/hydra.sh /usr/bin/hydra.sh.bak
+```
+set openmower to run on startup:
+```
+bash -c 'cat <<EOF > /etc/systemd/system/openmower.service
+[Unit]
+Description=OpenMower Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/var/openmower/OpenMowerGOATO600/chroot_devenv.sh run
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF'
+```
+then 
+```
+systemctl daemon-reload && sudo systemctl enable --now openmower
+```
