@@ -97,8 +97,8 @@ class EmergencyDriver {
   // calculate and return the emergency state
   uint16_t GetEmergencyState();
 
-  // Manually trigger/add or clear emergency bits via the driver
-  void UpdateEmergency(uint16_t add, uint16_t clear);
+  // Reset estop
+  void ClearEStop();
 };
 
 } // namespace xbot::driver::emergency
