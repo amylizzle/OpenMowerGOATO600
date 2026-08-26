@@ -23,6 +23,18 @@ bool GpsDriver::StartDriver(std::string path, int baud) {
   }
   
   this->rtklink = new SerialDriver("/dev/ttyS2",baud); //TODO should probably make this configurable with a service register
+  this->slink = new SerialDriver(path,baud);
+ 
+  LORAInit();
+  GNSSConfig();
+  
+  stopped_ = false;
+  processing_thread_ = createThread(threadHelper, this);
+
+  return true;
+}
+
+void GpsDriver::LORAInit() {
   // write the commands to start the RTK system
   for (std::string_view str : { 
     "rtktype rover\r\n", 
@@ -33,8 +45,10 @@ bool GpsDriver::StartDriver(std::string path, int baud) {
    }) {
       this->rtklink->write(std::vector<uint8_t>(str.begin(), str.end()));
   }
-  this->slink = new SerialDriver(path,baud);
-  // and configure the corrections
+}
+
+void GpsDriver::GNSSConfig() {
+  // configure streaming the corrections
   for (std::string_view str : { 
     "COM3 115200 N 8 1 IN:RTCM OUT:BYNAV\r\n", //COM3 serial = RTCM correction input
     "interfacemode com3 rtcm bynav\r\n", //COM3 interface = RTCM
@@ -49,10 +63,6 @@ bool GpsDriver::StartDriver(std::string path, int baud) {
    }) {
       this->slink->write(std::vector<uint8_t>(str.begin(), str.end()));
   }
-  stopped_ = false;
-  processing_thread_ = createThread(threadHelper, this);
-
-  return true;
 }
 
 void GpsDriver::SetStateCallback(const GpsDriver::StateCallback &function) {

@@ -26,16 +26,18 @@ void ScreenService::tick() {
     driver_->SetScreenPage(xbot::driver::screen::ScreenDriver::ScreenPage::BATTERY);
   }
   auto gpsstate = gps_service.GetGpsState();
-  if(gpsstate.fix_type != xbot::driver::gps::GpsDriver::GpsState::NO_FIX){
-    if(gpsstate.rtk_type == xbot::driver::gps::GpsDriver::GpsState::RTK_FIX) {
-      driver_->SetInternetIcon(xbot::driver::screen::ScreenDriver::ScreenIconState::ICON_ON);
-    } else {
+  switch(gpsstate.rtk_type){
+    case xbot::driver::gps::GpsDriver::GpsState::RTK_NONE:
+      driver_->SetInternetIcon(xbot::driver::screen::ScreenDriver::ScreenIconState::ICON_OFF);
+      break;
+    case xbot::driver::gps::GpsDriver::GpsState::RTK_FLOAT:
       driver_->SetInternetIcon(xbot::driver::screen::ScreenDriver::ScreenIconState::ICON_FLASH);
-    }
-  } else {
-    driver_->SetInternetIcon(xbot::driver::screen::ScreenDriver::ScreenIconState::ICON_OFF);
+      break;
+    case xbot::driver::gps::GpsDriver::GpsState::RTK_FIX:
+      driver_->SetInternetIcon(xbot::driver::screen::ScreenDriver::ScreenIconState::ICON_ON);
+      break;
   }
-  //TODO get wifi state, and probably also generally manage wifi
 
+  //TODO get wifi state, and probably also generally manage wifi
 
 }

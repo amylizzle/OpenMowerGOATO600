@@ -65,7 +65,8 @@ class GpsDriver {
   void SetStateCallback(const GpsDriver::StateCallback &function);
 
   void SendRTCM(const uint8_t *data, size_t size);
-
+  void GNSSConfig();
+  void LORAInit();
   /**
    * @brief Get current GPS state
    * @return Current GPS state

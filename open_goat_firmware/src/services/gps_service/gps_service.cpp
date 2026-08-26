@@ -52,6 +52,10 @@ void GpsService::GpsStateCallback(const GpsDriver::GpsState& state) {
     SendFixType("FIX", 3);
   } else if (state.rtk_type == xbot::driver::gps::GpsDriver::GpsState::RTK_FLOAT) {
     SendFixType("FLOAT", 5);
+  } else {
+    // lost RTK? try reset the RTK system
+    gps_driver_->LORAInit();
+    ULOG_WARNING("GPS SERVICE: RTK lost, resetting RTK system");
   }
   double vel[3] = {state.vel_e, state.vel_n, state.vel_u};
   SendMotionVectorENU(vel, 3);
