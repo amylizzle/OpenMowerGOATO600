@@ -60,7 +60,10 @@ void EmergencyDriver::RegisterNotifyCallback(const NotifyHandler& handler) {
     registered_handler_ = handler;
 }
 
-void EmergencyDriver::UpdateEmergency(uint16_t /*add*/, uint16_t /*clear*/){}
+void EmergencyDriver::ClearEStop(){
+    //send a JA message with a 16bit 0
+    mcu_driver_->SendMessage('J', 'A', (uint16_t)0, 2);
+}
 
 // Map ECOVACS mcuAlarmCode EMERGENCY_* bits onto the host EmergencyReason mask.
 // Only the bits that have a direct host counterpart are forwarded.
