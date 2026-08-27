@@ -367,7 +367,7 @@ launchom() {
 }
 
 launchomapp() {
-    if [[ ! -d openmower-app ]]; then
+    if [[ ! -d "${WORKSPACE}/openmower-app" ]]; then
         setup_omapp
     fi
 
