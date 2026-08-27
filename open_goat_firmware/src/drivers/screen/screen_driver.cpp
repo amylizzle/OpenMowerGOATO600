@@ -120,6 +120,9 @@ void ScreenDriver::SetScreenPage(ScreenPage value){
 }
 
 void ScreenDriver::SetErrorCode(uint16_t num, bool show_error_page){
+  if (state_.err_code_low == (num & 0x00FF) && state_.err_code_high == ((num & 0xFF00) >> 8)) {
+    return;
+  }
   state_.err_code_high = (num & 0xFF00) >> 8;
   state_.err_code_low = (num & 0x00FF);
   auto cmd = EncodeScreenStateCommand();
