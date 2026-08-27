@@ -230,6 +230,30 @@ EOF
     info "setup complete: ${ROOTFS}"
 }
 
+setup_omapp() {
+    require_root
+    [[ -d "${ROOTFS}" && -f "${ROOTFS}/usr/bin/bash" ]] || {
+        warn "rootfs missing; running setup first"
+        setup
+    }
+
+    info "setting up openmower app inside the chroot"
+    run_chroot "
+        export NVM_DIR=\${HOME}/.nvm
+        [ -s \"\$NVM_DIR/nvm.sh\" ] && \. \"\$NVM_DIR/nvm.sh\" 
+        command -v curl >/dev/null 2>&1 || apt-get update && apt-get install -y curl
+        command -v nvm >/dev/null 2>&1 || curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.7/install.sh | bash 
+        [ -s \"\$NVM_DIR/nvm.sh\" ] && \. \"\$NVM_DIR/nvm.sh\"        
+        nvm install --lts 
+        cd ${WORKSPACE_IN_CHROOT}
+        git clone https://github.com/xtech/openmower-app.git
+        cd openmower-app
+        npm install
+        npm run build
+    "
+    info "openmower app setup complete!"
+}
+
 # ----------------------------------------------------------------------------
 # build
 # ----------------------------------------------------------------------------
@@ -342,6 +366,15 @@ launchom() {
     "
 }
 
+launchomapp() {
+    run_chroot "
+        export NVM_DIR=\${HOME}/.nvm
+        [ -s \"\$NVM_DIR/nvm.sh\" ] && \. \"\$NVM_DIR/nvm.sh\"       
+        cd ${WORKSPACE_IN_CHROOT}/openmower-app
+        npm run start
+    "  
+}
+
 # ----------------------------------------------------------------------------
 # main
 # ----------------------------------------------------------------------------
@@ -352,6 +385,7 @@ case "${1:-}" in
     run)     launchom   ;;
     buildfw)   build_fw ;;
     cleanup) cleanup "${2:-}" ;;
+    app)     launchomapp ;;
     "" )     info "no command given; running setup, build, run"; setup; build; launchom ;;
-    *)       fatal "unknown command '${1}'; expected setup|build|shell|cleanup" ;;
+    *)       fatal "unknown command '${1}'; expected setup|build|buildfw|run|app|shell|cleanup" ;;
 esac
