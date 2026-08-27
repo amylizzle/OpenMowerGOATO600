@@ -28,6 +28,7 @@ class Dispatcher {
 
  private:
  	void OnTBMessage(const uint8_t *payload, size_t length, uint8_t ack);
+	uint8_t ack = 0;
 
  protected:
 	MCULink* mlink{};

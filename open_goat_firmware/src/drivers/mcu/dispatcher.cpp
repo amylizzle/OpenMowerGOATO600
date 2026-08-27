@@ -70,12 +70,8 @@ uint8_t Dispatcher::SendMessage(uint8_t cmd0, uint8_t cmd1, const uint8_t *paylo
 		return 0;
 	}
 
-	const uint8_t ack = 0x00;
 	mlink->write_frame(cmd0, cmd1, payload, length, ack);
-
-	// The MCU protocol encodes the ACK byte in the frame itself. For now we
-	// return a neutral ACK value, since the packet reader handles actual response
-	// frames asynchronously via the dispatcher thread.
+	ack++;
 	return ack;
 }
 
