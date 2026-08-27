@@ -383,7 +383,7 @@ case "${1:-}" in
     build)   build ;;
     shell)   shell ;;
     run)     launchom   ;;
-    buildfw)   build_fw ;;
+    buildfw) build_fw ;;
     cleanup) cleanup "${2:-}" ;;
     app)     launchomapp ;;
     "" )     info "no command given; running setup, build, run"; setup; build; launchom ;;
