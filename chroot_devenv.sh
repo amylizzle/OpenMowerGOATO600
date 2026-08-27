@@ -249,6 +249,7 @@ setup_omapp() {
         git clone https://github.com/xtech/openmower-app.git
         cd openmower-app
         npm install
+        npm install-scripts approve esbuild sharp unrs-resolver
         npm run build
     "
     info "openmower app setup complete!"
