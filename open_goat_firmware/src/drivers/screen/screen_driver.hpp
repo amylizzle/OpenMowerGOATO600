@@ -82,6 +82,8 @@ class ScreenDriver {
   void SetScreenPage(ScreenPage value);
   void SetErrorCode(uint16_t num, bool show_error_page=true); //show_error_page: switch to error page if you're not already there
 
+  bool IsRaining() const { return state_.rain != 0; }
+
  private:
   xbot::driver::mcu::Dispatcher* mcu_driver_{};
   ScreenState state_;

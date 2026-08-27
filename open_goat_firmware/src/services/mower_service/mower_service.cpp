@@ -21,7 +21,7 @@ void MowerService::tick() {
 
   StartTransaction();
   SendMowerRunning(state.rpm > 0);
-  SendRainDetected(false);
+  SendRainDetected(screen_service.IsRaining());
   SendMowerMotorCurrent(static_cast<double>(state.current_input));
   SendMowerMotorRPM(static_cast<double>(state.rpm));
   SendMowerStatus(static_cast<uint16_t>(state.status == xbot::driver::motor::MotorDriver::ESCState::ESCStatus::ESC_STATUS_OK ? 200u : 0u));

@@ -15,15 +15,18 @@ EmergencyDriver::EmergencyDriver(xbot::driver::mcu::Dispatcher* dispatcher) : mc
 
 uint16_t EmergencyDriver::GetEmergencyState() {
     uint16_t state = 0;
-    if(this->bump > 128) state |= EmergencyReason::COLLISION;
-    if(this->fall > 128) state |= EmergencyReason::LIFT;
+    if(this->bump > 64) state |= EmergencyReason::COLLISION;
+    if(this->fall > 64) state |= EmergencyReason::LIFT;
     if(this->roll) state |= EmergencyReason::LIFT_MULTIPLE;
     if(this->Stop) state |= EmergencyReason::STOP;
     // DB 
     state |= AlarmBitsToEmergencyReason(this->mcuAlarmCode);
     // A non-zero motor fault (any of the 4 motor err codes) is an emergency too.
-    if (this->motorFaultCode != 0) state |= EmergencyReason::LIFT_MULTIPLE;
-    if(state != 0) ULOG_ERROR("EMERGENCY STATE: bump: %u, fall: %u, charge: %u, acczero: %u, rain: %u, grass: %u, roll: %u, stop: %u, fan: %u, mcuAlarmCode: 0x%08x, motorFaultCode: 0x%08x", this->bump, this->fall, this->chargeState, this->acczero, this->rain, this->grass, this->roll, this->Stop, this->fan, this->mcuAlarmCode, this->motorFaultCode);
+    if (this->motorFaultCode != 0) {
+        state |= EmergencyReason::LIFT_MULTIPLE;
+        ULOG_ERROR("EMERGENCY STATE: mcuAlarmCode: 0x%08x, motorFaultCode: 0x%08x", this->mcuAlarmCode, this->motorFaultCode);
+    }
+    if(state != 0) ULOG_ERROR("EMERGENCY STATE: bump: %u, fall: %u, charge: %u, acczero: %u, rain: %u, grass: %u, roll: %u, stop: %u, fan: %u", this->bump, this->fall, this->chargeState, this->acczero, this->rain, this->grass, this->roll, this->Stop, this->fan);
     return state;
 }
 

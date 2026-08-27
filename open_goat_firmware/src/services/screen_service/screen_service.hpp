@@ -15,6 +15,13 @@ class ScreenService : public ScreenServiceBase {
   }
   bool OnStart();
 
+  bool IsRaining() const {
+    if (driver_ == nullptr) {
+      return false;
+    }
+    return driver_->IsRaining();
+  }
+
  private:
   void tick();
   ManagedSchedule tick_schedule_{scheduler_, IsRunning(), 200'000,

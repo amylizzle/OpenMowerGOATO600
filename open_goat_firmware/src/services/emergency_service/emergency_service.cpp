@@ -22,7 +22,11 @@ bool EmergencyService::OnStart() {
 }
 
 void EmergencyService::OnDriverNotify(const uint16_t emergencyState) {
-  UpdateEmergency(emergencyState);
+  uint16_t latched = 0;
+  if (emergencyState & (EmergencyReason::LIFT | EmergencyReason::LIFT_MULTIPLE | EmergencyReason::COLLISION_MULTIPLE | EmergencyReason::STOP)) {
+    latched |= EmergencyReason::LATCH;
+  }
+  UpdateEmergency(emergencyState | latched);
 }
 
 
@@ -61,7 +65,7 @@ void EmergencyService::UpdateEmergency(uint16_t add, uint16_t clear) {
   if (reasons_ == old_reason) {
     return;
   }
-  if(clear & EmergencyReason::STOP){
+  if(clear & (EmergencyReason::STOP | EmergencyReason::LATCH)){
     driver_->ClearEStop();
   }
   diff_drive_service.OnEmergencyChangedEvent();
