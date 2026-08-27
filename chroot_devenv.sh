@@ -367,6 +367,10 @@ launchom() {
 }
 
 launchomapp() {
+    if [[ ! -d openmower-app ]]; then
+        setup_omapp
+    fi
+
     run_chroot "
         export NVM_DIR=\${HOME}/.nvm
         [ -s \"\$NVM_DIR/nvm.sh\" ] && \. \"\$NVM_DIR/nvm.sh\"       
