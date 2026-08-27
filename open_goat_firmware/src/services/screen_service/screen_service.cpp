@@ -21,20 +21,24 @@ void ScreenService::tick() {
 
   auto emergency = emergency_service.GetEmergencyReasons();
   if (emergency > 0){
-    driver_->SetErrorCode(emergency);
+    if (emergency & EmergencyReason::STOP) {
+      driver_->SetScreenPage(ScreenDriver::ScreenPage::STOP);
+    } else {
+      driver_->SetErrorCode(emergency);
+    }
   } else {
-    driver_->SetScreenPage(xbot::driver::screen::ScreenDriver::ScreenPage::BATTERY);
+    driver_->SetScreenPage(ScreenDriver::ScreenPage::BATTERY);
   }
   auto gpsstate = gps_service.GetGpsState();
   switch(gpsstate.rtk_type){
-    case xbot::driver::gps::GpsDriver::GpsState::RTK_NONE:
-      driver_->SetInternetIcon(xbot::driver::screen::ScreenDriver::ScreenIconState::ICON_OFF);
+    case GpsDriver::GpsState::RTK_NONE:
+      driver_->SetInternetIcon(ScreenDriver::ScreenIconState::ICON_OFF);
       break;
-    case xbot::driver::gps::GpsDriver::GpsState::RTK_FLOAT:
-      driver_->SetInternetIcon(xbot::driver::screen::ScreenDriver::ScreenIconState::ICON_FLASH);
+    case GpsDriver::GpsState::RTK_FLOAT:
+      driver_->SetInternetIcon(ScreenDriver::ScreenIconState::ICON_FLASH);
       break;
-    case xbot::driver::gps::GpsDriver::GpsState::RTK_FIX:
-      driver_->SetInternetIcon(xbot::driver::screen::ScreenDriver::ScreenIconState::ICON_ON);
+    case GpsDriver::GpsState::RTK_FIX:
+      driver_->SetInternetIcon(ScreenDriver::ScreenIconState::ICON_ON);
       break;
   }
 
