@@ -69,9 +69,7 @@ uint8_t Dispatcher::SendMessage(uint8_t cmd0, uint8_t cmd1, const uint8_t *paylo
 	if (!mlink) {
 		return 0;
 	}
-
 	mlink->write_frame(cmd0, cmd1, payload, length, ack);
-	ack++;
 	return ack;
 }
 

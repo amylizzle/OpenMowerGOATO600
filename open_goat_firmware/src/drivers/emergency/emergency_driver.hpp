@@ -64,7 +64,6 @@ class EmergencyDriver {
   uint8_t roll = 0;
   uint8_t Stop = 0;
   uint8_t fan = 0;
-  uint8_t ack = 0;
 
   // DB (UrgentAlarm) raw state
   uint32_t mcuAlarmCode = 0;    // EMERGENCY_* bitmask

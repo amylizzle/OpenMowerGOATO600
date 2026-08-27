@@ -27,7 +27,7 @@ bool GpsDriver::StartDriver(std::string path, int baud) {
  
   LORAInit();
   GNSSConfig();
-  
+
   stopped_ = false;
   processing_thread_ = createThread(threadHelper, this);
 
@@ -91,6 +91,10 @@ void GpsDriver::threadFunc() {
       if (IsRawMode()) {
         RawDataOutput(processing_buffer_, processing_buffer_len_);
       }
+    } else {
+      std::this_thread::sleep_for(
+                std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::duration<double>(0.01))
+            );
     }
     // last_ndtr = 0;
     processing_buffer_len_ = 0;

@@ -57,8 +57,6 @@ class MotorDriver {
   static inline int16_t ReadI16Le(const uint8_t* data, size_t offset);
   static inline uint16_t ReadU16Le(const uint8_t* data, size_t offset);
 
-  uint8_t ack_ = 0;
-
   void OnMB(const uint8_t* payload, size_t length, uint8_t ack);
   void OnMC(const uint8_t* payload, size_t length, uint8_t ack);
   void OnMD(const uint8_t* payload, size_t length, uint8_t ack);
