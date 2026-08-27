@@ -75,30 +75,45 @@ void ScreenDriver::SetScreenState(ScreenIconState lock, ScreenIconState internet
 }
 
 void ScreenDriver::SetPowerMode(ScreenPowerState mode) {
+  if (state_.power_mode == mode) {
+    return;
+  }
   state_.power_mode = mode;
   auto cmd = EncodePowerModeCommand(mode);
   mcu_driver_->SendMessage('C', 'I', cmd.data(), cmd.size());
 }
 
 void ScreenDriver::SetLockIcon(ScreenIconState value){
+  if (state_.screen_lock == value) {
+    return;
+  }
   state_.screen_lock = value;
   auto cmd = EncodeScreenStateCommand();
   mcu_driver_->SendMessage('Z', 'A', cmd.data(), cmd.size());  
 }
 
 void ScreenDriver::SetInternetIcon(ScreenIconState value){
+  if (state_.internet == value) {
+    return;
+  }
   state_.internet = value;
   auto cmd = EncodeScreenStateCommand();
   mcu_driver_->SendMessage('Z', 'A', cmd.data(), cmd.size());  
 }
 
 void ScreenDriver::SetWifiIcon(ScreenIconState value){
+  if (state_.wifi == value) {
+    return;
+  }
   state_.wifi = value;
   auto cmd = EncodeScreenStateCommand();
   mcu_driver_->SendMessage('Z', 'A', cmd.data(), cmd.size());  
 }
 
 void ScreenDriver::SetScreenPage(ScreenPage value){
+  if (state_.page_num == value) {
+    return;
+  }
   state_.page_num = value;
   auto cmd = EncodeScreenStateCommand();
   mcu_driver_->SendMessage('Z', 'A', cmd.data(), cmd.size());  
