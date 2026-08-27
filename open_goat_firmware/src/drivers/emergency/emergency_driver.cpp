@@ -62,6 +62,7 @@ void EmergencyDriver::RegisterNotifyCallback(const NotifyHandler& handler) {
 
 void EmergencyDriver::ClearEStop(){
     //send a JA message with a 16bit 0
+    ULOG_INFO("EMERGENCY: ClearEStop() sending JA 0 message to MCU");
     mcu_driver_->SendMessage('J', 'A', (uint16_t)0, 2);
 }
 
