@@ -83,5 +83,6 @@ void EmergencyService::SendStatus() {
 }
 
 void EmergencyService::tick() {
+  OnDriverNotify(driver_->GetEmergencyState());
   SendStatus();
 }

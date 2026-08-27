@@ -22,11 +22,10 @@ uint16_t EmergencyDriver::GetEmergencyState() {
     // DB 
     state |= AlarmBitsToEmergencyReason(this->mcuAlarmCode);
     // A non-zero motor fault (any of the 4 motor err codes) is an emergency too.
-    if (this->motorFaultCode != 0) {
+    if (this->motorFaultCode != 0 || this->mcuAlarmCode != 0) {
         state |= EmergencyReason::LIFT_MULTIPLE;
-        ULOG_ERROR("EMERGENCY STATE: mcuAlarmCode: 0x%08x, motorFaultCode: 0x%08x", this->mcuAlarmCode, this->motorFaultCode);
     }
-    if(state != 0) ULOG_ERROR("EMERGENCY STATE: bump: %u, fall: %u, charge: %u, acczero: %u, rain: %u, grass: %u, roll: %u, stop: %u, fan: %u", this->bump, this->fall, this->chargeState, this->acczero, this->rain, this->grass, this->roll, this->Stop, this->fan);
+    
     return state;
 }
 
@@ -54,6 +53,7 @@ void EmergencyDriver::OnBCMessage(const uint8_t *payload, size_t length, uint8_t
         }
     }
     if(change){
+        ULOG_ERROR("EMERGENCY STATE CHANGE: bump: %u, fall: %u, charge: %u, acczero: %u, rain: %u, grass: %u, roll: %u, stop: %u, fan: %u", this->bump, this->fall, this->chargeState, this->acczero, this->rain, this->grass, this->roll, this->Stop, this->fan);
         if (registered_handler_)
             registered_handler_(GetEmergencyState());
     }
@@ -104,7 +104,7 @@ void EmergencyDriver::OnDBMessage(const uint8_t *payload, size_t length, uint8_t
                         (static_cast<uint32_t>(payload[3]) << 24);
         if (code != this->mcuAlarmCode) {
             this->mcuAlarmCode = code;
-            ULOG_INFO("alert mcuAlarmCode:0x%08x", code);
+            ULOG_INFO("EMERGENCY STATE CHANGE: mcuAlarmCode:0x%08x", code);
             anyChange = true;
         }
     }
@@ -121,7 +121,7 @@ void EmergencyDriver::OnDBMessage(const uint8_t *payload, size_t length, uint8_t
             uint8_t r_motor = static_cast<uint8_t>((code >> 8) & 0xFFu);
             uint8_t l_cut   = static_cast<uint8_t>((code >> 16) & 0xFFu);
             uint8_t r_cut   = static_cast<uint8_t>((code >> 24) & 0xFFu);
-            ULOG_INFO("alert from motor motorFaultCode:0x%08x l_motor_err_code=0x%02x r_motor_err_code=0x%02x l_cut_err_code=0x%02x r_cut_err_code=0x%02x",
+            ULOG_INFO("EMERGENCY STATE CHANGE: motorFaultCode:0x%08x l_motor_err_code=0x%02x r_motor_err_code=0x%02x l_cut_err_code=0x%02x r_cut_err_code=0x%02x",
                       code, l_motor, r_motor, l_cut, r_cut);
             anyChange = true;
             motorChange = true;
@@ -134,7 +134,7 @@ void EmergencyDriver::OnDBMessage(const uint8_t *payload, size_t length, uint8_t
                         (static_cast<uint16_t>(payload[9]) << 8);
         if (code != this->liftFaultCode) {
             this->liftFaultCode = code;
-            ULOG_INFO("alert liftFaultCode:0x%04x", code);
+            ULOG_INFO("EMERGENCY STATE CHANGE: liftFaultCode:0x%04x", code);
             anyChange = true;
         }
     }
@@ -145,7 +145,7 @@ void EmergencyDriver::OnDBMessage(const uint8_t *payload, size_t length, uint8_t
                         (static_cast<uint16_t>(payload[11]) << 8);
         if (code != this->grassFaultCode) {
             this->grassFaultCode = code;
-            ULOG_INFO("alert grassFaultCode:0x%04x", code);
+            ULOG_INFO("EMERGENCY STATE CHANGE: grassFaultCode:0x%04x", code);
             anyChange = true;
         }
     }
