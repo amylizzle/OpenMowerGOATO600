@@ -4,7 +4,8 @@
 namespace goat::service_ids {
 enum : uint16_t {
 //todo can you extend an enum in c++?
-  SCREEN = 12
+  SCREEN = 12,
+  RTC = 13
 };
 }
 

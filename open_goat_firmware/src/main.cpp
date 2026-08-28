@@ -36,6 +36,8 @@ int main() {
 	mower_service.start();
 	ULOG_INFO("IMU...");
 	imu_service.start();
+	ULOG_INFO("RTC...");
+	rtc_service.start();
 	ULOG_INFO("Power...");
 	power_service.start();
 	ULOG_INFO("GPS...");

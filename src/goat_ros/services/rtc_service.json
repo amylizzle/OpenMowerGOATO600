@@ -1,0 +1,11 @@
+{
+  "type": "RTCService",
+  "version": 1,
+  "outputs": [
+    {
+      "id": 0,
+      "name": "TimeDelta",
+      "type": "uint32_t"
+    }
+  ]
+}

@@ -27,9 +27,6 @@ class ScreenService : public ScreenServiceBase {
   ManagedSchedule tick_schedule_{scheduler_, IsRunning(), 200'000,
                                  XBOT_FUNCTION_FOR_METHOD(ScreenService, &ScreenService::tick, this)};
 
-  // Display phases: 0 = battery %, 1 = "DEAD", 2 = "BEEF"
-  uint8_t display_phase_ = 0;
-
 };
 
 #endif  // SCREEN_SERVICE_HPP
