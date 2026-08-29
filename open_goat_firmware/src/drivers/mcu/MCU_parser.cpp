@@ -92,7 +92,7 @@ public:
     }
 
     bool open() {
-        fd = ::open(path.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
+        fd = ::open(path.c_str(), O_RDWR | O_NOCTTY);
         if (fd < 0) {
             ULOG_ERROR("failed to open TTY for MCULink!");
             return false;
@@ -115,7 +115,7 @@ public:
         cfsetispeed(&attr, speed);
         cfsetospeed(&attr, speed);
 
-        attr.c_cc[VMIN] = 0;                              // non-blocking read
+        attr.c_cc[VMIN] = 1;                              // blocking read, wait for at least one byte
         attr.c_cc[VTIME] = 0;
 
         if (tcsetattr(fd, TCSANOW, &attr) != 0) {
@@ -164,73 +164,87 @@ public:
     }
 
     std::optional<std::vector<uint8_t>> read_frame(double timeout = 1.0, double poll = 0.05) {
+        (void)timeout;
+        (void)poll;
+
         if (fd < 0) {
             ULOG_ERROR("MCU LOST TTY FILE, REOPENING");
             open();
             return std::nullopt;
         }
 
-        std::vector<uint8_t> buf;
-        using clock = std::chrono::steady_clock;
-        
-        auto end_time = clock::now() + std::chrono::duration_cast<clock::duration>(
-            std::chrono::duration<double>(timeout)
-        );
-
-        while (clock::now() < end_time) {
-            uint8_t chunk[256];
-            ssize_t bytes_read = ::read(fd, chunk, sizeof(chunk));
-            
-            if (bytes_read > 0) {
-                buf.insert(buf.end(), chunk, chunk + bytes_read);
+        std::vector<uint8_t> frame;
+        while (true) {
+            uint8_t byte = 0;
+            const ssize_t n = ::read(fd, &byte, 1);
+            if (n < 0) {
+                if (errno == EINTR) {
+                    continue;
+                }
+                ULOG_ERROR("MCU read failed: %s", ::strerror(errno));
+                return std::nullopt;
+            }
+            if (n == 0) {
+                continue;
             }
 
-            while (true) {
-                auto it = std::find(buf.begin(), buf.end(), static_cast<uint8_t>(0x60));
-                if (it == buf.end()) {
-                    buf.clear(); // No delimiter left in buffer
-                    break;
+            if (frame.empty()) {
+                if (byte != 0x60) {
+                    continue;
                 }
-
-                size_t i = std::distance(buf.begin(), it);
-                if (buf.size() - i < 3) {
-                    break;
-                }
-
-                uint8_t ln = buf[i + 2];
-                size_t total = static_cast<size_t>(ln) + 5;
-                if (buf.size() - i < total) {
-                    break;
-                }
-
-                std::vector<uint8_t> frame(buf.begin() + i, buf.begin() + i + total);
-
-                bool terminator_ok = (frame.back() == 0x0A);
-                uint8_t expected_crc = crc8(frame.data(), frame.size() - 2);
-                uint8_t got_crc = frame[frame.size() - 2];
-                bool crc_ok = (expected_crc == got_crc);
-
-                if (terminator_ok && crc_ok) {
-                    buf.erase(buf.begin(), buf.begin() + i + total);
-                    return frame;
-                }
-
-                // False positive resync logic
-                // std::cout << "desync/bad frame at offset " << i
-                //           << " (terminator_ok=" << (terminator_ok ? "True" : "False")
-                //           << ", crc_ok=" << (crc_ok ? "True" : "False")
-                //           << ", expected_crc=" << static_cast<int>(expected_crc)
-                //           << ", got=" << static_cast<int>(got_crc) 
-                //           << ") - resyncing\n";
-
-                buf.erase(buf.begin() + i, buf.begin() + i + 1);
+                frame.push_back(byte);
+                continue;
             }
 
-            std::this_thread::sleep_for(
-                std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::duration<double>(poll))
-            );
+            if (frame.size() == 1) {
+                frame.push_back(byte);
+                continue;
+            }
+
+            if (frame.size() == 2) {
+                frame.push_back(byte);
+                const uint8_t length = frame[2];
+                if (length < 2) {
+                    frame.clear();
+                    continue;
+                }
+                continue;
+            }
+
+            const size_t expected_total = static_cast<size_t>(frame[2]) + 5u;
+            frame.push_back(byte);
+
+            if (frame.size() < expected_total) {
+                continue;
+            }
+
+            if (frame.size() > expected_total) {
+                auto next_start = std::find(frame.begin() + 1, frame.end(), static_cast<uint8_t>(0x60));
+                if (next_start != frame.end()) {
+                    const auto offset = std::distance(frame.begin(), next_start);
+                    frame.erase(frame.begin(), frame.begin() + static_cast<std::ptrdiff_t>(offset));
+                    continue;
+                }
+                frame.clear();
+                continue;
+            }
+
+            const uint8_t got_crc = frame[frame.size() - 2];
+            const uint8_t terminator = frame.back();
+            const uint8_t expected_crc = crc8(frame.data(), frame.size() - 2);
+
+            if (terminator == 0x0A && expected_crc == got_crc) {
+                return frame;
+            }
+
+            auto next_start = std::find(frame.begin() + 1, frame.end(), static_cast<uint8_t>(0x60));
+            if (next_start != frame.end()) {
+                const auto offset = std::distance(frame.begin(), next_start);
+                frame.erase(frame.begin(), frame.begin() + static_cast<std::ptrdiff_t>(offset));
+                continue;
+            }
+
+            frame.clear();
         }
-
-        return std::nullopt;
     }
 };

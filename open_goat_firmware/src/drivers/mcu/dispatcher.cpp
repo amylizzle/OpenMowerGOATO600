@@ -34,36 +34,32 @@ void Dispatcher::RegisterHandler(uint8_t cmd0, uint8_t cmd1, const MessageHandle
 }
 
 void Dispatcher::FrameReaderLoop(Dispatcher* instance) {
-	// Scan for frames. We return the number of bytes consumed from the front
-	while(true){
-		if (auto buffer = instance->mlink->read_frame()) {
-			auto val = buffer.value();
-			uint8_t ack = val[1];
-			uint8_t cmd0 = val[3];
-			uint8_t cmd1 = val[4];
-			// first 5 bytes are [0x60][ack][len][cmd0][cmd1], last two bytes are [crc],[0x0A]
-			size_t data_len = (val.size() - 5) - 2;
-			const uint8_t *data_ptr = &val[5];
+	while (true) {
+		auto buffer = instance->mlink->read_frame();
+		if (!buffer) {
+			continue;
+		}
 
-			// dispatch
-			bool dispatched = false;
-			uint16_t key = static_cast<uint16_t>((cmd0 << 8) | cmd1);
-			for (auto &p : instance->handlers_) {
-				if (p.first == key) {
-					if (p.second) {
-						p.second(data_ptr, data_len, ack);
-						dispatched = true;
-					}
-						
+		auto val = buffer.value();
+		uint8_t ack = val[1];
+		uint8_t cmd0 = val[3];
+		uint8_t cmd1 = val[4];
+		// first 5 bytes are [0x60][ack][len][cmd0][cmd1], last two bytes are [crc],[0x0A]
+		size_t data_len = (val.size() - 5) - 2;
+		const uint8_t *data_ptr = &val[5];
+
+		bool dispatched = false;
+		uint16_t key = static_cast<uint16_t>((cmd0 << 8) | cmd1);
+		for (auto &p : instance->handlers_) {
+			if (p.first == key) {
+				if (p.second) {
+					p.second(data_ptr, data_len, ack);
+					dispatched = true;
 				}
 			}
-			if(!dispatched){
-				ULOG_WARNING("UNHANDLED MCU MESSAGE %c%c",cmd0,cmd1);
-			}
-		} else {
-			std::this_thread::sleep_for(
-                std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::duration<double>(0.05))
-            );
+		}
+		if (!dispatched) {
+			ULOG_WARNING("UNHANDLED MCU MESSAGE %c%c", cmd0, cmd1);
 		}
 	}
 }
