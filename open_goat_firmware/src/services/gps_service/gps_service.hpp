@@ -47,6 +47,8 @@ public:
 
   // NTRIP statistics - timestamp of last received RTCM packet
   uint32_t last_ntrip_time_ = 0;
+  // time of last RTK system reset
+  uint32_t last_rtk_reset_ = 0;
 
   // Empty GPS state for fallback when no driver is available
   GpsDriver::GpsState empty_gps_state_{};

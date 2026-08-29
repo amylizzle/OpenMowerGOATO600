@@ -52,8 +52,9 @@ void GpsService::GpsStateCallback(const GpsDriver::GpsState& state) {
     SendFixType("FIX", 3);
   } else if (state.rtk_type == xbot::driver::gps::GpsDriver::GpsState::RTK_FLOAT) {
     SendFixType("FLOAT", 5);
-  } else {
+  } else if (TIME_I2S(chVTGetSystemTimeX() - last_rtk_reset_) > 30.0) {
     // lost RTK? try reset the RTK system
+    last_rtk_reset_ = chVTGetSystemTimeX();
     gps_driver_->LORAInit();
     ULOG_WARNING("GPS SERVICE: RTK lost, resetting RTK system");
   }
