@@ -22,6 +22,9 @@ bool Dispatcher::StartDriver(std::string path, int baud) {
 	this->RegisterHandler(
           static_cast<uint8_t>('T'), static_cast<uint8_t>('B'), // Log text message
           etl::delegate<void(const uint8_t *, size_t, uint8_t)>::create<Dispatcher, &Dispatcher::OnTBMessage>(*this));
+	//start with a reset of any emergency state, this *seems* to be required for proper MCU init?
+	const std::vector<uint8_t> resetMsg = {0,0,0};
+    SendMessage('D', 'A', resetMsg.data(), resetMsg.size());
 	return true;
 }
 

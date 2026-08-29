@@ -15,16 +15,17 @@ EmergencyDriver::EmergencyDriver(xbot::driver::mcu::Dispatcher* dispatcher) : mc
 
 uint16_t EmergencyDriver::GetEmergencyState() {
     uint16_t state = 0;
+    // DB 
+    state = AlarmBitsToEmergencyReason(this->mcuAlarmCode);
+    // A non-zero motor fault (any of the 4 motor err codes) is an emergency too.
+    if (this->motorFaultCode != 0) {
+        state |= 0xFFFF; //let's go overboard with this
+    }
+
     if(this->bump > 64) state |= EmergencyReason::COLLISION;
     if(this->fall > 64) state |= EmergencyReason::LIFT;
     if(this->roll) state |= EmergencyReason::LIFT_MULTIPLE;
     if(this->Stop) state |= EmergencyReason::STOP;
-    // DB 
-    state |= AlarmBitsToEmergencyReason(this->mcuAlarmCode);
-    // A non-zero motor fault (any of the 4 motor err codes) is an emergency too.
-    if (this->motorFaultCode != 0 || this->mcuAlarmCode != 0) {
-        state |= EmergencyReason::LIFT_MULTIPLE;
-    }
     
     return state;
 }
