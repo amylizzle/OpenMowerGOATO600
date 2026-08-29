@@ -50,7 +50,7 @@ RTCDriver::RTCDriver(xbot::driver::mcu::Dispatcher* dispatcher): mcu_driver_(dis
 }
 
 void RTCDriver::Start() {
-    const uint8_t request = 0x00;
+    const uint8_t request = 0x01;
     mcu_driver_->SendMessage('R','A', &request, 1); //request MCU's RTC value
     startTime = std::chrono::steady_clock::now();
 }
@@ -82,15 +82,58 @@ void RTCDriver::OnRC(const uint8_t *payload, size_t length, uint8_t ack){
 // off 6    u8  sec
 // ```
     (void)ack;
+    std::tm local_time = {};
+
     if (length == 7) {
-        ULOG_INFO("RC Receive %u,%u,%u, %u:%u:%u", (uint16_t)payload[0], payload[2], payload[3], payload[4], payload[5], payload[6]);
+        ULOG_INFO("RC Receive %u,%u,%u, %u:%u:%u", (uint16_t)(payload[0] + (payload[1] << 8)), payload[2], payload[3], payload[4], payload[5], payload[6]);
+        
+        local_time.tm_year = (payload[0] + (payload[1] << 8)) - 1900; // Offset since 1900
+        local_time.tm_mon  = payload[2] - 1;   // 0-indexed month (0-11)
+        local_time.tm_mday = payload[3];
+        local_time.tm_hour = payload[4];
+        local_time.tm_min  = payload[5];
+        local_time.tm_sec  = payload[6];
+        local_time.tm_isdst = -1;         // Auto-detect Daylight Saving Time
+
+        // Convert local tm struct to Unix timestamp (use timegm for UTC)
+        std::time_t t = std::mktime(&local_time);
+
+        if (t != -1) {
+            timespec ts;
+            ts.tv_sec = t;
+            ts.tv_nsec = 0;
+
+            if (clock_settime(CLOCK_REALTIME, &ts) != 0) {
+                ULOG_ERROR("Failed to set time to %u",t);
+            }
+        }
     } else {
         ULOG_INFO("RC Receive bad length %u", length);
     }
-// if it's off:
 // ### Send RB — set time (0xa95760)
 // Args: x0=this, w1=u16 year, w2..w6=month/day/hour/min/sec. Cmd bytes 0x52('R'),0x42('B'); data = 7 bytes `[u16 year][u8 month][u8 day][u8 hour][u8 min][u8 sec]` (sp+0x38..+0x3e, end=+7). Packed 0x8ef220, sent via `0x8ec34c` with this+0x140. Mirrors RC receive exactly (year stored as actual calendar year, month 1-12). Caller 0xa95568 converts unix-seconds→calendar (gmtime-like: tm_year+0x76c, tm_mon+1) and only sends if year>1999 (0x7cf). Invoked from `rtc/Synchronize` handler 0xa94fdc when msg byte0==1 (unix seconds at msg+4).
+    auto now = std::chrono::system_clock::now(); //get it again just in case
+    std::time_t time_t_now = std::chrono::system_clock::to_time_t(now);
+    local_time = *std::localtime(&time_t_now);
 
+    uint16_t year = static_cast<uint16_t>(local_time.tm_year + 1900); 
+    uint8_t month = static_cast<uint8_t>(local_time.tm_mon + 1);
+    uint8_t day   = static_cast<uint8_t>(local_time.tm_mday);
+    uint8_t hour  = static_cast<uint8_t>(local_time.tm_hour);
+    uint8_t min   = static_cast<uint8_t>(local_time.tm_min);
+    uint8_t sec   = static_cast<uint8_t>(local_time.tm_sec);
+    std::vector<uint8_t> RBmsg = {
+        static_cast<uint8_t>(year),
+        static_cast<uint8_t>(year >> 8),
+        static_cast<uint8_t>(month), 
+        static_cast<uint8_t>(day), 
+        static_cast<uint8_t>(hour), 
+        static_cast<uint8_t>(min), 
+        static_cast<uint8_t>(sec), 
+        
+    };
+
+    mcu_driver_->SendMessage('R','B', RBmsg.data(), RBmsg.size());
 }
 
 void RTCDriver::OnUC(const uint8_t *payload, size_t length, uint8_t ack){
