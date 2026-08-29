@@ -97,7 +97,10 @@ void RTCDriver::OnUC(const uint8_t *payload, size_t length, uint8_t ack){
     (void)ack;
     //recieve UC is one byte flag, 3 uint32s - t0, t1, t2
     if (length == 13) {
-        ULOG_INFO("UC Receive t0,t1,t2 = %u,%u,%u",(uint32_t)payload[1],(uint32_t)payload[5],(uint32_t)payload[9]);
+        uint32_t t0 = payload[1] | (payload[2]<<8) | (payload[3]<<16) | (payload[4]<<24);
+        uint32_t t1 = payload[5] | (payload[6]<<8) | (payload[7]<<16) | (payload[8]<<24);
+        uint32_t t2 = payload[9] | (payload[10]<<8) | (payload[11]<<16) | (payload[12]<<24);
+        ULOG_INFO("UC Receive t0,t1,t2 = %u,%u,%u", t0, t1, t2);
     } else {
         ULOG_INFO("UC Received bad length %u", length);
     }
