@@ -16,7 +16,7 @@ class RTCDriver {
     void Start();
     void Sync();
   private:
-    std::chrono::steady_clock::time_point startTime{};
+    bool sentRA = false;
     xbot::driver::mcu::Dispatcher* mcu_driver_{};
     void OnRC(const uint8_t *payload, size_t length, uint8_t ack);
     void OnRT(const uint8_t *payload, size_t length, uint8_t ack);

@@ -50,15 +50,17 @@ RTCDriver::RTCDriver(xbot::driver::mcu::Dispatcher* dispatcher): mcu_driver_(dis
 }
 
 void RTCDriver::Start() {
-    const uint8_t request = 0x01;
-    mcu_driver_->SendMessage('R','A', &request, 1); //request MCU's RTC value
-    startTime = std::chrono::steady_clock::now();
+
 }
 
 void RTCDriver::Sync() {
+    if(!sentRA){
+        const uint8_t request = 0x00;
+        mcu_driver_->SendMessage('R','A', &request, 1); //request MCU's RTC value
+    }
     const uint32_t secondsSinceStart = static_cast<uint32_t>(
         std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now() - startTime).count());
+            std::chrono::steady_clock::now()).count());
     std::vector<uint8_t> UCmsg = {
         static_cast<uint8_t>(0x00), 
         static_cast<uint8_t>(secondsSinceStart),
