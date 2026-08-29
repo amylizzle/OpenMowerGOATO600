@@ -58,19 +58,17 @@ void RTCDriver::Sync() {
         const uint8_t request = 0x00;
         mcu_driver_->SendMessage('R','A', &request, 1); //request MCU's RTC value
     }
-    const uint32_t secondsSinceStart = static_cast<uint32_t>(
-        std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now()).count());
+    const uint32_t msSinceStart = static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
     std::vector<uint8_t> UCmsg = {
         static_cast<uint8_t>(0x00), 
-        static_cast<uint8_t>(secondsSinceStart),
-        static_cast<uint8_t>(secondsSinceStart >> 8),
-        static_cast<uint8_t>(secondsSinceStart >> 16),
-        static_cast<uint8_t>(secondsSinceStart >> 24)
+        static_cast<uint8_t>(msSinceStart),
+        static_cast<uint8_t>(msSinceStart >> 8),
+        static_cast<uint8_t>(msSinceStart >> 16),
+        static_cast<uint8_t>(msSinceStart >> 24)
     };
 
     mcu_driver_->SendMessage('U','C', UCmsg.data(), UCmsg.size());
-    ULOG_INFO("RTC Sync: %u",secondsSinceStart);
+    ULOG_INFO("RTC Sync: %u",msSinceStart);
 }
 
 void RTCDriver::OnRC(const uint8_t *payload, size_t length, uint8_t ack){
