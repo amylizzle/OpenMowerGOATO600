@@ -57,10 +57,10 @@ void RTCDriver::Start() {
 
 void RTCDriver::Sync() {
     const uint32_t secondsSinceStart = static_cast<uint32_t>(
-        std::chrono::duration_cast<std::chrono::seconds>(
+        std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::steady_clock::now() - startTime).count());
     std::vector<uint8_t> UCmsg = {
-        static_cast<uint8_t>(0x01), 
+        static_cast<uint8_t>(0x00), 
         static_cast<uint8_t>(secondsSinceStart),
         static_cast<uint8_t>(secondsSinceStart >> 8),
         static_cast<uint8_t>(secondsSinceStart >> 16),
