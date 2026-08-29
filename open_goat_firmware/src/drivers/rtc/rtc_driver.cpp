@@ -57,6 +57,7 @@ void RTCDriver::Sync() {
     if(!sentRA){
         const uint8_t request = 0x00;
         mcu_driver_->SendMessage('R','A', &request, 1); //request MCU's RTC value
+        sentRA = true;
     }
     const uint32_t msSinceStart = static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
     std::vector<uint8_t> UCmsg = {
