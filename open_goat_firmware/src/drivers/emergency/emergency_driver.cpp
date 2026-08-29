@@ -63,10 +63,11 @@ void EmergencyDriver::RegisterNotifyCallback(const NotifyHandler& handler) {
     registered_handler_ = handler;
 }
 
-void EmergencyDriver::ClearEStop(){
+void EmergencyDriver::ClearEmergency(){
     //send a JA message with a 16bit 0
-    ULOG_INFO("EMERGENCY: ClearEStop() sending JA 0 message to MCU");
-    mcu_driver_->SendMessage('J', 'A', (uint16_t)0, 2);
+    ULOG_INFO("EMERGENCY: ClearEmergency() sending DB 0 message to MCU");
+    const std::vector<uint8_t> resetMsg = {0,0,0};
+    mcu_driver_->SendMessage('D', 'A', resetMsg.data(), resetMsg.size());
 }
 
 // Map ECOVACS mcuAlarmCode EMERGENCY_* bits onto the host EmergencyReason mask.

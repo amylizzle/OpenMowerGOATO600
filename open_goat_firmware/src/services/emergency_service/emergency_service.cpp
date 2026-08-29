@@ -62,11 +62,11 @@ void EmergencyService::UpdateEmergency(uint16_t add, uint16_t clear) {
   uint16_t old_reason = reasons_;
   reasons_ &= ~clear;
   reasons_ |= add;
+  if(clear & EmergencyReason::LATCH){
+    driver_->ClearEmergency();
+  }
   if (reasons_ == old_reason) {
     return;
-  }
-  if(clear & (EmergencyReason::STOP | EmergencyReason::LATCH)){
-    driver_->ClearEStop();
   }
   diff_drive_service.OnEmergencyChangedEvent();
   SendStatus();

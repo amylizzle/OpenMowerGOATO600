@@ -97,7 +97,7 @@ class EmergencyDriver {
   uint16_t GetEmergencyState();
 
   // Reset estop
-  void ClearEStop();
+  void ClearEmergency();
 };
 
 } // namespace xbot::driver::emergency
