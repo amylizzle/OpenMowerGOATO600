@@ -18,7 +18,7 @@ class RTCService : public RTCServiceBase {
 
  private:
   void tick();
-  ManagedSchedule tick_schedule_{scheduler_, IsRunning(), 30'000'000,
+  ManagedSchedule tick_schedule_{scheduler_, IsRunning(), 1'000'000,
                                  XBOT_FUNCTION_FOR_METHOD(RTCService, &RTCService::tick, this)};
 };
 
