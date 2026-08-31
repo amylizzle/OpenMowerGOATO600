@@ -16,6 +16,7 @@ class EmergencyService : public EmergencyServiceBase {
   explicit EmergencyService(uint16_t service_id) : EmergencyServiceBase(service_id) {
   }
   uint16_t GetEmergencyReasons();
+  void UpdateEmergency(uint16_t add, uint16_t clear = 0);
 
  protected:
   void OnStop() override;
@@ -29,7 +30,6 @@ class EmergencyService : public EmergencyServiceBase {
   ManagedSchedule tick_schedule_{scheduler_, IsRunning(), 100'000,
                                  XBOT_FUNCTION_FOR_METHOD(EmergencyService, &EmergencyService::tick, this)};
 
-  void UpdateEmergency(uint16_t add, uint16_t clear = 0);
   void SendStatus();
   uint32_t CheckTimeouts(uint32_t now);
   uint16_t reasons_ = EmergencyReason::TIMEOUT_INPUTS | EmergencyReason::TIMEOUT_HIGH_LEVEL;

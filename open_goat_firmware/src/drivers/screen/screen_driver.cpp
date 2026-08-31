@@ -137,7 +137,7 @@ void ScreenDriver::RegisterNotifyCallback(const NotifyHandler& handler) {
 }
 
 // ZT touch/test/control: byte at data+0 is the sub-code.
-//   0xd key-shutdown, 9 wifi_mark, 4 factory test, 6 clear lock, 0xe roll-motor
+//   0xd key-shutdown, 9 wifi_mark, 4 factory test, 6 clear stop, 0xe roll-motor
 void ScreenDriver::OnZT(const uint8_t* payload, size_t length, uint8_t ack) {
   (void) ack;
   if (!payload || length == 0) {
@@ -146,14 +146,9 @@ void ScreenDriver::OnZT(const uint8_t* payload, size_t length, uint8_t ack) {
   const uint8_t code = payload[0];
   ULOG_WARNING("[SCREEN] ZT: ack %u code: %u", ack, static_cast<unsigned>(code));
 
-//   // Sub-code 6 clears the screen lock (obj+0x135 = 0)
-//   if (code == 6) {
-//     state_.screen_lock = 0;
-//   }
-
-//   if (registered_handler_) {
-//     registered_handler_(code);
-//   }
+  if (registered_handler_) {
+    registered_handler_(code);
+  }
 }
 
 // ZC screen lock/unlock code: 16-bit signed code from data[0..1].

@@ -21,6 +21,8 @@ class ScreenService : public ScreenServiceBase {
     }
     return driver_->IsRaining();
   }
+  
+  void OnDriverNotify(const uint8_t eventCode);
 
  private:
   void tick();

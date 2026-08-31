@@ -64,6 +64,7 @@ void EmergencyService::UpdateEmergency(uint16_t add, uint16_t clear) {
   reasons_ |= add;
   if(clear & EmergencyReason::LATCH){
     driver_->ClearEmergency();
+    reasons_ = 0;
   }
   if (reasons_ == old_reason) {
     return;

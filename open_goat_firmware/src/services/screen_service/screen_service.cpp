@@ -14,6 +14,13 @@ bool ScreenService::OnStart() {
   return true;
 }
 
+void ScreenService::OnDriverNotify(const uint8_t eventCode) {
+  if (eventCode == 6){
+    //reset code, clear latched and stop
+    emergency_service.UpdateEmergency(0, EmergencyReason::STOP | EmergencyReason::LATCH);
+  }
+}
+
 void ScreenService::tick() {
   if (driver_ == nullptr) {
     return;
