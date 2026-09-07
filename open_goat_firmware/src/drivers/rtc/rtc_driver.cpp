@@ -69,7 +69,7 @@ void RTCDriver::Sync() {
     };
 
     mcu_driver_->SendMessage('U','C', UCmsg.data(), UCmsg.size());
-    ULOG_INFO("RTC Sync: %u",msSinceStart);
+    // ULOG_INFO("RTC Sync: %u",msSinceStart);
 }
 
 void RTCDriver::OnRC(const uint8_t *payload, size_t length, uint8_t ack){
@@ -144,7 +144,10 @@ void RTCDriver::OnUC(const uint8_t *payload, size_t length, uint8_t ack){
         uint32_t t0 = payload[1] | (payload[2]<<8) | (payload[3]<<16) | (payload[4]<<24);
         uint32_t t1 = payload[5] | (payload[6]<<8) | (payload[7]<<16) | (payload[8]<<24);
         uint32_t t2 = payload[9] | (payload[10]<<8) | (payload[11]<<16) | (payload[12]<<24);
-        ULOG_INFO("UC Receive t0,t1,t2 = %u,%u,%u", t0, t1, t2);
+        // ULOG_INFO("UC Receive t0,t1,t2 = %u,%u,%u", t0, t1, t2);
+        (void)t0;
+        (void)t1;
+        (void)t2;
     } else {
         ULOG_INFO("UC Received bad length %u", length);
     }

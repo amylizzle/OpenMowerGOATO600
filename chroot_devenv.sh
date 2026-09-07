@@ -218,14 +218,14 @@ EOF
         ln -s /workspace/src/open_mower_ros/web /opt/open_mower_ros/web
     "
     info "copying nginx config into chroot"
-    cp "./src/open_mower_ros/docker/assets/nginx.conf" "${ROOTFS}/etc/nginx/conf.d/default.conf"
+    cp "${WORKSPACE}/src/open_mower_ros/docker/assets/nginx.conf" "${ROOTFS}/etc/nginx/conf.d/default.conf"
 
     info "setting up mosquitto"
     run_chroot "
         apt install -y mosquitto
     "
     info "copying mosquitto config into chroot"
-    cp "./assets/mosquitto.conf" "${ROOTFS}/etc/mosquitto/mosquitto.conf"
+    cp "${WORKSPACE}/assets/mosquitto.conf" "${ROOTFS}/etc/mosquitto/mosquitto.conf"
 
     info "setup complete: ${ROOTFS}"
 }

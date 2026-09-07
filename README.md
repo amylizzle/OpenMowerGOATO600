@@ -30,7 +30,7 @@ then
 setenv avb_boot 'echo slot=${slot_suffix}; run setbootargs; part size mmc 0 boot${slot_suffix} bootimagesize; part start mmc 0 boot${slot_suffix} bootimageblk; mmc read ${kernel_addr} 0x${bootimageblk} 0x${bootimagesize}; echo booting...; bootm ${kernel_addr}#boardid-0x2000'
 ```
 3. enter `saveenv` to store these values for future boots
-4. enter `setenv sploit 'androidboot.verifiedbootstate=green init=/bin/sh ignore="'` to boot into a root init shell this time
+4. enter `setenv sploit init=/bin/sh ignore=\"` to boot into a root init shell this time
 5. enter `boot`
 6. this will drop you at a root shell. Remount the root drive as rw with `mount -o remount,rw /` then use `passwd` to set a password
 7. `mount /dev/mmcblk0p16 /data` then `touch /data/sshd_to_be_run` to set a sshd server to start on boot
@@ -90,6 +90,8 @@ systemctl disable log_clean.timer
 systemctl disable cameraProvider.service 
 mv /usr/bin/hydra.sh /usr/bin/hydra.sh.bak
 ```
+install systemd-timesyncd and add service to setup hwclock setting
+
 set openmower to run on startup:
 ```
 bash -c 'cat <<EOF > /etc/systemd/system/openmower.service
