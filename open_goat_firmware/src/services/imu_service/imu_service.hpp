@@ -17,9 +17,7 @@ class ImuService : public ImuServiceBase {
   bool OnStart() override;
 
  private:
-  void tick();
-  ManagedSchedule tick_schedule_{scheduler_, IsRunning(), 10'000,
-                                 XBOT_FUNCTION_FOR_METHOD(ImuService, &ImuService::tick, this)};
+  void OnDriverNotify(const double* axes, size_t length);
 };
 
 #endif  // IMU_SERVICE_HPP

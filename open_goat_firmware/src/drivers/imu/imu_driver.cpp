@@ -28,18 +28,8 @@ void ImuDriver::Start(){
     mcu_driver_->SendMessage(static_cast<uint8_t>('G'), static_cast<uint8_t>('C'), payload, sizeof(payload));
 }
 
-void ImuDriver::ReadAxes(double* axes, size_t length){
-        // fill axes buffer with latest accel, gyro, mag values where available
-        if (!axes || length == 0) return;
-        // order: accel[0..2], gyro[0..w], mag[0..2]
-        if (length >= 1) {
-            size_t i = 0;
-            for (; i < length && i < 3; ++i) axes[i] = static_cast<double>(data_.accel[i]) * accel_scale_factor;
-            for (size_t g = 0; i < length && g < 3; ++g, ++i) axes[i] = data_.gyro[g] * gyro_scale_factor;
-            for (size_t m = 0; i < length && m < 3; ++m, ++i) axes[i] = static_cast<double>(data_.mag[m]);
-            // fill remaining with zeros
-            for (; i < length; ++i) axes[i] = 0.0;
-        }
+void ImuDriver::RegisterNotifyCallback(const NotifyHandler& handler) {
+    registered_handler_ = handler;
 }
 
 ImuDriver::Data ImuDriver::GetData() { return data_; }
@@ -84,6 +74,16 @@ void ImuDriver::OnGD(const uint8_t *payload, size_t length, uint8_t ack) {
         data_.mag[1] = read_i16_le(payload, 17);
         data_.mag[2] = read_i16_le(payload, 19);
         data_.ts = read_u32_le(payload, 0x15);
+    }
+
+    // Any GD (gyro) message triggers a publish of the latest axes. Order:
+    // accel[0..2] (scaled), gyro[0..2] (scaled), mag[0..2].
+    double axes[9]{};
+    for (size_t i = 0; i < 3; ++i) axes[i] = static_cast<double>(data_.accel[i]) * accel_scale_factor;
+    for (size_t i = 0; i < 3; ++i) axes[3 + i] = data_.gyro[i] * gyro_scale_factor;
+    for (size_t i = 0; i < 3; ++i) axes[6 + i] = static_cast<double>(data_.mag[i]);
+    if (registered_handler_) {
+        registered_handler_(axes, 9);
     }
 }
 

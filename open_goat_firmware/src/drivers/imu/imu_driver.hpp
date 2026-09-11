@@ -10,6 +10,8 @@ namespace xbot::driver::imu {
 
 class ImuDriver {
  private:
+  using NotifyHandler = etl::delegate<void(const double*, size_t)>;
+
   xbot::driver::mcu::Dispatcher* mcu_driver_; 
   mutable struct Data {
     bool valid = false;
@@ -32,15 +34,21 @@ class ImuDriver {
     uint8_t gyro_type = 0;
   } data_{};
 
+  NotifyHandler registered_handler_{};
+
  public:
+
   ImuDriver(xbot::driver::mcu::Dispatcher* dispatcher);
   ~ImuDriver() = default;
 
   // Initialize hardware / bus
   void Start();
 
-  // Read latest axes data. Expect length==9 (3 accel, 3 gyro, 3 reserved) or similar.
-  void ReadAxes(double* axes, size_t length);
+  // Register a callback to be invoked with the latest axes data whenever a GD
+  // (gyro) message arrives. Accept the delegate by const-ref so callers can
+  // pass temporaries; the driver makes its own copy for storage.
+  void RegisterNotifyCallback(const NotifyHandler& handler);
+
   Data GetData();
 
  private:
