@@ -24,6 +24,8 @@ ImuDriver::ImuDriver(xbot::driver::mcu::Dispatcher* dispatcher) : mcu_driver_(di
 void ImuDriver::Start(){
     //there may be a message needs to be sent here? The decomp wasn't totally clear, it looks like it just 
     // sends a GC message with payload 0,1, or 2. Maybe off/on/init? Probably worth playing with
+    const uint8_t payload[1] = {0}; // 0 = init, 1 = start, 2 = stop
+    mcu_driver_->SendMessage(static_cast<uint8_t>('G'), static_cast<uint8_t>('C'), payload, sizeof(payload));
 }
 
 void ImuDriver::ReadAxes(double* axes, size_t length){
@@ -71,9 +73,9 @@ void ImuDriver::OnGD(const uint8_t *payload, size_t length, uint8_t ack) {
         return;
     }
     if (length >= (0x15 + 4)) {
-        data_.gyro[0] = static_cast<float>(read_i16_le(payload, 1));
-        data_.gyro[1] = static_cast<float>(read_i16_le(payload, 3));
-        data_.gyro[2] = static_cast<float>(read_i16_le(payload, 5));
+        data_.gyro[0] = static_cast<float>(read_i16_le(payload, 1) + data_.bias[0]);
+        data_.gyro[1] = static_cast<float>(read_i16_le(payload, 3) + data_.bias[1]);
+        data_.gyro[2] = static_cast<float>(read_i16_le(payload, 5) + data_.bias[2]);
         // payload[7] is a duplicate of payload[1]        
         data_.accel[0] = read_i16_le(payload, 9);
         data_.accel[1] = read_i16_le(payload, 11);
