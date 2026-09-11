@@ -63,19 +63,39 @@ void ImuDriver::OnGD(const uint8_t *payload, size_t length, uint8_t ack) {
         return;
     }
     if (length >= (0x15 + 4)) {
-        data_.gyro[0] = static_cast<float>(read_i16_le(payload, 1) + data_.bias[0]);
-        data_.gyro[1] = static_cast<float>(read_i16_le(payload, 3) + data_.bias[1]);
-        data_.gyro[2] = static_cast<float>(read_i16_le(payload, 5) + data_.bias[2]);
+        data_.prevgyro[0] = data_.rawgyro[0];
+        data_.prevgyro[1] = data_.rawgyro[1];
+        data_.prevgyro[2] = data_.rawgyro[2];
+        data_.prevaccel[0] = data_.rawaccel[0];
+        data_.prevaccel[1] = data_.rawaccel[1];
+        data_.prevaccel[2] = data_.rawaccel[2];
+        data_.prevmag[0] = data_.rawmag[0];
+        data_.prevmag[1] = data_.rawmag[1];
+        data_.prevmag[2] = data_.rawmag[2];
+        data_.prevts = data_.ts;            
+        data_.rawgyro[0] = read_i16_le(payload, 1); //yaw
+        data_.rawgyro[1] = read_i16_le(payload, 3); //roll
+        data_.rawgyro[2] = read_i16_le(payload, 5); //pitch
         // payload[7] is a duplicate of payload[1]        
-        data_.accel[0] = read_i16_le(payload, 9);
-        data_.accel[1] = read_i16_le(payload, 11);
-        data_.accel[2] = read_i16_le(payload, 13);
-        data_.mag[0] = read_i16_le(payload, 15);
-        data_.mag[1] = read_i16_le(payload, 17);
-        data_.mag[2] = read_i16_le(payload, 19);
+        data_.rawaccel[0] = read_i16_le(payload, 9);
+        data_.rawaccel[1] = read_i16_le(payload, 11);
+        data_.rawaccel[2] = read_i16_le(payload, 13);
+        data_.rawmag[0] = read_i16_le(payload, 15);
+        data_.rawmag[1] = read_i16_le(payload, 17);
+        data_.rawmag[2] = read_i16_le(payload, 19);
         data_.ts = read_u32_le(payload, 0x15);
     }
 
+    data_.gyro[0] = static_cast<float>(data_.rawgyro[0] - data_.prevgyro[0])/(data_.ts - data_.prevts);
+    data_.gyro[1] = static_cast<float>(data_.rawgyro[1] - data_.prevgyro[1])/(data_.ts - data_.prevts);
+    data_.gyro[2] = static_cast<float>(data_.rawgyro[2] - data_.prevgyro[2])/(data_.ts - data_.prevts);
+    data_.accel[0] = static_cast<float>(data_.rawaccel[0] - data_.prevaccel[0])/(data_.ts - data_.prevts);
+    data_.accel[1] = static_cast<float>(data_.rawaccel[1] - data_.prevaccel[1])/(data_.ts - data_.prevts);
+    data_.accel[2] = static_cast<float>(data_.rawaccel[2] - data_.prevaccel[2])/(data_.ts - data_.prevts);
+    data_.mag[0] = static_cast<float>(data_.rawmag[0] - data_.prevmag[0])/(data_.ts - data_.prevts);
+    data_.mag[1] = static_cast<float>(data_.rawmag[1] - data_.prevmag[1])/(data_.ts - data_.prevts);
+    data_.mag[2] = static_cast<float>(data_.rawmag[2] - data_.prevmag[2])/(data_.ts - data_.prevts);    
+    
     // Any GD (gyro) message triggers a publish of the latest axes. Order:
     // accel[0..2] (scaled), gyro[0..2] (scaled), mag[0..2].
     double axes[9]{};

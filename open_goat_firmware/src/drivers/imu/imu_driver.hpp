@@ -16,9 +16,16 @@ class ImuDriver {
   mutable struct Data {
     bool valid = false;
     float gyro[3] = {0, 0, 0};
-    int16_t accel[3] = {0, 0, 0};
-    int16_t mag[3] = {0, 0, 0};
+    float accel[3] = {0, 0, 0};
+    float mag[3] = {0, 0, 0};
+    int16_t rawgyro[3] = {0, 0, 0};
+    int16_t rawaccel[3] = {0, 0, 0};
+    int16_t rawmag[3] = {0, 0, 0};
     uint32_t ts = 0;
+    int16_t prevgyro[3] = {0, 0, 0};
+    int16_t prevaccel[3] = {0, 0, 0};
+    int16_t prevmag[3] = {0, 0, 0};
+    uint32_t prevts = 0;
     // Gyro bias (GF) - six unsigned 16-bit values
     uint16_t bias[6] = {0, 0, 0, 0, 0, 0};
     // Geomag (GH) validity: two u16 and one u8
