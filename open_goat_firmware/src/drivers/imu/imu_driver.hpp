@@ -15,17 +15,10 @@ class ImuDriver {
   xbot::driver::mcu::Dispatcher* mcu_driver_; 
   mutable struct Data {
     bool valid = false;
-    float gyro[3] = {0, 0, 0};
-    float accel[3] = {0, 0, 0};
-    float mag[3] = {0, 0, 0};
-    int16_t rawgyro[3] = {0, 0, 0};
-    int16_t rawaccel[3] = {0, 0, 0};
-    int16_t rawmag[3] = {0, 0, 0};
+    int16_t gyro[3] = {0, 0, 0};
+    int16_t accel[3] = {0, 0, 0};
+    int16_t orientation[3] = {0, 0, 0};
     uint32_t ts = 0;
-    int16_t prevgyro[3] = {0, 0, 0};
-    int16_t prevaccel[3] = {0, 0, 0};
-    int16_t prevmag[3] = {0, 0, 0};
-    uint32_t prevts = 0;
     // Gyro bias (GF) - six unsigned 16-bit values
     uint16_t bias[6] = {0, 0, 0, 0, 0, 0};
     // Geomag (GH) validity: two u16 and one u8
@@ -60,7 +53,7 @@ class ImuDriver {
 
  private:
   const double accel_scale_factor = 0.01; //cm/s^2 -> m/s^2
-  const double gyro_scale_factor = 0.001065; // 32767 = 2000 deg/s = 0.0001065 rad/s
+  const double gyro_scale_factor =  0.1; //just a guess //0.001065; // 32767 = 2000 deg/s = 0.0001065 rad/s
   void OnGD(const uint8_t *payload, size_t length, uint8_t ack);
   void OnGF(const uint8_t *payload, size_t length, uint8_t ack);
   void OnGH(const uint8_t *payload, size_t length, uint8_t ack);
