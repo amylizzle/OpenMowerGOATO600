@@ -3,10 +3,8 @@ ll:
 
   services:
     diff_drive:
-      # TODO: Set this to values for your mower
       wheel_distance_m: 0.325
-      # TODO: Set this to values for your mower
-      ticks_per_m: 1600.0
+      ticks_per_m: 1200.0
     sound:
       language: "en"
       volume: -1
@@ -31,7 +29,7 @@ ll:
 
 xbot_positioning:
   # TODO: Set this to values for your mower
-  antenna_offset_x: 0.3
+  antenna_offset_x: 0.0
   # TODO: Set this to values for your mower
   antenna_offset_y: 0.0
   max_gps_accuracy: 0.2
@@ -62,7 +60,7 @@ mower_logic:
   rain_delay_minutes: 30
   rain_check_seconds: 20
   cu_rain_threshold: -1
-  undock_angled_distance: 0.0
+  undock_angled_distance: -1.0
   undock_angle: 0.0
   undock_fixed_angle: true
   undock_use_curve: false
