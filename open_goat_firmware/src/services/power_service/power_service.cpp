@@ -32,7 +32,7 @@ void PowerService::tick() {
   // Send the sensor values
   StartTransaction();
   
-  SendChargeVoltage(powerdata.chargingState * 10.0f); // charge voltage isn't really available from the driver, so just send dummy value so docking detection works
+  SendChargeVoltage(powerdata.chargingState * 10.5f); // charge voltage isn't really available from the driver, so just send dummy value so docking detection works
 
   SendBatteryVoltage(powerdata.batteryVoltage / 1000.0f);
   SendBatteryPercentage(powerdata.stateOfCharge);
