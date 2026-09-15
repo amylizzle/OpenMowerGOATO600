@@ -89,8 +89,6 @@ class ScreenDriver {
   ScreenState state_;
   NotifyHandler registered_handler_{};
 
-  static inline int16_t ReadI16Le(const uint8_t* data, size_t offset);
-
   std::vector<uint8_t> EncodeScreenStateCommand();
   std::vector<uint8_t> EncodePowerModeCommand(ScreenPowerState mode);
 

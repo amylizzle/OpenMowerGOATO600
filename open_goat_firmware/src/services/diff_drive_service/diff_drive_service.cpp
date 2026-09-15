@@ -23,22 +23,25 @@ void DiffDriveService::tick() {
   StartTransaction();
   SendLeftESCStatus(static_cast<uint8_t>(left_state.status == xbot::driver::motor::MotorDriver::ESCState::ESCStatus::ESC_STATUS_OK ? 200u : 0u));
   SendRightESCStatus(static_cast<uint8_t>(right_state.status == xbot::driver::motor::MotorDriver::ESCState::ESCStatus::ESC_STATUS_OK ? 200u : 0u));
+  // add min int32 to avoid overflow when converting to uint32_t
+  uint32_t wheelticks[2]{ static_cast<uint32_t>(left_state.tacho+0x80000000), static_cast<uint32_t>(right_state.tacho+0x80000000) };
+  SendWheelTicks(wheelticks, sizeof(wheelticks) / sizeof(uint32_t));
+  SendLeftESCCurrent(static_cast<float>(left_state.current_input));
+  SendRightESCCurrent(static_cast<float>(right_state.current_input));
+  SendLeftESCTemperature(static_cast<float>(left_state.temperature_pcb));
+  SendRightESCTemperature(static_cast<float>(right_state.temperature_pcb));
 
-  //wheel ticks per meter and separation distance from service parameters
+  //TODO wheel ticks per meter and separation distance from service parameters
   float wheel_radius = 1.0;
-  float track_width = 0.3;
 
   double twist[6]{0};
-  // 1. Convert RPM to wheel linear velocity (m/s)
-  // v_wheel = RPM * (2 * PI / 60) * wheel_radius
   const float rpm_to_v_wheel = (2.0f * M_PI / 60.0f) * wheel_radius;
 
   float v_left  = left_state.rpm  * rpm_to_v_wheel;
   float v_right = right_state.rpm * rpm_to_v_wheel;
 
-  // 2. Forward Kinematics (Wheel Speeds -> Robot Twist)
   twist[0]  = (v_right + v_left) / 2.0f;           // Average linear velocity
-  twist[5] = (v_right - v_left) / track_width;     // Yaw rate (rad/s)
+  twist[5] = (v_right - v_left) / this->WheelDistance.value;     // Yaw rate (rad/s)
   SendActualTwist(twist, sizeof(twist) / sizeof(double));
   CommitTransaction();
 }
@@ -68,13 +71,9 @@ void DiffDriveService::OnControlTwistChanged(const double* new_value, uint32_t l
   float max_linear_vel = 1.0f;  // m/s
   float max_angular_vel = 2.0f; // rad/s
 
-  // 1. Differential Drive Mixer
-  // Linear velocity adds to both wheels equally; angular creates opposing wheel speeds.
   float left_raw = (linear / max_linear_vel) - (angular / max_angular_vel);
   float right_raw = (linear / max_linear_vel) + (angular / max_angular_vel);
 
-  // 2. Normalization / Desaturation
-  // If combined inputs exceed 1.0, scale both proportionally to maintain turning radius.
   float max_mag = std::max(std::abs(left_raw), std::abs(right_raw));
 
   float leftval = left_raw;
@@ -84,11 +83,6 @@ void DiffDriveService::OnControlTwistChanged(const double* new_value, uint32_t l
       leftval /= max_mag;
       rightval /= max_mag;
   }
-
-  // Optional hard safety clamp [-1.0f, 1.0f]
-  leftval = std::clamp(leftval, -1.0f, 1.0f);
-  rightval = std::clamp(rightval, -1.0f, 1.0f);
-
   // Send normalized values to motor driver
   driver_->SetDuty(leftval, rightval, std::nullopt);
 }

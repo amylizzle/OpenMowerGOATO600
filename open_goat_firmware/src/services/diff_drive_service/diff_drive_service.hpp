@@ -18,6 +18,12 @@ class DiffDriveService : public DiffDriveServiceBase {
   void OnMowerStatusChanged(uint32_t new_status);
   xbot::driver::motor::MotorDriver* GetDriverInstance();
   void OnEmergencyChangedEvent();
+
+  struct {
+      double value = 0.3;
+      bool valid = false;
+    } WheelDistance;
+    
  protected:
   bool OnStart() override;
   void OnStop() override;

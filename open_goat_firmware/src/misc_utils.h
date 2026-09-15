@@ -10,7 +10,38 @@
 #include <condition_variable>
 #include <cstdint>
 #include <cstdlib>
+#include <cstddef>
+#include <cassert>
 #include <etl/algorithm.h>
+
+// Little-endian packet readers shared across firmware drivers.
+inline int16_t ReadI16Le(const uint8_t* data, size_t offset) {
+  if (!data) return 0;
+  return static_cast<int16_t>(static_cast<uint16_t>(data[offset]) |
+                               (static_cast<uint16_t>(data[offset + 1]) << 8));
+}
+
+inline int32_t ReadI32Le(const uint8_t* data, size_t offset) {
+  if (!data) return 0;
+  return static_cast<int32_t>(static_cast<uint32_t>(data[offset]) |
+                               (static_cast<uint32_t>(data[offset + 1]) << 8) |
+                               (static_cast<uint32_t>(data[offset + 2]) << 16) |
+                               (static_cast<uint32_t>(data[offset + 3]) << 24));
+}
+
+inline uint16_t ReadU16Le(const uint8_t* data, size_t offset) {
+  if (!data) return 0;
+  return static_cast<uint16_t>(static_cast<uint16_t>(data[offset]) |
+                                (static_cast<uint16_t>(data[offset + 1]) << 8));
+}
+
+inline uint32_t ReadU32Le(const uint8_t* data, size_t offset) {
+  if (!data) return 0;
+  return static_cast<uint32_t>(static_cast<uint32_t>(data[offset]) |
+                                (static_cast<uint32_t>(data[offset + 1]) << 8) |
+                                (static_cast<uint32_t>(data[offset + 2]) << 16) |
+                                (static_cast<uint32_t>(data[offset + 3]) << 24));
+}
 
 // System time helpers (milliseconds since steady clock)
 #include <chrono>

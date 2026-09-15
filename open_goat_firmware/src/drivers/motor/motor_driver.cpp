@@ -1,4 +1,5 @@
 #include "motor_driver.hpp"
+#include "misc_utils.h"
 #include <ulog.h>
 #include <algorithm>
 #include <cmath>
@@ -40,18 +41,6 @@ MotorDriver::MotorDriver(xbot::driver::mcu::Dispatcher* dispatcher)
     dispatcher->RegisterHandler(static_cast<uint8_t>('W'), static_cast<uint8_t>('R'),
                             etl::delegate<void(const uint8_t*, size_t, uint8_t)>::create<MotorDriver, &MotorDriver::OnWD>(*this));
 
-}
-
-inline int16_t MotorDriver::ReadI16Le(const uint8_t* data, size_t offset) {
-  if (!data) return 0;
-  return static_cast<int16_t>(static_cast<uint16_t>(data[offset]) |
-                              (static_cast<uint16_t>(data[offset + 1]) << 8));
-}
-
-inline uint16_t MotorDriver::ReadU16Le(const uint8_t* data, size_t offset) {
-  if (!data) return 0;
-  return static_cast<uint16_t>(static_cast<uint16_t>(data[offset]) |
-                              (static_cast<uint16_t>(data[offset + 1]) << 8));
 }
 
 void MotorDriver::Start() {
@@ -287,14 +276,12 @@ void MotorDriver::OnWD(const uint8_t* payload, size_t length, uint8_t ack) {
   if (!payload || length == 0) {
     return;
   }
-  // const uint8_t flag = payload[0];
-  // ULOG_WARNING("[MOTOR] WD: ack %u flag: %u len: %u", ack, static_cast<unsigned>(flag), length);
-//   switch (flag) {
-//     case 0: left_state_.status = ESCState::ESCStatus::ESC_STATUS_DISCONNECTED; break;
-//     case 1: left_state_.status = ESCState::ESCStatus::ESC_STATUS_OK; break;
-//     case 2: left_state_.status = ESCState::ESCStatus::ESC_STATUS_ERROR; break;
-//     default: left_state_.status = ESCState::ESCStatus::ESC_STATUS_ERROR; break;
-//   } 
+  int32_t left = ReadI32Le(payload, 1);
+  int32_t right = ReadI32Le(payload, 5);
+  uint32_t timestamp = ReadU32Le(payload, 9);
+  ULOG_DEBUG("[MOTOR] WD: ack %u left %d right %d timestamp %u", ack, left, right, timestamp);
+  left_state_.tacho = left;
+  right_state_.tacho = right;  
 }
 
 // Wheel motor status 

@@ -1,4 +1,5 @@
 #include "imu_driver.hpp"
+#include "misc_utils.h"
 #include <drivers/mcu/dispatcher.hpp>
 #include <etl/delegate.h>
 
@@ -34,20 +35,6 @@ void ImuDriver::RegisterNotifyCallback(const NotifyHandler& handler) {
 
 ImuDriver::Data ImuDriver::GetData() { return data_; }
 
-static inline int16_t read_i16_le(const uint8_t* b, size_t idx) {
-    return static_cast<int16_t>(static_cast<uint16_t>(b[idx]) | (static_cast<uint16_t>(b[idx+1]) << 8));
-}
-
-static inline uint32_t read_u32_le(const uint8_t* b, size_t idx) {
-    return static_cast<uint32_t>(static_cast<uint32_t>(b[idx]) | (static_cast<uint32_t>(b[idx+1]) << 8) |
-                                                             (static_cast<uint32_t>(b[idx+2]) << 16) | (static_cast<uint32_t>(b[idx+3]) << 24));
-}
-
-static inline uint16_t read_u16_le(const uint8_t* b, size_t idx) {
-    return static_cast<uint16_t>(static_cast<uint16_t>(b[idx]) | (static_cast<uint16_t>(b[idx+1]) << 8));
-}
-
-
 // Handler for GD -> imu/ImuSensor
 void ImuDriver::OnGD(const uint8_t *payload, size_t length, uint8_t ack) {
     (void) ack;
@@ -63,22 +50,22 @@ void ImuDriver::OnGD(const uint8_t *payload, size_t length, uint8_t ack) {
         return;
     }
     if (length >= (0x15 + 4)) {
-        data_.orientation[0] = read_i16_le(payload, 1); //yaw
-        data_.orientation[1] = read_i16_le(payload, 3); //roll
-        data_.orientation[2] = read_i16_le(payload, 5); //pitch
+        data_.orientation[0] = ReadI16Le(payload, 1); //yaw
+        data_.orientation[1] = ReadI16Le(payload, 3); //roll
+        data_.orientation[2] = ReadI16Le(payload, 5); //pitch
         // payload[7] is a duplicate of payload[1]  
-        int16_t check = read_i16_le(payload, 7);
+        int16_t check = ReadI16Le(payload, 7);
         if (check != data_.orientation[0]) {
             ULOG_WARNING("IMU ORIENTATION CHECK FAILED: %d != %d", check, data_.orientation[0]);
             return;
         }      
-        data_.accel[0] = read_i16_le(payload, 9);
-        data_.accel[1] = read_i16_le(payload, 11);
-        data_.accel[2] = read_i16_le(payload, 13);
-        data_.gyro[0] = read_i16_le(payload, 15);
-        data_.gyro[1] = read_i16_le(payload, 17);
-        data_.gyro[2] = read_i16_le(payload, 19);
-        data_.ts = read_u32_le(payload, 0x15);
+        data_.accel[0] = ReadI16Le(payload, 9);
+        data_.accel[1] = ReadI16Le(payload, 11);
+        data_.accel[2] = ReadI16Le(payload, 13);
+        data_.gyro[0] = ReadI16Le(payload, 15);
+        data_.gyro[1] = ReadI16Le(payload, 17);
+        data_.gyro[2] = ReadI16Le(payload, 19);
+        data_.ts = ReadU32Le(payload, 0x15);
     }
 
     // Any GD (gyro) message triggers a publish of the latest axes. Order:
@@ -101,12 +88,12 @@ void ImuDriver::OnGF(const uint8_t *payload, size_t length, uint8_t ack) {
         for (int i = 0; i < 6; ++i) data_.bias[i] = 0;
         return;
     }
-    if (length >= 3) data_.bias[0] = read_u16_le(payload, 1);
-    if (length >= 5) data_.bias[1] = read_u16_le(payload, 3);
-    if (length >= 7) data_.bias[2] = read_u16_le(payload, 5);
-    if (length >= 9) data_.bias[3] = read_u16_le(payload, 7);
-    if (length >= 11) data_.bias[4] = read_u16_le(payload, 9);
-    if (length >= 13) data_.bias[5] = read_u16_le(payload, 11);
+    if (length >= 3) data_.bias[0] = ReadU16Le(payload, 1);
+    if (length >= 5) data_.bias[1] = ReadU16Le(payload, 3);
+    if (length >= 7) data_.bias[2] = ReadU16Le(payload, 5);
+    if (length >= 9) data_.bias[3] = ReadU16Le(payload, 7);
+    if (length >= 11) data_.bias[4] = ReadU16Le(payload, 9);
+    if (length >= 13) data_.bias[5] = ReadU16Le(payload, 11);
 }
 
 // Handler for GH -> imu/geomag (validity + u16,u16,u8)
@@ -119,8 +106,8 @@ void ImuDriver::OnGH(const uint8_t *payload, size_t length, uint8_t ack) {
         data_.geomag_u8 = 0;
         return;
     }
-    if (length >= 3) data_.geomag_u16[0] = read_u16_le(payload, 1);
-    if (length >= 5) data_.geomag_u16[1] = read_u16_le(payload, 3);
+    if (length >= 3) data_.geomag_u16[0] = ReadU16Le(payload, 1);
+    if (length >= 5) data_.geomag_u16[1] = ReadU16Le(payload, 3);
     if (length >= 6) data_.geomag_u8 = payload[5];
 }
 
@@ -128,9 +115,9 @@ void ImuDriver::OnGH(const uint8_t *payload, size_t length, uint8_t ack) {
 void ImuDriver::OnGI(const uint8_t *payload, size_t length, uint8_t ack) {
     (void) ack;
     if (!payload || length == 0) return;
-    if (length >= 2) data_.geomag3[0] = read_u16_le(payload, 0);
-    if (length >= 4) data_.geomag3[1] = read_u16_le(payload, 2);
-    if (length >= 6) data_.geomag3[2] = read_u16_le(payload, 4);
+    if (length >= 2) data_.geomag3[0] = ReadU16Le(payload, 0);
+    if (length >= 4) data_.geomag3[1] = ReadU16Le(payload, 2);
+    if (length >= 6) data_.geomag3[2] = ReadU16Le(payload, 4);
 }
 
 // Handler for GS -> state/status [state, value]

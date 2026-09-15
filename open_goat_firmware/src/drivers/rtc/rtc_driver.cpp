@@ -141,9 +141,9 @@ void RTCDriver::OnUC(const uint8_t *payload, size_t length, uint8_t ack){
     (void)ack;
     //recieve UC is one byte flag, 3 uint32s - t0, t1, t2
     if (length == 13) {
-        uint32_t t0 = payload[1] | (payload[2]<<8) | (payload[3]<<16) | (payload[4]<<24);
-        uint32_t t1 = payload[5] | (payload[6]<<8) | (payload[7]<<16) | (payload[8]<<24);
-        uint32_t t2 = payload[9] | (payload[10]<<8) | (payload[11]<<16) | (payload[12]<<24);
+        uint32_t t0 = ReadU32Le(payload, 1);
+        uint32_t t1 = ReadU32Le(payload, 5);
+        uint32_t t2 = ReadU32Le(payload, 9);
         // ULOG_INFO("UC Receive t0,t1,t2 = %u,%u,%u", t0, t1, t2);
         (void)t0;
         (void)t1;

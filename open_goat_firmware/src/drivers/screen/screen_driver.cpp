@@ -1,4 +1,5 @@
 #include "screen_driver.hpp"
+#include "misc_utils.h"
 #include <ulog.h>
 #include <algorithm>
 
@@ -19,12 +20,6 @@ ScreenDriver::ScreenDriver(xbot::driver::mcu::Dispatcher* dispatcher)
     // CI power mode request (main cmd 'C')
     dispatcher->RegisterHandler(static_cast<uint8_t>('C'), static_cast<uint8_t>('I'),
                                etl::delegate<void(const uint8_t*, size_t, uint8_t)>::create<ScreenDriver, &ScreenDriver::OnCI>(*this));
-}
-
-inline int16_t ScreenDriver::ReadI16Le(const uint8_t* data, size_t offset) {
-  if (!data) return 0;
-  return static_cast<int16_t>(static_cast<uint16_t>(data[offset]) |
-                              (static_cast<uint16_t>(data[offset + 1]) << 8));
 }
 
 // ZA send: 8 bytes [lock][internet][wifi][page_num][err_low][err_high][pincode_confirm][pincode_first].

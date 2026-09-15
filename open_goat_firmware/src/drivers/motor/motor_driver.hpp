@@ -54,8 +54,6 @@ class MotorDriver {
   std::vector<uint8_t> EncodeWheelSpeedCommand(int left, int right);
   std::vector<uint8_t> EncodeEnableCommand(uint8_t motor_type);
   std::vector<uint8_t> EncodeStopCommand();
-  static inline int16_t ReadI16Le(const uint8_t* data, size_t offset);
-  static inline uint16_t ReadU16Le(const uint8_t* data, size_t offset);
 
   void OnMB(const uint8_t* payload, size_t length, uint8_t ack);
   void OnMC(const uint8_t* payload, size_t length, uint8_t ack);

@@ -100,10 +100,7 @@ void EmergencyDriver::OnDBMessage(const uint8_t *payload, size_t length, uint8_t
 
     // mcuAlarmCode (u32 LE at off 0)
     if (length >= 4) {
-        uint32_t code = static_cast<uint32_t>(payload[0]) |
-                        (static_cast<uint32_t>(payload[1]) << 8) |
-                        (static_cast<uint32_t>(payload[2]) << 16) |
-                        (static_cast<uint32_t>(payload[3]) << 24);
+        uint32_t code = ReadU32Le(payload, 0);
         if (code != this->mcuAlarmCode) {
             this->mcuAlarmCode = code;
             ULOG_INFO("EMERGENCY STATE CHANGE: mcuAlarmCode:0x%08x", code);
@@ -113,10 +110,7 @@ void EmergencyDriver::OnDBMessage(const uint8_t *payload, size_t length, uint8_t
 
     // motorFaultCode (u32 LE at off 4)
     if (length >= 8) {
-        uint32_t code = static_cast<uint32_t>(payload[4]) |
-                        (static_cast<uint32_t>(payload[5]) << 8) |
-                        (static_cast<uint32_t>(payload[6]) << 16) |
-                        (static_cast<uint32_t>(payload[7]) << 24);
+        uint32_t code = ReadU32Le(payload, 4);
         if (code != this->motorFaultCode) {
             this->motorFaultCode = code;
             uint8_t l_motor = static_cast<uint8_t>(code & 0xFFu);
@@ -132,8 +126,7 @@ void EmergencyDriver::OnDBMessage(const uint8_t *payload, size_t length, uint8_t
 
     // liftFaultCode (u16 LE at off 8)
     if (length > 9) {
-        uint16_t code = static_cast<uint16_t>(payload[8]) |
-                        (static_cast<uint16_t>(payload[9]) << 8);
+        uint16_t code = ReadU16Le(payload, 8);
         if (code != this->liftFaultCode) {
             this->liftFaultCode = code;
             ULOG_INFO("EMERGENCY STATE CHANGE: liftFaultCode:0x%04x", code);
@@ -143,8 +136,7 @@ void EmergencyDriver::OnDBMessage(const uint8_t *payload, size_t length, uint8_t
 
     // grassFaultCode (u16 LE at off 10)
     if (length > 11) {
-        uint16_t code = static_cast<uint16_t>(payload[10]) |
-                        (static_cast<uint16_t>(payload[11]) << 8);
+        uint16_t code = ReadU16Le(payload, 10);
         if (code != this->grassFaultCode) {
             this->grassFaultCode = code;
             ULOG_INFO("EMERGENCY STATE CHANGE: grassFaultCode:0x%04x", code);
