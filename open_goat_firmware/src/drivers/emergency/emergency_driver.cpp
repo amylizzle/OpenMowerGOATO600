@@ -54,7 +54,7 @@ void EmergencyDriver::OnBCMessage(const uint8_t *payload, size_t length, uint8_t
         }
     }
     if(change){
-        ULOG_ERROR("EMERGENCY STATE CHANGE: bump: %u, fall: %u, charge: %u, acczero: %u, rain: %u, grass: %u, roll: %u, stop: %u, fan: %u", this->bump, this->fall, this->chargeState, this->acczero, this->rain, this->grass, this->roll, this->Stop, this->fan);
+        ULOG_DEBUG("EMERGENCY STATE CHANGE: bump: %u, fall: %u, charge: %u, acczero: %u, rain: %u, grass: %u, roll: %u, stop: %u, fan: %u", this->bump, this->fall, this->chargeState, this->acczero, this->rain, this->grass, this->roll, this->Stop, this->fan);
         if (registered_handler_)
             registered_handler_(GetEmergencyState());
     }
@@ -66,7 +66,7 @@ void EmergencyDriver::RegisterNotifyCallback(const NotifyHandler& handler) {
 
 void EmergencyDriver::ClearEmergency(){
     //send a JA message with a 16bit 0
-    ULOG_INFO("EMERGENCY: ClearEmergency() sending DB 0 message to MCU");
+    ULOG_DEBUG("EMERGENCY: ClearEmergency() sending DB 0 message to MCU");
     const std::vector<uint8_t> resetMsg = {0,0,0};
     mcu_driver_->SendMessage('D', 'A', resetMsg.data(), resetMsg.size());
 }
