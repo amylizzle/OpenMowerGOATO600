@@ -44,6 +44,7 @@ MotorDriver::MotorDriver(xbot::driver::mcu::Dispatcher* dispatcher)
 }
 
 void MotorDriver::Start() {
+  std::lock_guard<std::mutex> lock(state_mutex_);
   left_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
   right_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
   mow_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
@@ -74,6 +75,7 @@ void MotorDriver::MotorMessageLoop(MotorDriver* instance) {
 }
 
 void MotorDriver::SetDuty(std::optional<float> left, std::optional<float> right, std::optional<float> mow) {
+  std::lock_guard<std::mutex> lock(state_mutex_);
   if (left.has_value()){
     left_state_.target_duty = std::clamp(left.value(), -1.0f, 1.0f);
     left_state_.direction = (left_state_.target_duty >= 0.0f) ? 0.0f : 1.0f;
@@ -103,13 +105,16 @@ void MotorDriver::SetDuty(std::optional<float> left, std::optional<float> right,
   
 }
 
-const MotorDriver::ESCState& MotorDriver::GetLeftState() const {
+const MotorDriver::ESCState MotorDriver::GetLeftState() const {
+  std::lock_guard<std::mutex> lock(state_mutex_);
   return left_state_;
 }
-const MotorDriver::ESCState& MotorDriver::GetRightState() const {
+const MotorDriver::ESCState MotorDriver::GetRightState() const {
+  std::lock_guard<std::mutex> lock(state_mutex_);
   return right_state_;
 }
-const MotorDriver::ESCState& MotorDriver::GetMowState() const {
+const MotorDriver::ESCState MotorDriver::GetMowState() const {
+  std::lock_guard<std::mutex> lock(state_mutex_);
   return mow_state_;
 }
 
@@ -169,6 +174,7 @@ void MotorDriver::OnMB(const uint8_t* payload, size_t length, uint8_t ack) {
     return;
   }
   ULOG_DEBUG("[MOTOR] MB Signal ack %u len %zu", ack, length);
+  std::lock_guard<std::mutex> lock(state_mutex_);
   const size_t max_words = std::min<size_t>(length / 2, 6u);
   for (size_t i = 0; i < max_words; ++i) {
     const int16_t value = ReadI16Le(payload, i * 2);
@@ -189,6 +195,7 @@ void MotorDriver::OnMC(const uint8_t* payload, size_t length, uint8_t ack) {
     return;
   }
   ULOG_WARNING("[MOTOR] MC: ack %u val: %u", ack, static_cast<unsigned>(payload[2]));
+  std::lock_guard<std::mutex> lock(state_mutex_);
   mow_state_.current_input = static_cast<float>(payload[2]);   
 }
 
@@ -251,6 +258,7 @@ void MotorDriver::OnMS(const uint8_t* payload, size_t length, uint8_t ack) {
   const int16_t rpm1 = ReadI16Le(payload, 1);
   const int16_t rpm2 = ReadI16Le(payload, 3);
   ULOG_DEBUG("[MOTOR] MS: ack %u type %u RPM - %d %d", ack, motor_type, rpm1, rpm2);
+  std::lock_guard<std::mutex> lock(state_mutex_);
   mow_state_.rpm = static_cast<float>(rpm1);
   mow_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
 }
@@ -280,6 +288,7 @@ void MotorDriver::OnWD(const uint8_t* payload, size_t length, uint8_t ack) {
   int32_t right = ReadI32Le(payload, 5);
   uint32_t timestamp = ReadU32Le(payload, 9);
   ULOG_DEBUG("[MOTOR] WD: ack %u left %d right %d timestamp %u", ack, left, right, timestamp);
+  std::lock_guard<std::mutex> lock(state_mutex_);
   if ( abs(left_state_.tacho - left ) > 50 ) { //sometimes invalid values are sent, ignore them. 50 ticks in 20ms is about 2.1m/s, which is faster than the mower can go.
     left_state_.tacho = left;
   }
@@ -298,6 +307,7 @@ void MotorDriver::OnWR(const uint8_t* payload, size_t length, uint8_t ack) {
   const int16_t rpm1 = ReadI16Le(payload, 9);
   const int16_t rpm2 = ReadI16Le(payload, 13);
   ULOG_WARNING("[MOTOR] WR: ack %u type %u RPM - %d %d", ack, motor_type, rpm1, rpm2);
+  std::lock_guard<std::mutex> lock(state_mutex_);
   left_state_.rpm = static_cast<float>(rpm1);
   right_state_.rpm = static_cast<float>(rpm2);
   left_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;

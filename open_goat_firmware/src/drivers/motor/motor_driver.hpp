@@ -35,12 +35,13 @@ class MotorDriver {
 
   void Start();
   void SetDuty(std::optional<float> left, std::optional<float> right, std::optional<float> mow); // duty in [-1,1], std::nullopt for don't change
-  const ESCState& GetLeftState() const;
-  const ESCState& GetRightState() const;
-  const ESCState& GetMowState() const;
+  const ESCState GetLeftState() const;
+  const ESCState GetRightState() const;
+  const ESCState GetMowState() const;
 
  private:
   xbot::driver::mcu::Dispatcher* mcu_driver_{};
+  mutable std::mutex state_mutex_;
   ESCState left_state_;
   ESCState right_state_;
   ESCState mow_state_;
