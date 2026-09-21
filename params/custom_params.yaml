@@ -4,7 +4,7 @@ ll:
   services:
     diff_drive:
       wheel_distance_m: 0.325
-      ticks_per_m: 1200.0
+      ticks_per_m: 1164.0
     sound:
       language: "en"
       volume: -1

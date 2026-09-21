@@ -31,14 +31,11 @@ void DiffDriveService::tick() {
   SendLeftESCTemperature(static_cast<float>(left_state.temperature_pcb));
   SendRightESCTemperature(static_cast<float>(right_state.temperature_pcb));
 
-  //TODO wheel ticks per meter and separation distance from service parameters
-  float wheel_radius = 1.0;
-
   double twist[6]{0};
-  const float rpm_to_v_wheel = (2.0f * M_PI / 60.0f) * wheel_radius;
+  const float rpm_to_v_wheel = 0.15/1000.0f; //measured, gross
 
-  float v_left  = left_state.rpm  * rpm_to_v_wheel;
-  float v_right = right_state.rpm * rpm_to_v_wheel;
+  float v_left  = left_state.rpm/left_state.max_rpm * rpm_to_v_wheel; 
+  float v_right = right_state.rpm/right_state.max_rpm * rpm_to_v_wheel;
 
   twist[0]  = (v_right + v_left) / 2.0f;           // Average linear velocity
   twist[5] = (v_right - v_left) / this->WheelDistance.value;     // Yaw rate (rad/s)
@@ -68,7 +65,7 @@ void DiffDriveService::OnControlTwistChanged(const double* new_value, uint32_t l
 
   // Optional scaling factors depending on your robot's max limits
   // Tune these if your raw command values exceed typical bounds
-  float max_linear_vel = 1.0f;  // m/s
+  float max_linear_vel = 0.15f;  // m/s
   float max_angular_vel = 2.0f; // rad/s
 
   float left_raw = (linear / max_linear_vel) - (angular / max_angular_vel);

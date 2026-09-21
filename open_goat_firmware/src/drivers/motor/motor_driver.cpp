@@ -270,7 +270,7 @@ void MotorDriver::OnMT(const uint8_t* payload, size_t length, uint8_t ack) {
 }
 
 
-// Wheel motor distance report? 
+// Wheel motor distance report 
 void MotorDriver::OnWD(const uint8_t* payload, size_t length, uint8_t ack) {
     (void) ack;
   if (!payload || length == 0) {
@@ -284,7 +284,7 @@ void MotorDriver::OnWD(const uint8_t* payload, size_t length, uint8_t ack) {
   right_state_.tacho = right;  
 }
 
-// Wheel motor status 
+// Wheel motor status - never sent?
 void MotorDriver::OnWR(const uint8_t* payload, size_t length, uint8_t ack) {
     (void) ack;
   if (!payload || length <= 1) {
@@ -293,9 +293,11 @@ void MotorDriver::OnWR(const uint8_t* payload, size_t length, uint8_t ack) {
   const uint8_t motor_type = payload[0];
   const int16_t rpm1 = ReadI16Le(payload, 9);
   const int16_t rpm2 = ReadI16Le(payload, 13);
-  ULOG_DEBUG("[MOTOR] WR: ack %u type %u RPM - %d %d", ack, motor_type, rpm1, rpm2);
-  mow_state_.rpm = static_cast<float>(rpm1);
-  mow_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
+  ULOG_WARNING("[MOTOR] WR: ack %u type %u RPM - %d %d", ack, motor_type, rpm1, rpm2);
+  left_state_.rpm = static_cast<float>(rpm1);
+  right_state_.rpm = static_cast<float>(rpm2);
+  left_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
+  right_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
 }
 
 }  // namespace xbot::driver::motor
