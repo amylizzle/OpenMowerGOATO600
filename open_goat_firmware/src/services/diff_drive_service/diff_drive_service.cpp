@@ -34,8 +34,8 @@ void DiffDriveService::tick() {
   double twist[6]{0};
   const float rpm_to_v_wheel = 0.15/1000.0f; //measured, gross
 
-  float v_left  = left_state.rpm/left_state.max_rpm * rpm_to_v_wheel; 
-  float v_right = right_state.rpm/right_state.max_rpm * rpm_to_v_wheel;
+  float v_left  = left_state.target_rpm/left_state.max_rpm * rpm_to_v_wheel; 
+  float v_right = right_state.target_rpm/right_state.max_rpm * rpm_to_v_wheel;
 
   twist[0]  = (v_right + v_left) / 2.0f;           // Average linear velocity
   twist[5] = (v_right - v_left) / this->WheelDistance.value;     // Yaw rate (rad/s)
