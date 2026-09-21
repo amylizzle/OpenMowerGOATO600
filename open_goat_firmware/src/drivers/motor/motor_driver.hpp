@@ -22,7 +22,6 @@ class MotorDriver {
     float temperature_motor = 0.0f;
     float current_input = 0.0f;
     float rpm = 0.0f;
-    float direction = 0.0f; // 0..1
     float target_duty = 0.0f;
     float target_rpm = 0.0f;
     float max_rpm = 1000.0f;
@@ -45,7 +44,8 @@ class MotorDriver {
   ESCState left_state_;
   ESCState right_state_;
   ESCState mow_state_;
-  
+  uint8_t bad_wd_count_ = 0;
+  uint32_t wd_last_timestamp = 0;
   thread_t *processing_thread_ = nullptr;
   static void MotorMessageLoop(MotorDriver* instance);
   static void ThreadEntry(void* arg);
@@ -63,7 +63,6 @@ class MotorDriver {
   void OnMF(const uint8_t* payload, size_t length, uint8_t ack);
   void OnMS(const uint8_t* payload, size_t length, uint8_t ack);
   void OnMT(const uint8_t* payload, size_t length, uint8_t ack);
-
   void OnWD(const uint8_t* payload, size_t length, uint8_t ack);
   void OnWR(const uint8_t* payload, size_t length, uint8_t ack);
 };

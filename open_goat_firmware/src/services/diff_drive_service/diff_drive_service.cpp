@@ -69,7 +69,7 @@ void DiffDriveService::OnControlTwistChanged(const double* new_value, uint32_t l
 
   // Optional scaling factors depending on your robot's max limits
   // Tune these if your raw command values exceed typical bounds
-  float max_linear_vel = 0.15f;  // m/s
+  float max_linear_vel = 0.2f;  // m/s
   float max_angular_vel = 2.0f; // rad/s
 
   float left_raw = (linear / max_linear_vel) - (angular / max_angular_vel);

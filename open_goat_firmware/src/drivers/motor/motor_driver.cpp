@@ -78,17 +78,14 @@ void MotorDriver::SetDuty(std::optional<float> left, std::optional<float> right,
   std::lock_guard<std::mutex> lock(state_mutex_);
   if (left.has_value()){
     left_state_.target_duty = std::clamp(left.value(), -1.0f, 1.0f);
-    left_state_.direction = (left_state_.target_duty >= 0.0f) ? 0.0f : 1.0f;
     left_state_.target_rpm = left_state_.target_duty * left_state_.max_rpm;
   }
   if (right.has_value()){
     right_state_.target_duty = std::clamp(right.value(), -1.0f, 1.0f);
-    right_state_.direction = (right_state_.target_duty >= 0.0f) ? 0.0f : 1.0f;
     right_state_.target_rpm = right_state_.target_duty * right_state_.max_rpm;
   }
   if (mow.has_value()){
     mow_state_.target_duty = std::clamp(mow.value(), -1.0f, 1.0f);
-    mow_state_.direction = (mow_state_.target_duty >= 0.0f) ? 0.0f : 1.0f;
     mow_state_.target_rpm = mow_state_.target_duty * mow_state_.max_rpm;
   }
   if (std::fabs(left_state_.target_duty) < 0.0001f) {
@@ -289,12 +286,26 @@ void MotorDriver::OnWD(const uint8_t* payload, size_t length, uint8_t ack) {
   uint32_t timestamp = ReadU32Le(payload, 9);
   ULOG_DEBUG("[MOTOR] WD: ack %u left %d right %d timestamp %u", ack, left, right, timestamp);
   std::lock_guard<std::mutex> lock(state_mutex_);
-  if ( abs(left_state_.tacho - left ) > 50 ) { //sometimes invalid values are sent, ignore them. 50 ticks in 20ms is about 2.1m/s, which is faster than the mower can go.
-    left_state_.tacho = left;
+  if (wd_last_timestamp == 0) {
+    wd_last_timestamp = timestamp;
+  } else if (wd_last_timestamp - timestamp > 1000) { //don't need abs, they're uint
+    bad_wd_count_++;
+    if (bad_wd_count_ > 3) {
+      wd_last_timestamp = timestamp;
+      bad_wd_count_ = 0;
+      ULOG_WARNING("[MOTOR] WD: multiple bad timestamps detected, resetting base timestamp to %u", timestamp);
+    } else {
+      return;
+    }
   }
-  if ( abs(right_state_.tacho - right ) > 50 ) { 
-    right_state_.tacho = right;
+  if ( left_state_.tacho != 0 && abs(left_state_.tacho - left ) > 200 ) { //sometimes invalid values are sent, ignore them. 50 ticks in 20ms is about 2.1m/s, which is faster than the mower can go.
+    return;
   }
+  if ( right_state_.tacho != 0 && abs(right_state_.tacho - right ) > 200 ) { 
+    return;
+  }
+  left_state_.tacho = left;
+  right_state_.tacho = right;
 }
 
 // Wheel motor status - never sent?
