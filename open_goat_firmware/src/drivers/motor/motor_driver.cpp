@@ -278,7 +278,7 @@ void MotorDriver::OnMT(const uint8_t* payload, size_t length, uint8_t ack) {
 // Wheel motor distance report 
 void MotorDriver::OnWD(const uint8_t* payload, size_t length, uint8_t ack) {
     (void) ack;
-  if (!payload || length == 0) {
+  if (!payload || length < 13) {
     return;
   }
   int32_t left = ReadI32Le(payload, 1);
@@ -288,7 +288,7 @@ void MotorDriver::OnWD(const uint8_t* payload, size_t length, uint8_t ack) {
   std::lock_guard<std::mutex> lock(state_mutex_);
   if (wd_last_timestamp == 0) {
     wd_last_timestamp = timestamp;
-  } else if (wd_last_timestamp - timestamp > 1000) { //don't need abs, they're uint
+  } else if (abs(static_cast<int32_t>(wd_last_timestamp - timestamp)) > 1000) {
     bad_wd_count_++;
     if (bad_wd_count_ > 3) {
       wd_last_timestamp = timestamp;
@@ -298,15 +298,18 @@ void MotorDriver::OnWD(const uint8_t* payload, size_t length, uint8_t ack) {
       return;
     }
   }
-  if ( left_state_.tacho != 0 && abs(left_state_.tacho - left ) > 200 ) { //sometimes invalid values are sent, ignore them. 50 ticks in 20ms is about 2.1m/s, which is faster than the mower can go.
+  if ( left_state_.tacho != 0 && abs(left_state_.tacho - left ) > 200 ) { //sometimes invalid values are sent, ignore them. 50 ticks in 20ms is about 2.1m/s, which is faster than the mower >
     return;
   }
   if ( right_state_.tacho != 0 && abs(right_state_.tacho - right ) > 200 ) { 
     return;
   }
+  bad_wd_count_ = 0;
+  wd_last_timestamp = timestamp;
   left_state_.tacho = left;
   right_state_.tacho = right;
 }
+
 
 // Wheel motor status - never sent?
 void MotorDriver::OnWR(const uint8_t* payload, size_t length, uint8_t ack) {
