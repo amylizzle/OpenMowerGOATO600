@@ -1,7 +1,3 @@
-//
-// Created by clemens on 26.07.24.
-//
-
 #include "diff_drive_service.hpp"
 
 #include <globals.hpp>
@@ -32,13 +28,21 @@ void DiffDriveService::tick() {
   SendRightESCTemperature(static_cast<float>(right_state.temperature_pcb));
 
   double twist[6]{0};
-  const float rpm_to_v_wheel = 0.15f; //measured, gross
+  uint32_t now_ms = chVTGetSystemTimeX();
+  float dt = (now_ms - last_tick_time_ms_) * 1e-3f;
 
-  float v_left  = left_state.target_rpm/left_state.max_rpm * rpm_to_v_wheel; 
-  float v_right = right_state.target_rpm/right_state.max_rpm * rpm_to_v_wheel;
+  float v_left  = 0.0f, v_right = 0.0f;
+  if (dt > 0.0f) {
+      v_left  = (left_state.tacho  - last_left_tacho_)  / WheelTicksPerMeter.value / dt;
+      v_right = (right_state.tacho - last_right_tacho_) / WheelTicksPerMeter.value / dt;
+  }
 
-  twist[0]  = (v_right + v_left) / 2.0f;           // Average linear velocity
-  twist[5] = (v_right - v_left) / this->WheelDistance.value;     // Yaw rate (rad/s)
+  last_left_tacho_  = left_state.tacho;
+  last_right_tacho_ = right_state.tacho;
+  last_tick_time_ms_ = now_ms;
+
+  twist[0]  = (v_right + v_left) / 2.0f; // Average linear velocity
+  twist[5] = (v_right - v_left) / this->WheelDistance.value; // Yaw rate (rad/s)
   SendActualTwist(twist, sizeof(twist) / sizeof(double));
   CommitTransaction();
 }
