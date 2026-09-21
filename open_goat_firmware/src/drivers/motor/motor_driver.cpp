@@ -280,8 +280,12 @@ void MotorDriver::OnWD(const uint8_t* payload, size_t length, uint8_t ack) {
   int32_t right = ReadI32Le(payload, 5);
   uint32_t timestamp = ReadU32Le(payload, 9);
   ULOG_DEBUG("[MOTOR] WD: ack %u left %d right %d timestamp %u", ack, left, right, timestamp);
-  left_state_.tacho = left;
-  right_state_.tacho = right;  
+  if ( abs(left_state_.tacho - left ) > 50 ) { //sometimes invalid values are sent, ignore them. 50 ticks in 20ms is about 2.1m/s, which is faster than the mower can go.
+    left_state_.tacho = left;
+  }
+  if ( abs(right_state_.tacho - right ) > 50 ) { 
+    right_state_.tacho = right;
+  }
 }
 
 // Wheel motor status - never sent?
