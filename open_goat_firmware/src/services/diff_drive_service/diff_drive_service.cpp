@@ -32,7 +32,7 @@ void DiffDriveService::tick() {
   SendRightESCTemperature(static_cast<float>(right_state.temperature_pcb));
 
   double twist[6]{0};
-  const float rpm_to_v_wheel = 0.15/1000.0f; //measured, gross
+  const float rpm_to_v_wheel = 0.15f; //measured, gross
 
   float v_left  = left_state.target_rpm/left_state.max_rpm * rpm_to_v_wheel; 
   float v_right = right_state.target_rpm/right_state.max_rpm * rpm_to_v_wheel;
