@@ -28,21 +28,10 @@ ll:
       charge_critical_high_current: 3.0
 
 xbot_positioning:
-  # TODO: Set this to values for your mower
   antenna_offset_x: 0.0
-  # TODO: Set this to values for your mower
   antenna_offset_y: 0.0
   max_gps_accuracy: 0.2
   debug: false
-
-ntrip_client:
-  reconnect_attempt_max: 5
-  reconnect_attempt_wait_seconds: 99999
-  host: "www.your-ntrip-caster.de"
-  port: 2101
-  username: "ntripuser"
-  password: "ntrippass"
-  mountpoint: "ntripmount"
 
 mower_logic:
   automatic_mode: 0
@@ -60,7 +49,8 @@ mower_logic:
   rain_delay_minutes: 30
   rain_check_seconds: 20
   cu_rain_threshold: -1
-  undock_angled_distance: -1.0
+  undock_distance: 1.0
+  dock_distance: 1.0
   undock_angle: 0.0
   undock_fixed_angle: true
   undock_use_curve: false
@@ -78,5 +68,5 @@ xbot_monitoring:
 
 move_base_flex:
   FTCPlanner:
-    speed_fast: 1.0
-    speed_slow: 1.0
+    speed_fast: 0.3
+    speed_slow: 0.1

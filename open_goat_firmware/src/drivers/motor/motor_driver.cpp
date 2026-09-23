@@ -293,10 +293,13 @@ void MotorDriver::OnWD(const uint8_t* payload, size_t length, uint8_t ack) {
     if (bad_wd_count_ > 3) {
       wd_last_timestamp = timestamp;
       bad_wd_count_ = 0;
+      //we're just gonna assume these are valid tacho values
+      left_state_.tacho = left;
+      right_state_.tacho = right; 
       ULOG_WARNING("[MOTOR] WD: multiple bad timestamps detected, resetting base timestamp to %u", timestamp);
-    } else {
-      return;
-    }
+    } 
+
+    return;
   }
   if ( left_state_.tacho != 0 && abs(left_state_.tacho - left ) > 200 ) { //sometimes invalid values are sent, ignore them. 50 ticks in 20ms is about 2.1m/s, which is faster than the mower >
     return;
