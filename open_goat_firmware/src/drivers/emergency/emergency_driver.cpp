@@ -74,13 +74,39 @@ void EmergencyDriver::ClearEmergency(){
 // Map ECOVACS mcuAlarmCode EMERGENCY_* bits onto the host EmergencyReason mask.
 // Only the bits that have a direct host counterpart are forwarded.
 uint16_t EmergencyDriver::AlarmBitsToEmergencyReason(uint32_t mcuAlarmCode) {
-    uint16_t state = 0;
-    if (mcuAlarmCode & EMERGENCY_BUMP)      state |= EmergencyReason::COLLISION;
-    if (mcuAlarmCode & EMERGENCY_INCLINE)   state |= EmergencyReason::COLLISION;
-    if (mcuAlarmCode & EMERGENCY_ELEVATE)   state |= EmergencyReason::LIFT;
-    if (mcuAlarmCode & EMERGENCY_TURNOVER)  state |= EmergencyReason::LIFT;
-    if (mcuAlarmCode & EMERGENCY_LIFTMOT)   state |= EmergencyReason::LIFT_MULTIPLE;
-    if (mcuAlarmCode & EMERGENCY_STOP)      state |= EmergencyReason::STOP;
+    uint16_t state = 0;    
+    if (mcuAlarmCode & EMERGENCY_STOP)        state |= EmergencyReason::STOP;
+    if (mcuAlarmCode & EMERGENCY_BACK)        state |= EmergencyReason::STOP; // What is this????
+
+    if (mcuAlarmCode & EMERGENCY_INCLINE)     state |= EmergencyReason::LIFT;
+    if (mcuAlarmCode & EMERGENCY_ELEVATE)     state |= EmergencyReason::LIFT;
+    if (mcuAlarmCode & EMERGENCY_TURNOVER)    state |= EmergencyReason::LIFT;
+    if (mcuAlarmCode & EMERGENCY_INCLINE_D)   state |= EmergencyReason::LIFT_MULTIPLE;
+    if (mcuAlarmCode & EMERGENCY_ELEVATE_D)   state |= EmergencyReason::LIFT_MULTIPLE;
+    if (mcuAlarmCode & EMERGENCY_LIFTMOT)     state |= EmergencyReason::LIFT_MULTIPLE;
+
+    if (mcuAlarmCode & EMERGENCY_BUMP)        state |= EmergencyReason::COLLISION;
+    if (mcuAlarmCode & EMERGENCY_BUMP_D)      state |= EmergencyReason::COLLISION_MULTIPLE;
+
+    if (mcuAlarmCode & EMERGENCY_HEART)       state |= EmergencyReason::TIMEOUT_INPUTS; 
+    if (mcuAlarmCode & EMERGENCY_LSPEED)      state |= EmergencyReason::COLLISION;
+    if (mcuAlarmCode & EMERGENCY_RSPEED)      state |= EmergencyReason::COLLISION;
+
+    // Don't super know what these mean, so they can all be critical errors until we learn otherwise.
+    if (mcuAlarmCode & EMERGENCY_LWERR)       state |= EmergencyReason::STOP;
+    if (mcuAlarmCode & EMERGENCY_RWERR)       state |= EmergencyReason::STOP;
+    if (mcuAlarmCode & EMERGENCY_LCERR)       state |= EmergencyReason::STOP;
+    if (mcuAlarmCode & EMERGENCY_RCERR)       state |= EmergencyReason::STOP;
+    if (mcuAlarmCode & EMERGENCY_GRASS_MOT)   state |= EmergencyReason::STOP;
+    if (mcuAlarmCode & EMERGENCY_GYRO)        state |= EmergencyReason::STOP;
+
+    if (mcuAlarmCode & EMERGENCY_BATTEMP)      state |= EmergencyReason::STOP;
+    if (mcuAlarmCode & EMERGENCY_BATERR)       state |= EmergencyReason::STOP;
+    if (mcuAlarmCode & EMERGENCY_CHARGEERR)    state |= EmergencyReason::STOP;
+    if (mcuAlarmCode & EMERGENCY_CORE_P)       state |= EmergencyReason::STOP;
+    if (mcuAlarmCode & EMERGENCY_M12_P)        state |= EmergencyReason::STOP;
+    if (mcuAlarmCode & EMERGENCY_FANERR)       state |= EmergencyReason::STOP;
+
     return state;
 }
 
