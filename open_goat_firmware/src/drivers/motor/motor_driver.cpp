@@ -40,9 +40,9 @@ void MotorDriver::Start() {
   right_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
   mow_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
 
-  auto enable_cmd = EncodeEnableCommand(0x0A); //mow motor enable
+  auto enable_cmd = EncodeMowSpeedCommand(mow_state_.target_rpm);
   mcu_driver_->SendMessage('M','A',enable_cmd.data(), enable_cmd.size());
-  enable_cmd = EncodeEnableCommand(0x0C); //wheel motor enable
+  enable_cmd = EncodeWheelSpeedCommand(left_state_.target_rpm, right_state_.target_rpm);
   mcu_driver_->SendMessage('W','A',enable_cmd.data(), enable_cmd.size());
   processing_thread_ = createThread(ThreadEntry, this);
 }
@@ -54,7 +54,7 @@ void MotorDriver::ThreadEntry(void* arg) {
 
 void MotorDriver::MotorMessageLoop(MotorDriver* instance) {
   while(true){
-    auto mow_cmd = instance->EncodeMowSpeedCommand(instance->mow_state_.brand, instance->mow_state_.target_rpm);
+    auto mow_cmd = instance->EncodeMowSpeedCommand(instance->mow_state_.target_rpm);
     auto wheel_cmd = instance->EncodeWheelSpeedCommand(instance->left_state_.target_rpm, instance->right_state_.target_rpm);
     
     instance->mcu_driver_->SendMessage('M','A',mow_cmd.data(), mow_cmd.size());
@@ -106,26 +106,14 @@ const MotorDriver::ESCState MotorDriver::GetMowState() const {
   return mow_state_;
 }
 
-uint16_t MotorDriver::BrandEncode(const ESCState::MotorBrand brand, int speed) {
-  const uint16_t magnitude = static_cast<uint16_t>(std::abs(speed) & 0xFFFFu);
-  if (brand == ESCState::MotorBrand::BRAND_DECHANG) {
-    return static_cast<uint16_t>((rol16(magnitude, 1) & 0xFFFEu));
-  }
-  if (brand == ESCState::MotorBrand::BRAND_LIANYI) {
-    return static_cast<uint16_t>((rol16(magnitude, 2) & 0xFFFCu));
-  }
-  return magnitude;
-}
-
 // mow speed message
-std::vector<uint8_t> MotorDriver::EncodeMowSpeedCommand(const ESCState::MotorBrand brand, int speed) {
-  const bool dir = speed >= 0 ? false : true;
-  const uint16_t encoded = BrandEncode(brand, std::abs(speed));
+std::vector<uint8_t> MotorDriver::EncodeMowSpeedCommand(int speed) {
   std::vector<uint8_t> out(4);
+  //0x0A is mow motor, 0x0B is lift motor, 0x0C is roll motor
   out[0] = 0x0A;
-  out[1] = static_cast<uint8_t>(dir ? 1u : 0u);
-  out[2] = static_cast<uint8_t>(encoded);
-  out[3] = static_cast<uint8_t>((encoded >> 8));
+  out[1] = 0x06; //constant
+  out[2] = static_cast<uint8_t>((speed & 0xFF));
+  out[3] = static_cast<uint8_t>((speed >> 8));
   return out;
 }
 
@@ -144,18 +132,7 @@ std::vector<uint8_t> MotorDriver::EncodeWheelSpeedCommand(int left, int right) {
     return p;
 }
 
-std::vector<uint8_t> MotorDriver::EncodeEnableCommand(uint8_t motor_type) {
-  return {static_cast<uint8_t>(0x0B), static_cast<uint8_t>(0x01),
-          static_cast<uint8_t>(motor_type), static_cast<uint8_t>(0x00)};
-}
-
-// motor type not specified for some reason?
-std::vector<uint8_t> MotorDriver::EncodeStopCommand() {
-  return {static_cast<uint8_t>(0x02), static_cast<uint8_t>(0x00),
-          static_cast<uint8_t>(0x00), static_cast<uint8_t>(0x00)};
-}
-
-// all motor current report (mA I'm assuming)
+// all motor current report (mA)
 void MotorDriver::OnMB(const uint8_t* payload, size_t length, uint8_t ack) {
     (void) ack;
   if (!payload || length == 0) {
@@ -195,12 +172,6 @@ void MotorDriver::OnMD(const uint8_t* payload, size_t length, uint8_t ack) {
   }
   const uint8_t flag = payload[0];
   ULOG_WARNING("[MOTOR] MD: ack %u flag: %u len: %u", ack, static_cast<unsigned>(flag), length);
-//   switch (flag) {
-//     case 0: left_state_.status = ESCState::ESCStatus::ESC_STATUS_DISCONNECTED; break;
-//     case 1: left_state_.status = ESCState::ESCStatus::ESC_STATUS_OK; break;
-//     case 2: left_state_.status = ESCState::ESCStatus::ESC_STATUS_ERROR; break;
-//     default: left_state_.status = ESCState::ESCStatus::ESC_STATUS_ERROR; break;
-//   } 
 }
 
 // MOW motor error? TODO
@@ -248,7 +219,6 @@ void MotorDriver::OnMS(const uint8_t* payload, size_t length, uint8_t ack) {
   ULOG_DEBUG("[MOTOR] MS: ack %u type %u RPM - %d %d", ack, motor_type, rpm1, rpm2);
   std::lock_guard<std::mutex> lock(state_mutex_);
   mow_state_.rpm = static_cast<float>(rpm1);
-  mow_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
 }
 
 // MOW motor text logging from the MCU? weird
@@ -318,8 +288,6 @@ void MotorDriver::OnWR(const uint8_t* payload, size_t length, uint8_t ack) {
   std::lock_guard<std::mutex> lock(state_mutex_);
   left_state_.rpm = static_cast<float>(rpm1);
   right_state_.rpm = static_cast<float>(rpm2);
-  left_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
-  right_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
 }
 
 }  // namespace xbot::driver::motor

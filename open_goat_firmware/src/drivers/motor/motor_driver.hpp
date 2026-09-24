@@ -8,15 +8,11 @@
 #include <drivers/mcu/dispatcher.hpp>
 
 namespace xbot::driver::motor {
-//brands have multipliers for their RPM set values
-//dechang x2
-//lianyi x4 (14bit)
-//kaihang x1
+
 class MotorDriver {
  public:
   struct ESCState {
     enum class ESCStatus : uint8_t { ESC_STATUS_DISCONNECTED = 0, ESC_STATUS_OK = 1, ESC_STATUS_ERROR = 2 };
-    enum class MotorBrand : uint8_t {  BRAND_KAIHANG=0, BRAND_DECHANG=1, BRAND_LIANYI=2 };
     int32_t tacho = 0;
     float temperature_pcb = 0.0f;
     float temperature_motor = 0.0f;
@@ -26,7 +22,6 @@ class MotorDriver {
     float target_rpm = 0.0f;
     float max_rpm = 1000.0f;
     ESCStatus status = ESCStatus::ESC_STATUS_OK;
-    MotorBrand brand = MotorBrand::BRAND_KAIHANG;
   };
 
   MotorDriver(xbot::driver::mcu::Dispatcher* dispatcher);
@@ -50,11 +45,8 @@ class MotorDriver {
   static void MotorMessageLoop(MotorDriver* instance);
   static void ThreadEntry(void* arg);
 
-  uint16_t BrandEncode(const ESCState::MotorBrand brand, int speed);
-  std::vector<uint8_t> EncodeMowSpeedCommand(const ESCState::MotorBrand brand, int speed);
+  std::vector<uint8_t> EncodeMowSpeedCommand(int speed);
   std::vector<uint8_t> EncodeWheelSpeedCommand(int left, int right);
-  std::vector<uint8_t> EncodeEnableCommand(uint8_t motor_type);
-  std::vector<uint8_t> EncodeStopCommand();
 
   void OnMB(const uint8_t* payload, size_t length, uint8_t ack);
   void OnMC(const uint8_t* payload, size_t length, uint8_t ack);
