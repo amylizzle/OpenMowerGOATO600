@@ -12,7 +12,6 @@ bool MowerService::OnStart() {
   }
 
   driver_->Start();
-  mower_running_ = false;
   return true;
 }
 
@@ -30,9 +29,8 @@ void MowerService::tick() {
   CommitTransaction();
 }
 
-void MowerService::OnMowerSpeedChanged(const float& new_value) {
-  mower_running_ = new_value != 0.0f;
+void MowerService::OnMowerEnabledChanged(const uint8_t& new_value) {
   if (driver_ != nullptr) {
-    driver_->SetDuty(std::nullopt , std::nullopt, mower_running_ ? new_value : 0.0f);
+    driver_->SetDuty(std::nullopt , std::nullopt, new_value > 0 ? 1.0f : 0.0f);
   }
 }
