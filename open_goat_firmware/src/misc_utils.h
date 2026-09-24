@@ -43,6 +43,11 @@ inline uint32_t ReadU32Le(const uint8_t* data, size_t offset) {
                                 (static_cast<uint32_t>(data[offset + 3]) << 24));
 }
 
+inline uint16_t rol16(uint16_t value, uint8_t bits) {
+  value &= 0xFFFFu;
+  return static_cast<uint16_t>((value << bits) | (value >> (16u - bits)));
+}
+
 // System time helpers (milliseconds since steady clock)
 #include <chrono>
 inline uint32_t chVTGetSystemTimeX() {

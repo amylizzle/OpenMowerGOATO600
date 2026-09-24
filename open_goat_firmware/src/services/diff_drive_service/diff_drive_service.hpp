@@ -23,7 +23,11 @@ class DiffDriveService : public DiffDriveServiceBase {
       double value = 0.3;
       bool valid = false;
     } WheelDistance;
-    
+  
+  // TODO: make this a parameter
+  static constexpr float MaxWheelSpeed = 0.15f; // m/s
+
+
  protected:
   bool OnStart() override;
   void OnStop() override;

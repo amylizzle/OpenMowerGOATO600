@@ -2,6 +2,9 @@
 
 #include <globals.hpp>
 
+#include <algorithm>
+#include <cmath>
+
 void DiffDriveService::OnStop() {
   if (driver_ != nullptr) {
     driver_->SetDuty(0.0f,0.0f,0.0f);
@@ -64,26 +67,25 @@ void DiffDriveService::OnControlTwistChanged(const double* new_value, uint32_t l
   // data[5] = msg->angular.z;
 
   // we can only do forward and rotation around one axis
-  const auto linear = static_cast<float>(new_value[0]);
-  const auto angular = static_cast<float>(new_value[5]);
+  const auto linear = static_cast<float>(new_value[0]); //m/s
+  const auto angular = static_cast<float>(new_value[5]); //rad/s
 
-  // Optional scaling factors depending on your robot's max limits
-  // Tune these if your raw command values exceed typical bounds
-  float max_linear_vel = 0.2f;  // m/s
-  float max_angular_vel = 2.0f; // rad/s
+  // Inverse kinematics: each wheel carries half the rotation over the track width
+  const auto half_track = static_cast<float>(WheelDistance.value) / 2.0f;
+  const float v_left = linear - angular * half_track;   // m/s
+  const float v_right = linear + angular * half_track;  // m/s
 
-  float left_raw = (linear / max_linear_vel) - (angular / max_angular_vel);
-  float right_raw = (linear / max_linear_vel) + (angular / max_angular_vel);
+  float leftval = v_left / MaxWheelSpeed;
+  float rightval = v_right / MaxWheelSpeed;
 
-  float max_mag = std::max(std::abs(left_raw), std::abs(right_raw));
-
-  float leftval = left_raw;
-  float rightval = right_raw;
-
+  // Scale both wheels together if either saturates, so the commanded curvature
+  // is kept instead of clipping one wheel and driving the wrong arc
+  const float max_mag = std::max(std::abs(leftval), std::abs(rightval));
   if (max_mag > 1.0f) {
-      leftval /= max_mag;
-      rightval /= max_mag;
+    leftval /= max_mag;
+    rightval /= max_mag;
   }
+
   // Send normalized values to motor driver
   driver_->SetDuty(leftval, rightval, std::nullopt);
 }

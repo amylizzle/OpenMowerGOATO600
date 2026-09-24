@@ -8,15 +8,6 @@
 
 namespace xbot::driver::motor {
 
-namespace {
-
-uint16_t rol16(uint16_t value, uint8_t bits) {
-  value &= 0xFFFFu;
-  return static_cast<uint16_t>((value << bits) | (value >> (16u - bits)));
-}
-
-}  // namespace
-
 MotorDriver::MotorDriver(xbot::driver::mcu::Dispatcher* dispatcher)
     : mcu_driver_(dispatcher) {
     // mow motor
@@ -49,9 +40,9 @@ void MotorDriver::Start() {
   right_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
   mow_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
 
-  auto enable_cmd = EncodeEnableCommand(0x0A); //mow moter enable
+  auto enable_cmd = EncodeEnableCommand(0x0A); //mow motor enable
   mcu_driver_->SendMessage('M','A',enable_cmd.data(), enable_cmd.size());
-  enable_cmd = EncodeEnableCommand(0x0C); //wheel moter enable
+  enable_cmd = EncodeEnableCommand(0x0C); //wheel motor enable
   mcu_driver_->SendMessage('W','A',enable_cmd.data(), enable_cmd.size());
   processing_thread_ = createThread(ThreadEntry, this);
 }
@@ -129,12 +120,12 @@ uint16_t MotorDriver::BrandEncode(const ESCState::MotorBrand brand, int speed) {
 // mow speed message
 std::vector<uint8_t> MotorDriver::EncodeMowSpeedCommand(const ESCState::MotorBrand brand, int speed) {
   const bool dir = speed >= 0 ? false : true;
-  const uint16_t encoded = BrandEncode(brand, std::abs(speed)) & 0xFFFFu;
+  const uint16_t encoded = BrandEncode(brand, std::abs(speed));
   std::vector<uint8_t> out(4);
   out[0] = 0x0A;
   out[1] = static_cast<uint8_t>(dir ? 1u : 0u);
-  out[2] = static_cast<uint8_t>(encoded & 0xFFu);
-  out[3] = static_cast<uint8_t>((encoded >> 8) & 0xFFu);
+  out[2] = static_cast<uint8_t>(encoded);
+  out[3] = static_cast<uint8_t>((encoded >> 8));
   return out;
 }
 
@@ -155,7 +146,7 @@ std::vector<uint8_t> MotorDriver::EncodeWheelSpeedCommand(int left, int right) {
 
 std::vector<uint8_t> MotorDriver::EncodeEnableCommand(uint8_t motor_type) {
   return {static_cast<uint8_t>(0x0B), static_cast<uint8_t>(0x01),
-          static_cast<uint8_t>(motor_type & 0xFFu), static_cast<uint8_t>(0x00)};
+          static_cast<uint8_t>(motor_type), static_cast<uint8_t>(0x00)};
 }
 
 // motor type not specified for some reason?
