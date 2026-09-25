@@ -235,7 +235,7 @@ void MotorDriver::OnMT(const uint8_t* payload, size_t length, uint8_t ack) {
   right_state_.temperature_motor = static_cast<float>(payload[1]);
   mow_state_.temperature_motor = static_cast<float>(payload[2]);
   if (length > 3) {
-    ULOG_WARNING("[MOTOR] MT: LONGER THAN EXPECTED ack %u len %zu temp - %u %u %u", ack, length, payload[0], payload[1], payload[2]);
+    ULOG_WARNING("[MOTOR] MT: LONGER THAN EXPECTED ack %u len %zu temp - %u %u %u %u", ack, length, payload[0], payload[1], payload[2], payload[3]);
   }
 }
 

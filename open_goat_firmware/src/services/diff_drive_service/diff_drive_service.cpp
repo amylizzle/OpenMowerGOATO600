@@ -1,7 +1,7 @@
 #include "diff_drive_service.hpp"
 
 #include <globals.hpp>
-
+#include <xbot-service/portable/system.hpp>
 #include <algorithm>
 #include <cmath>
 
@@ -14,6 +14,11 @@ void DiffDriveService::OnStop() {
 void DiffDriveService::tick() {
   if (driver_ == nullptr) {
     return;
+  }
+
+  // Check, if we recently received duty. If not, set to zero for safety
+  if (xbot::service::system::getTimeMicros() - last_duty_received_micros_ > 1'000'000) {
+    driver_->SetDuty(0.0f,0.0f,0.0f); //include the mow motor, cos why not
   }
 
   const auto& left_state = driver_->GetLeftState();
@@ -52,6 +57,8 @@ void DiffDriveService::tick() {
 
 void DiffDriveService::OnControlTwistChanged(const double* new_value, uint32_t length) {
   if (length != 6) return;
+  last_duty_received_micros_ = xbot::service::system::getTimeMicros();
+
   bool emergency = emergency_service.GetEmergencyReasons() != 0;
   if (emergency) {
     if (driver_ != nullptr) {

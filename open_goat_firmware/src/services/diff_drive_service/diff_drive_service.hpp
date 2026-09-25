@@ -36,7 +36,8 @@ class DiffDriveService : public DiffDriveServiceBase {
   xbot::driver::motor::MotorDriver* driver_ = nullptr;
   int32_t last_left_tacho_ = 0, last_right_tacho_ = 0;
   uint32_t last_tick_time_ms_ = 0xFFFFFFFF;
-
+  uint32_t last_duty_received_micros_ = 0;
+  
   void tick();
   ManagedSchedule tick_schedule_{scheduler_, IsRunning(), 20'000,
                                  XBOT_FUNCTION_FOR_METHOD(DiffDriveService, &DiffDriveService::tick, this)};
