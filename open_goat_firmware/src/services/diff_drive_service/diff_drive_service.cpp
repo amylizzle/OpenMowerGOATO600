@@ -79,11 +79,8 @@ void DiffDriveService::OnControlTwistChanged(const double* new_value, uint32_t l
 
   // Inverse kinematics: each wheel carries half the rotation over the track width
   const auto half_track = static_cast<float>(WheelDistance.value) / 2.0f;
-  const float v_left = linear - angular * half_track;   // m/s
-  const float v_right = linear + angular * half_track;  // m/s
-
-  float leftval = v_left / MaxWheelSpeed;
-  float rightval = v_right / MaxWheelSpeed;
+  float leftval = linear - angular * half_track;   // m/s
+  float rightval = linear + angular * half_track;  // m/s
 
   // Scale both wheels together if either saturates, so the commanded curvature
   // is kept instead of clipping one wheel and driving the wrong arc
