@@ -182,16 +182,12 @@ void MotorDriver::OnME(const uint8_t* payload, size_t length, uint8_t ack) {
     return;
   }
   const uint8_t kind = payload[0];
-  ULOG_ERROR("[MOTOR] ME: ack %u kind %u", ack, static_cast<unsigned>(kind));
-//   switch (kind) {
-//     case 1: state_.status = ESCState::ESCStatus::ESC_STATUS_OK; break;
-//     case 2: state_.status = ESCState::ESCStatus::ESC_STATUS_OK; break;
-//     case 10: state_.status = ESCState::ESCStatus::ESC_STATUS_DISCONNECTED; break;
-//     case 4: state_.status = ESCState::ESCStatus::ESC_STATUS_OK; break;
-//     case 5: state_.status = ESCState::ESCStatus::ESC_STATUS_OK; break;
-//     case 6: state_.status = ESCState::ESCStatus::ESC_STATUS_OK; break;
-//     default: state_.status = ESCState::ESCStatus::ESC_STATUS_DISCONNECTED; break;
-//   }
+  ULOG_ERROR("[MOTOR] ME: ack %u len %u kind %u", ack, length, static_cast<unsigned>(kind));
+  // let's just set an error state if this happens, since we don't know what it means
+  std::lock_guard<std::mutex> lock(state_mutex_);
+  mow_state_.status = ESCState::ESCStatus::ESC_STATUS_ERROR;
+  left_state_.status = ESCState::ESCStatus::ESC_STATUS_ERROR;
+  right_state_.status = ESCState::ESCStatus::ESC_STATUS_ERROR;
   
 }
 
@@ -227,16 +223,13 @@ void MotorDriver::OnMS(const uint8_t* payload, size_t length, uint8_t ack) {
 // Motor (or maybe ESC) temperature
 void MotorDriver::OnMT(const uint8_t* payload, size_t length, uint8_t ack) {
     (void) ack;
-  if (!payload || length == 0) {
+  if (!payload || length < 3) {
     return;
   }
 
-  left_state_.temperature_motor = static_cast<float>(payload[0]);
-  right_state_.temperature_motor = static_cast<float>(payload[1]);
-  mow_state_.temperature_motor = static_cast<float>(payload[2]);
-  if (length > 3) {
-    ULOG_WARNING("[MOTOR] MT: LONGER THAN EXPECTED ack %u len %zu temp - %u %u %u %u", ack, length, payload[0], payload[1], payload[2], payload[3]);
-  }
+  left_state_.temperature_pcb = static_cast<float>(payload[0]);
+  right_state_.temperature_pcb = static_cast<float>(payload[1]);
+  mow_state_.temperature_pcb = static_cast<float>(payload[2]);
 }
 
 

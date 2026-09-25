@@ -20,7 +20,7 @@ class MotorDriver {
     float rpm = 0.0f;
     float target_duty = 0.0f;
     float target_rpm = 0.0f;
-    float max_rpm = 1000.0f;
+    float max_rpm = 2000.0f;
     ESCStatus status = ESCStatus::ESC_STATUS_OK;
   };
 
