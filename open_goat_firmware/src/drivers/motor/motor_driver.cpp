@@ -201,13 +201,15 @@ void MotorDriver::OnMF(const uint8_t* payload, size_t length, uint8_t ack) {
     return;
   }
   const uint8_t warning = payload[0];
-  ULOG_ERROR("[MOTOR] MF: ack %u warn: %u", ack, static_cast<unsigned>(warning));
-  // if (warning == 4 || warning == 5 || warning == 10) {
-  //   state_.status = ESCState::ESCStatus::ESC_STATUS_ERROR;
-  // }
+  ULOG_ERROR("[MOTOR] MF: ack %u len %u warn: %u", ack, length, static_cast<unsigned>(warning));
+  // let's just set an error state if this happens, since we don't know what it means
+  std::lock_guard<std::mutex> lock(state_mutex_);
+  mow_state_.status = ESCState::ESCStatus::ESC_STATUS_ERROR;
+  left_state_.status = ESCState::ESCStatus::ESC_STATUS_ERROR;
+  right_state_.status = ESCState::ESCStatus::ESC_STATUS_ERROR;
 }
 
-// MOW motor status 
+// MOW motor status - has 5 RPM values, but only the first is used for the MOW motor. The rest are for other motors that aren't used.
 void MotorDriver::OnMS(const uint8_t* payload, size_t length, uint8_t ack) {
     (void) ack;
   if (!payload || length <= 1) {
@@ -221,18 +223,19 @@ void MotorDriver::OnMS(const uint8_t* payload, size_t length, uint8_t ack) {
   mow_state_.rpm = static_cast<float>(rpm1);
 }
 
-// MOW motor text logging from the MCU? weird
+// Motor (or maybe ESC) temperature
 void MotorDriver::OnMT(const uint8_t* payload, size_t length, uint8_t ack) {
     (void) ack;
   if (!payload || length == 0) {
     return;
   }
-  const size_t count = std::min<size_t>(4u, length);
-  std::string info(reinterpret_cast<const char*>(payload), count);
-  if (count < length) {
-    info.resize(static_cast<size_t>(count));
+
+  left_state_.temperature_motor = static_cast<float>(payload[0]);
+  right_state_.temperature_motor = static_cast<float>(payload[1]);
+  mow_state_.temperature_motor = static_cast<float>(payload[2]);
+  if (length > 3) {
+    ULOG_WARNING("[MOTOR] MT: LONGER THAN EXPECTED ack %u len %zu temp - %u %u %u", ack, length, payload[0], payload[1], payload[2]);
   }
-  ULOG_WARNING("[MOTOR] MT: ack %u info: %s", ack, info.c_str());  
 }
 
 
@@ -262,7 +265,7 @@ void MotorDriver::OnWD(const uint8_t* payload, size_t length, uint8_t ack) {
 
     return;
   }
-  if ( left_state_.tacho != 0 && abs(left_state_.tacho - left ) > 200 ) { //sometimes invalid values are sent, ignore them. 50 ticks in 20ms is about 2.1m/s, which is faster than the mower >
+  if ( left_state_.tacho != 0 && abs(left_state_.tacho - left ) > 200 ) { //sometimes invalid values are sent, ignore them. 50 ticks in 20ms is about 2.1m/s, which is faster than the mower can go
     return;
   }
   if ( right_state_.tacho != 0 && abs(right_state_.tacho - right ) > 200 ) { 
