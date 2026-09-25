@@ -39,6 +39,7 @@ void MotorDriver::Start() {
   left_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
   right_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
   mow_state_.status = ESCState::ESCStatus::ESC_STATUS_OK;
+  mow_state_.max_rpm = 3000.0f; //seems to be the set point in the MCU firmware
 
   auto enable_cmd = EncodeMowSpeedCommand(mow_state_.target_rpm);
   mcu_driver_->SendMessage('M','A',enable_cmd.data(), enable_cmd.size());
