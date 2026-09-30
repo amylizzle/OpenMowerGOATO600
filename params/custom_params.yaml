@@ -21,8 +21,8 @@ ll:
       axis_config: "+Y+X-Z"
     power:
       battery_full_voltage: 20.0
-      battery_empty_voltage: 16.5
-      battery_critical_voltage: 16.0
+      battery_empty_voltage: 16.0
+      battery_critical_voltage: 15.5
       battery_critical_high_voltage: 25.0
       charge_critical_high_voltage: 34.0
       charge_critical_high_current: 3.0
@@ -44,7 +44,7 @@ mower_logic:
   mow_angle_offset_is_absolute: false
   mow_angle_increment: 0
   gps_wait_time: 1.0
-  gps_timeout: 5.0
+  gps_timeout: 60.0
   rain_mode: 0
   rain_delay_minutes: 30
   rain_check_seconds: 20

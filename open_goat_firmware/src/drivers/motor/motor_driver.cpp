@@ -217,7 +217,7 @@ void MotorDriver::OnMS(const uint8_t* payload, size_t length, uint8_t ack) {
   const int16_t rpm2 = ReadI16Le(payload, 3);
   ULOG_DEBUG("[MOTOR] MS: ack %u type %u RPM - %d %d", ack, motor_type, rpm1, rpm2);
   std::lock_guard<std::mutex> lock(state_mutex_);
-  mow_state_.rpm = static_cast<float>(rpm1);
+  mow_state_.rpm = std::abs(static_cast<float>(rpm1));
 }
 
 // Motor (or maybe ESC) temperature
