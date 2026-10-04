@@ -46,17 +46,13 @@ void GpsService::GpsStateCallback(const GpsDriver::GpsState& state) {
   StartTransaction();
   double position[3] = {state.pos_lat, state.pos_lon, state.pos_height};
   SendPosition(position, 3);
-  // TODO: might be able to derive accuracy from $SYSRTC - some propetiary stuff going on there, but signal quality and "deception" indicators
-  // SendPositionHorizontalAccuracy(state.position_h_accuracy);
-  // SendPositionVerticalAccuracy(state.position_v_accuracy);
+  SendPositionHorizontalAccuracy(state.position_h_accuracy);
+  SendPositionVerticalAccuracy(state.position_v_accuracy);
   if (state.rtk_type == xbot::driver::gps::GpsDriver::GpsState::RTK_FIX) {
     SendFixType("FIX", 3);
-    SendPositionHorizontalAccuracy(0.02f);
   } else if (state.rtk_type == xbot::driver::gps::GpsDriver::GpsState::RTK_FLOAT) {
     SendFixType("FLOAT", 5);
-    SendPositionHorizontalAccuracy(0.5f);
   } else {
-    SendPositionHorizontalAccuracy(1.3f);
     if(TIME_I2S(chVTGetSystemTimeX() - last_rtk_reset_) > 30.0) {
       // lost RTK? try reset the RTK system
       last_rtk_reset_ = chVTGetSystemTimeX();

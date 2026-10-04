@@ -59,6 +59,12 @@ void GpsDriver::GNSSConfig() {
     "log bestposa ontime 1\r\n", //RTK-fixed position
     "log com1 gpgga ontime 0.1\r\n", //NMEA position (navigation)
     "log com1 bestposa ontime 0.1\r\n", //best-pos ASCII position
+    "log com1 gpgsv ontime 1\r\n", //NMEA satellite information
+    "log com1 gprmc ontime 1\r\n", //NMEA recommended minimum specific GPS/TRANSIT data
+    "log com1 gpgsa ontime 1\r\n", //NMEA GPS DOP and active satellites
+    "log com1 gpvtg ontime 1\r\n", //NMEA course over ground and speed relative to the ground
+    "log com1 gpgst ontime 1\r\n", //NMEA GPS Pseudorange Noise Statistics
+    "log com1 gpgga ontime 0.1\r\n", //NMEA Global Positioning System Fix Data
     "saveconfig\r\n", //persist config
    }) {
       this->slink->write(std::vector<uint8_t>(str.begin(), str.end()));
