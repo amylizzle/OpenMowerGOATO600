@@ -28,6 +28,8 @@ int main() {
 	xbot::service::startRemoteLogging();
 	
 	ULOG_INFO("Starting services...");
+	ULOG_INFO("Meta...");
+	meta_service.start();
 	ULOG_INFO("Emergency...");
 	emergency_service.start();
 	ULOG_INFO("Diff drive...");
