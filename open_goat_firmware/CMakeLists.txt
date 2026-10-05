@@ -58,7 +58,6 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         src/services/rtc_service/rtc_service.cpp
         # GPS driver
         src/drivers/gps/gps_driver.cpp
-        src/drivers/gps/ublox_gps_driver.cpp
         src/drivers/gps/nmea_gps_driver.cpp
         ext/minmea/minmea.c
         # MCU driver

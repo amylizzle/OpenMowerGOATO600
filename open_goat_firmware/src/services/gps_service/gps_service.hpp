@@ -33,7 +33,7 @@ public:
    * Allows initializing the GPS driver before service OnStart(), enabling
    * immediate GPS functionality without waiting for ROS configuration.
    */
-  bool LoadAndStartGpsDriver(ProtocolType protocol_type, const char *device, uint32_t baudrate);
+  bool LoadAndStartGpsDriver(const char *device, uint32_t baudrate);
 
  protected:
   bool OnStart() override;

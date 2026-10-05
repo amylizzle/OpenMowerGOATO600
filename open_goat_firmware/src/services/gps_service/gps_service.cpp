@@ -1,19 +1,14 @@
 #include "gps_service.hpp"
 
 #include <drivers/gps/nmea_gps_driver.h>
-#include <drivers/gps/ublox_gps_driver.h>
 #include <ulog.h>
 
 #include <cstdio>
 #include "misc_utils.h"
 
-bool GpsService::LoadAndStartGpsDriver(ProtocolType protocol_type, const char *device, uint32_t baudrate) {
+bool GpsService::LoadAndStartGpsDriver(const char *device, uint32_t baudrate) {
   // Create the requested driver
-  if (protocol_type == ProtocolType::UBX) {
-    gps_driver_ = new UbxGpsDriver();
-  } else {
-    gps_driver_ = new NmeaGpsDriver();
-  }
+  gps_driver_ = new NmeaGpsDriver();
 
   gps_driver_->SetStateCallback(
       etl::delegate<void(const GpsDriver::GpsState&)>::create<GpsService, &GpsService::GpsStateCallback>(*this));
@@ -29,7 +24,7 @@ bool GpsService::OnStart() {
   if (gps_driver_ == nullptr) {
     // We don't have a gps driver running yet, so create one.
     ULOG_WARNING(("Starting GPS driver on /dev/ttyS" + std::to_string(Uart.value)).c_str());
-    return LoadAndStartGpsDriver(Protocol.value, ("/dev/ttyS" + std::to_string(Uart.value)).c_str(), Baudrate.value);
+    return LoadAndStartGpsDriver(("/dev/ttyS" + std::to_string(Uart.value)).c_str(), Baudrate.value);
   }
 
   return true;
