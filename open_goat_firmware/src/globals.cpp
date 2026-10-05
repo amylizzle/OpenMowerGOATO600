@@ -2,6 +2,7 @@
 
 xbot::driver::mcu::Dispatcher mcu_dispatcher_driver{};
 
+MetaService meta_service{xbot::service_ids::META};
 EmergencyService emergency_service{xbot::service_ids::EMERGENCY};
 DiffDriveService diff_drive_service{xbot::service_ids::DIFF_DRIVE};
 MowerService mower_service{xbot::service_ids::MOWER};

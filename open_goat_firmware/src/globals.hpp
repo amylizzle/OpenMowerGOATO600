@@ -3,7 +3,7 @@
 #define GLOBALS_HPP
 
 #include "drivers/mcu/dispatcher.hpp"
-
+#include "services/meta_service/meta_service.hpp"
 #include "services/diff_drive_service/diff_drive_service.hpp"
 #include "services/emergency_service/emergency_service.hpp"
 #include "services/gps_service/gps_service.hpp"
@@ -16,6 +16,7 @@
 
 extern xbot::driver::mcu::Dispatcher mcu_dispatcher_driver;
 
+extern MetaService meta_service;
 extern EmergencyService emergency_service;
 extern DiffDriveService diff_drive_service;
 extern MowerService mower_service;
