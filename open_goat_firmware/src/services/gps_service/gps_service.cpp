@@ -55,8 +55,14 @@ void GpsService::GpsStateCallback(const GpsDriver::GpsState& state) {
       ULOG_WARNING("GPS SERVICE: RTK lost, resetting RTK system");
     }
   }
-  double vel[3] = {state.vel_e, state.vel_n, state.vel_u};
-  SendMotionVectorENU(vel, 3);
+  // Only send the motion vector when a fresh RMC has arrived since the last
+  // publish. Re-sending a stale course would let the consumer fuse the same
+  // heading measurement repeatedly, which during a turn drags the estimate
+  // back toward where the robot was pointing an epoch ago.
+  if (state.motion_heading_valid) {
+    double vel[3] = {state.vel_e, state.vel_n, state.vel_u};
+    SendMotionVectorENU(vel, 3);
+  }
   CommitTransaction();
 }
 

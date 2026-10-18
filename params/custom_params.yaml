@@ -18,7 +18,12 @@ ll:
       datum_lat: 53.457452
       datum_long: 10.014737
     imu:
-      axis_config: "+Y+X-Z"
+      # The GOAT MCU already reports axes in the ROS convention: with the robot
+      # level, accel.z reads +9.6 (up) and gyro.z correlates +0.93 with the
+      # wheel-odometry yaw rate. The previous "+Y+X-Z" would swap X/Y and
+      # invert yaw - harmless only because the firmware ignored this register.
+      # It is applied now, so it has to be right.
+      axis_config: "+X+Y+Z"
     power:
       battery_full_voltage: 20.0
       battery_empty_voltage: 16.0
@@ -28,10 +33,47 @@ ll:
       charge_critical_high_current: 3.0
 
 xbot_positioning:
+  # Measured: the antenna sits directly over the centre of the drive wheel
+  # axis, so there is no offset to correct for.
   antenna_offset_x: 0.0
   antenna_offset_y: 0.0
   max_gps_accuracy: 0.2
   debug: false
+
+  # Process noise, as variance per second. These are scaled by dt internally,
+  # so they no longer depend on the IMU sample rate.
+  #
+  # Tuned by replaying a 10 min RTK-fixed recording and watching the position
+  # NIS, which should average ~2.0 if the noise model is honest. The NIS optimum
+  # sits at q_xy 3e-5 / gps_accuracy_scale 1.5, but that is tuned purely for the
+  # 0.1 s gap between GPS fixes, where dead reckoning is very good. Dead-reckoning
+  # error is systematic (scale and bias), not a random walk, so a Q that fits the
+  # short gaps badly under-covers a multi-second GPS dropout. These values are
+  # deliberately ~2x looser than the NIS optimum (NIS ~1.0) to keep that margin.
+  q_xy: 0.0001      # ~1 cm/s growth in position sigma while dead reckoning
+  q_theta: 0.0001   # (0.01 rad/s)^2; measured gyro bias drift is well under this
+  q_vx: 0.01        # random walk on the speed state
+  q_vr: 0.01        # random walk on the yaw-rate state
+
+  # Measurement noise for the wheel-odometry speed / gyro rate update.
+  r_vx: 0.001       # (0.03 m/s)^2
+  r_vr: 0.0004      # (0.02 rad/s)^2
+
+  # GPS position variance is (scale * max(reported_accuracy, floor))^2.
+  # The bynav reports ~0.02 m when RTK fixed (0.01-0.06 over the test run).
+  gps_accuracy_scale: 1.5
+  gps_accuracy_floor: 0.02
+
+  # Variance on each component of the GPS motion vector, (m/s)^2.
+  orientation_r: 0.01
+
+  # Course over ground below this speed is noise, so it is not fused. Swept on
+  # the test run: 0.15 gave the lowest heading error (5.7 deg median), against
+  # 7.2 deg at the old 0.01 and 7.8 deg at 0.25.
+  min_speed: 0.15
+
+  # Largest prediction step; guards against dropouts and restarts.
+  max_predict_dt: 0.5
 
 mower_logic:
   automatic_mode: 0

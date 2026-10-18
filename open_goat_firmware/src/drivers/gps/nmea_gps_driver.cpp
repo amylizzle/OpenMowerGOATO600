@@ -103,7 +103,15 @@ bool NmeaGpsDriver::ProcessLine(const char *line) {
       gps_state_.num_sv = gga.satellites_tracked;
 
       UpdateGpsStateValidity();
+      // GGA is the position fix and the only sentence that publishes. The other
+      // sentences update gps_state_ in place and are picked up by the next GGA.
+      // Publishing per-sentence would re-send the same position several times a
+      // second, and a Kalman filter consuming it would treat each copy as an
+      // independent measurement.
       TriggerStateCallback();
+      // The motion vector has now been consumed; it is only valid again once a
+      // fresh RMC arrives.
+      gps_state_.motion_heading_valid = false;
       return true;
     }
 
@@ -132,7 +140,6 @@ bool NmeaGpsDriver::ProcessLine(const char *line) {
       gps_state_.motion_heading_valid = true;
       gps_state_.vehicle_heading_valid = false;
 
-      TriggerStateCallback();
       return true;
     }
 
@@ -149,7 +156,6 @@ bool NmeaGpsDriver::ProcessLine(const char *line) {
       }
 
       UpdateGpsStateValidity();
-      TriggerStateCallback();
       return true;
     }
 
@@ -166,7 +172,6 @@ bool NmeaGpsDriver::ProcessLine(const char *line) {
       gps_state_.position_h_accuracy = sqrt(lat_std * lat_std + lon_std * lon_std);
       gps_state_.position_v_accuracy = alt_std;
 
-      TriggerStateCallback();
       return true;
     }
 

@@ -57,14 +57,11 @@ void GpsDriver::GNSSConfig() {
     "WORKFREQS B1IB2IB3I BEIDOU2\r\n", //enable BD2/BEIDOU2 constellations
     "fix auto\r\n", //automatic RTK fix mode
     "log bestposa ontime 1\r\n", //RTK-fixed position
-    "log com1 gpgga ontime 0.1\r\n", //NMEA position (navigation)
-    "log com1 bestposa ontime 0.1\r\n", //best-pos ASCII position
+    "log com1 gpgga ontime 0.1\r\n", //NMEA position (navigation), 10Hz - this is what we publish on
+    "log com1 gprmc ontime 0.1\r\n", //NMEA course+speed, 10Hz so the motion vector matches the fix rate
     "log com1 gpgsv ontime 1\r\n", //NMEA satellite information
-    "log com1 gprmc ontime 1\r\n", //NMEA recommended minimum specific GPS/TRANSIT data
     "log com1 gpgsa ontime 1\r\n", //NMEA GPS DOP and active satellites
-    "log com1 gpvtg ontime 1\r\n", //NMEA course over ground and speed relative to the ground
-    "log com1 gpgst ontime 1\r\n", //NMEA GPS Pseudorange Noise Statistics
-    "log com1 gpgga ontime 0.1\r\n", //NMEA Global Positioning System Fix Data
+    "log com1 gpgst ontime 1\r\n", //NMEA GPS Pseudorange Noise Statistics (position accuracy)
     "saveconfig\r\n", //persist config
    }) {
       this->slink->write(std::vector<uint8_t>(str.begin(), str.end()));
