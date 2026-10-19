@@ -45,7 +45,11 @@ void MotorDriver::Start() {
   mcu_driver_->SendMessage('M','A',enable_cmd.data(), enable_cmd.size());
   enable_cmd = EncodeWheelSpeedCommand(left_state_.target_rpm, right_state_.target_rpm);
   mcu_driver_->SendMessage('W','A',enable_cmd.data(), enable_cmd.size());
-  processing_thread_ = createThread(ThreadEntry, this);
+  // Both the diff drive and mower services share one driver instance and each
+  // call Start(), so only spawn the message loop on the first call.
+  if (processing_thread_ == nullptr) {
+    processing_thread_ = createThread(ThreadEntry, this);
+  }
 }
 
 void MotorDriver::ThreadEntry(void* arg) {
@@ -55,9 +59,16 @@ void MotorDriver::ThreadEntry(void* arg) {
 
 void MotorDriver::MotorMessageLoop(MotorDriver* instance) {
   while(true){
-    auto mow_cmd = instance->EncodeMowSpeedCommand(instance->mow_state_.target_rpm);
-    auto wheel_cmd = instance->EncodeWheelSpeedCommand(instance->left_state_.target_rpm, instance->right_state_.target_rpm);
-    
+    float mow_rpm, left_rpm, right_rpm;
+    {
+      std::lock_guard<std::mutex> lock(instance->state_mutex_);
+      mow_rpm = instance->mow_state_.target_rpm;
+      left_rpm = instance->left_state_.target_rpm;
+      right_rpm = instance->right_state_.target_rpm;
+    }
+    auto mow_cmd = instance->EncodeMowSpeedCommand(mow_rpm);
+    auto wheel_cmd = instance->EncodeWheelSpeedCommand(left_rpm, right_rpm);
+
     instance->mcu_driver_->SendMessage('M','A',mow_cmd.data(), mow_cmd.size());
     instance->mcu_driver_->SendMessage('W','A',wheel_cmd.data(), wheel_cmd.size());
     std::this_thread::sleep_for(
@@ -217,7 +228,7 @@ void MotorDriver::OnMS(const uint8_t* payload, size_t length, uint8_t ack) {
   const int16_t rpm2 = ReadI16Le(payload, 3);
   ULOG_DEBUG("[MOTOR] MS: ack %u type %u RPM - %d %d", ack, motor_type, rpm1, rpm2);
   std::lock_guard<std::mutex> lock(state_mutex_);
-  mow_state_.rpm = std::abs(static_cast<float>(rpm1));
+  mow_state_.rpm = static_cast<float>(rpm1);
 }
 
 // Motor (or maybe ESC) temperature

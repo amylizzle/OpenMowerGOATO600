@@ -29,8 +29,9 @@ void MowerService::tick() {
   CommitTransaction();
 }
 
-void MowerService::OnMowerEnabledChanged(const uint8_t& new_value) {
+// Signed duty in [-1, 1]: sign = direction, magnitude = speed, 0 = off.
+void MowerService::OnMowerSpeedChanged(const float& new_value) {
   if (driver_ != nullptr) {
-    driver_->SetDuty(std::nullopt , std::nullopt, new_value > 0 ? 1.0f : 0.0f);
+    driver_->SetDuty(std::nullopt , std::nullopt, new_value);
   }
 }
