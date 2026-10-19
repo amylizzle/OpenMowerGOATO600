@@ -14,6 +14,10 @@ class MotorDriver {
   struct ESCState {
     enum class ESCStatus : uint8_t { ESC_STATUS_DISCONNECTED = 0, ESC_STATUS_OK = 1, ESC_STATUS_ERROR = 2 };
     int32_t tacho = 0;
+    // Bumped every time the reported tacho restarts (the OEM MCU zeroes its
+    // distance counters on docking, among other things). A consumer that sees
+    // this change must re-baseline: the delta spanning that frame is garbage.
+    uint32_t tacho_epoch = 0;
     float temperature_pcb = 0.0f;
     float temperature_motor = 0.0f;
     float current_input = 0.0f;
@@ -41,6 +45,13 @@ class MotorDriver {
   ESCState mow_state_;
   uint8_t bad_wd_count_ = 0;
   uint32_t wd_last_timestamp = 0;
+  // False until the first WD frame has established a baseline. 0 is a valid
+  // tick count, so it cannot double as the "no sample yet" sentinel.
+  bool has_wd_ = false;
+  uint32_t tacho_epoch_ = 0;
+  // Takes the reported counters as a fresh baseline and invalidates any delta
+  // spanning this frame. Caller must hold state_mutex_.
+  void AcceptWdReset(int32_t left, int32_t right, uint32_t timestamp);
   thread_t *processing_thread_ = nullptr;
   static void MotorMessageLoop(MotorDriver* instance);
   static void ThreadEntry(void* arg);

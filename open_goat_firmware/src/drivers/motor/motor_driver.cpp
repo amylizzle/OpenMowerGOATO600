@@ -255,31 +255,54 @@ void MotorDriver::OnWD(const uint8_t* payload, size_t length, uint8_t ack) {
   uint32_t timestamp = ReadU32Le(payload, 9);
   ULOG_DEBUG("[MOTOR] WD: ack %u left %d right %d timestamp %u", ack, left, right, timestamp);
   std::lock_guard<std::mutex> lock(state_mutex_);
-  if (wd_last_timestamp == 0) {
-    wd_last_timestamp = timestamp;
-  } else if (abs(static_cast<int32_t>(wd_last_timestamp - timestamp)) > 1000) {
-    bad_wd_count_++;
-    if (bad_wd_count_ > 3) {
-      wd_last_timestamp = timestamp;
-      bad_wd_count_ = 0;
-      //we're just gonna assume these are valid tacho values
-      left_state_.tacho = left;
-      right_state_.tacho = right; 
-      ULOG_WARNING("[MOTOR] WD: multiple bad timestamps detected, resetting base timestamp to %u", timestamp);
-    } 
 
+  // First frame we have ever seen: nothing to compare against, just take it.
+  if (!has_wd_) {
+    AcceptWdReset(left, right, timestamp);
     return;
   }
-  if ( left_state_.tacho != 0 && abs(left_state_.tacho - left ) > 200 ) { //sometimes invalid values are sent, ignore them. 50 ticks in 20ms is about 2.1m/s, which is faster than the mower can go
+
+  // A timestamp discontinuity means the MCU restarted its counters (docking
+  // does this) or we lost a long run of frames. Either way the distance
+  // travelled in between is unknown, so confirm over a few frames and then
+  // re-baseline rather than differencing across the gap.
+  if (abs(static_cast<int32_t>(wd_last_timestamp - timestamp)) > 1000) {
+    if (++bad_wd_count_ > 3) {
+      ULOG_WARNING("[MOTOR] WD: multiple bad timestamps detected, re-baselining at %u", timestamp);
+      AcceptWdReset(left, right, timestamp);
+    }
     return;
   }
-  if ( right_state_.tacho != 0 && abs(right_state_.tacho - right ) > 200 ) { 
+
+  // Sometimes invalid values are sent; ignore them. 200 ticks in 20ms is well
+  // over 2m/s, which is faster than the mower can go. Checked per wheel, but
+  // the frame is dropped as a unit so the two counters stay on the same
+  // timestamp. If the implausible values persist then the counters really did
+  // move, so re-baseline instead of freezing the odometry forever.
+  if (abs(left_state_.tacho - left) > 200 || abs(right_state_.tacho - right) > 200) {
+    if (++bad_wd_count_ > 3) {
+      ULOG_WARNING("[MOTOR] WD: persistent tick discontinuity, re-baselining to %d / %d", left, right);
+      AcceptWdReset(left, right, timestamp);
+    }
     return;
   }
+
   bad_wd_count_ = 0;
   wd_last_timestamp = timestamp;
   left_state_.tacho = left;
   right_state_.tacho = right;
+}
+
+void MotorDriver::AcceptWdReset(int32_t left, int32_t right, uint32_t timestamp) {
+  bad_wd_count_ = 0;
+  has_wd_ = true;
+  wd_last_timestamp = timestamp;
+  left_state_.tacho = left;
+  right_state_.tacho = right;
+  // Tell consumers that a delta spanning this frame is meaningless.
+  ++tacho_epoch_;
+  left_state_.tacho_epoch = tacho_epoch_;
+  right_state_.tacho_epoch = tacho_epoch_;
 }
 
 

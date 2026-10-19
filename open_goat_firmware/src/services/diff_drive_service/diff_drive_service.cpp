@@ -39,14 +39,22 @@ void DiffDriveService::tick() {
   uint32_t now_ms = chVTGetSystemTimeX();
   float dt = (now_ms - last_tick_time_ms_) * 1e-3f;
 
+  // The driver bumps the epoch when the OEM MCU restarts its distance counters,
+  // which it does on docking. Differencing across that restart would report the
+  // entire accumulated odometry as a single velocity sample and jump the EKF by
+  // that distance, so re-baseline and report zero speed for this one cycle.
+  // Both wheels are re-baselined together, so either epoch answers for both.
+  const bool tacho_restarted = left_state.tacho_epoch != last_tacho_epoch_;
+
   float v_left  = 0.0f, v_right = 0.0f;
-  if (dt > 0.0f) {
+  if (dt > 0.0f && !tacho_restarted) {
       v_left  = (left_state.tacho  - last_left_tacho_)  / WheelTicksPerMeter.value / dt;
       v_right = (right_state.tacho - last_right_tacho_) / WheelTicksPerMeter.value / dt;
   }
 
   last_left_tacho_  = left_state.tacho;
   last_right_tacho_ = right_state.tacho;
+  last_tacho_epoch_ = left_state.tacho_epoch;
   last_tick_time_ms_ = now_ms;
 
   twist[0]  = (v_right + v_left) / 2.0f; // Average linear velocity
