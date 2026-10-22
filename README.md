@@ -102,8 +102,6 @@ After=network.target
 [Service]
 Type=simple
 ExecStart=/var/openmower/OpenMowerGOATO600/chroot_devenv.sh run
-#uncomment to run auto-setup and run openmower-app
-#ExecStart=/var/openmower/OpenMowerGOATO600/chroot_devenv.sh app
 Restart=always
 RestartSec=5
 
