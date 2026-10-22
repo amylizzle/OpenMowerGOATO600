@@ -17,6 +17,12 @@ namespace xbot::driver::mcu {
 bool Dispatcher::StartDriver(std::string path, int baud) {
 	DbgAssert(stopped_, "don't start the dispatcher twice");
 	if (!stopped_) return false;
+	if (storeUnregisteredMessages) {
+		unregisteredMessagesFile = fopen(unregisteredMessagesFilename.c_str(), "ab");
+		if (!unregisteredMessagesFile) {
+			ULOG_ERROR("Failed to open %s for writing: %s", unregisteredMessagesFilename.c_str(), ::strerror(errno));
+		}
+	}
 	this->mlink = new MCULink(path,baud);
 	processing_thread_ = createThread(ThreadEntry, this);
 	this->RegisterHandler(
@@ -60,6 +66,13 @@ void Dispatcher::FrameReaderLoop(Dispatcher* instance) {
 		}
 		if (!dispatched) {
 			ULOG_WARNING("UNHANDLED MCU MESSAGE %c%c", cmd0, cmd1);
+			if (instance->storeUnregisteredMessages) {
+				if (instance->unregisteredMessagesFile) {
+					fwrite(val.data(), 1, val.size(), instance->unregisteredMessagesFile);
+				} else {
+					ULOG_ERROR("Failed to open %s for writing: %s", instance->unregisteredMessagesFilename.c_str(), ::strerror(errno));
+				}
+			}
 		}
 	}
 }

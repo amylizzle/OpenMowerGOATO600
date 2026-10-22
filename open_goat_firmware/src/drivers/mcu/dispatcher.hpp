@@ -29,6 +29,10 @@ class Dispatcher {
  private:
  	void OnTBMessage(const uint8_t *payload, size_t length, uint8_t ack);
 	uint8_t ack = 0;
+	// if true, store messages that we don't recognise in a file for later analysis.
+	const bool storeUnregisteredMessages = true;
+	const std::string unregisteredMessagesFilename = "/data/unhandled_mcu_messages.log"; //TODO: parameter
+	FILE *unregisteredMessagesFile = nullptr;
 
  protected:
 	MCULink* mlink{};
