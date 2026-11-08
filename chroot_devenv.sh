@@ -93,7 +93,7 @@ mount_all() {
     mountpoint -q "${ROOTFS}/dev/pts" || mount --bind /dev/pts "${ROOTFS}/dev/pts" 2>/dev/null || true
     mountpoint -q "${ROOTFS}/dev/shm" || mount --bind /dev/shm "${ROOTFS}/dev/shm" || true
     # bind host /tmp so we can use the host's IPC sockets (eg, for cameraProvider)
-    mountpoint -q "${ROOTFS}/hosttmp" || mount --bind /hosttmp "${ROOTFS}/tmp"
+    mountpoint -q "${ROOTFS}/hosttmp" || mount --bind /tmp "${ROOTFS}/hosttmp"
 
     # The workspace (open_mower_ros) is bind-mounted at /workspace so build
     # artifacts (build/, devel/) persist on the host.
@@ -345,6 +345,10 @@ cleanup() {
 }
 
 launchom() {
+    # start the cameraProvider daemon on the host 
+    /usr/bin/cameraProvider &
+    provider_pid=$!
+
     run_chroot "
         source /workspace/devel/setup.bash
         source /workspace/mower_config.sh
@@ -363,6 +367,8 @@ launchom() {
         killall mosquitto
         echo Goodbye!
     "
+    
+    kill $provider_pid 2>/dev/null || true
 }
 
 # ----------------------------------------------------------------------------
