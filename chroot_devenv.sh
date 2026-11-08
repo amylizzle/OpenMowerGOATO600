@@ -91,6 +91,7 @@ mount_all() {
     mountpoint -q "${ROOTFS}/sys"  || mount --bind /sys  "${ROOTFS}/sys"
     mountpoint -q "${ROOTFS}/dev"  || mount --bind /dev  "${ROOTFS}/dev"
     mountpoint -q "${ROOTFS}/dev/pts" || mount --bind /dev/pts "${ROOTFS}/dev/pts" 2>/dev/null || true
+    mountpoint -q "${ROOTFS}/dev/shm" || mount --bind /dev/smh "${ROOTFS}/dev/shm" 2>/dev/null || true
 
     # The workspace (open_mower_ros) is bind-mounted at /workspace so build
     # artifacts (build/, devel/) persist on the host.
