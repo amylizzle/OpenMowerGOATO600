@@ -93,8 +93,7 @@ mount_all() {
     mountpoint -q "${ROOTFS}/dev/pts" || mount --bind /dev/pts "${ROOTFS}/dev/pts" 2>/dev/null || true
     mountpoint -q "${ROOTFS}/dev/shm" || mount --bind /dev/shm "${ROOTFS}/dev/shm" || true
     # bind host /tmp so we can use the host's IPC sockets (eg, for cameraProvider)
-    mkdir -p "${ROOTFS}/hosttmp"
-    mountpoint -q "${ROOTFS}/tmp" || mount --bind /hosttmp "${ROOTFS}/tmp"
+    mountpoint -q "${ROOTFS}/hosttmp" || mount --bind /hosttmp "${ROOTFS}/tmp"
 
     # The workspace (open_mower_ros) is bind-mounted at /workspace so build
     # artifacts (build/, devel/) persist on the host.
