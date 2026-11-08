@@ -349,8 +349,11 @@ launchom() {
         service mosquitto start
         roslaunch open_mower open_mower.launch &
         roslaunch_pid=\$!
+        roslaunch --wait goat_ros goat_camera.launch &
+        camera_pid=\$!
         /workspace/build_fw/open_goat.elf
         kill \$roslaunch_pid 2>/dev/null
+        kill \$camera_pid 2>/dev/null
         service nginx stop
         service mosquitto stop
         killall nginx

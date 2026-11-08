@@ -12,3 +12,4 @@ GpsService gps_service{xbot::service_ids::GPS};
 HighLevelService high_level_service{xbot::service_ids::HIGH_LEVEL};
 ScreenService screen_service{goat::service_ids::SCREEN};
 RTCService rtc_service{goat::service_ids::RTC};
+CameraService camera_service{goat::service_ids::CAMERA};

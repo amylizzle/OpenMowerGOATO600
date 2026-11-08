@@ -13,6 +13,7 @@
 #include "services/power_service/power_service.hpp"
 #include "services/screen_service/screen_service.hpp"
 #include "services/rtc_service/rtc_service.hpp"
+#include "services/camera_service/camera_service.hpp"
 
 extern xbot::driver::mcu::Dispatcher mcu_dispatcher_driver;
 
@@ -26,5 +27,6 @@ extern GpsService gps_service;
 extern HighLevelService high_level_service;
 extern ScreenService screen_service;
 extern RTCService rtc_service;
+extern CameraService camera_service;
 
 #endif // GLOBALS_HPP

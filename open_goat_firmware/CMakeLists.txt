@@ -57,6 +57,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         src/services/high_level_service/high_level_service.cpp
         src/services/screen_service/screen_service.cpp
         src/services/rtc_service/rtc_service.cpp
+        src/services/camera_service/camera_service.cpp
+        src/services/camera_service/camera_web_server.cpp
         # GPS driver
         src/drivers/gps/gps_driver.cpp
         src/drivers/gps/nmea_gps_driver.cpp
@@ -75,6 +77,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         src/drivers/screen/screen_driver.cpp
         # RTC driver
         src/drivers/rtc/rtc_driver.cpp
+        # Camera driver
+        src/drivers/camera/camera_driver.cpp
 )
 
 # Add include paths
@@ -102,6 +106,7 @@ target_add_service(${CMAKE_PROJECT_NAME} GpsService ${CMAKE_CURRENT_SOURCE_DIR}/
 target_add_service(${CMAKE_PROJECT_NAME} HighLevelService ${CMAKE_CURRENT_SOURCE_DIR}/../src/open_mower_ros/services/high_level_service.json)
 target_add_service(${CMAKE_PROJECT_NAME} ScreenService ${CMAKE_CURRENT_SOURCE_DIR}/../src/goat_ros/services/screen_service.json)
 target_add_service(${CMAKE_PROJECT_NAME} RTCService ${CMAKE_CURRENT_SOURCE_DIR}/../src/goat_ros/services/rtc_service.json)
+target_add_service(${CMAKE_PROJECT_NAME} CameraService ${CMAKE_CURRENT_SOURCE_DIR}/../src/goat_ros/services/camera_service.json)
 
 set_target_properties(${CMAKE_PROJECT_NAME}
         PROPERTIES SUFFIX ".elf")

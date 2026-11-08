@@ -1,0 +1,22 @@
+<!--
+  Publishes the GOAT's fisheye camera on camera/image_raw.
+
+  open_goat's CameraService owns the camera: it asks cameraProvider to stream
+  and keeps the stream alive, so this node only maps the shared memory and
+  republishes. Run it with manage_stream:=true if you want it to drive the
+  camera on its own instead.
+-->
+<launch>
+    <arg name="encoding" default="bgr8" doc="bgr8 for colour, mono8 for the luma plane as-is (cheaper)"/>
+    <arg name="decimation" default="1" doc="publish every n'th pixel in each axis; 1 for full resolution"/>
+    <arg name="manage_stream" default="false" doc="true if no CameraService is running to hold the stream open"/>
+    <arg name="camera_info_url" default="" doc="e.g. file:///workspace/params/goat_fisheye.yaml"/>
+
+    <node pkg="goat_ros" type="goat_camera_node" name="goat_camera" output="screen">
+        <param name="encoding" value="$(arg encoding)"/>
+        <param name="decimation" value="$(arg decimation)"/>
+        <param name="manage_stream" value="$(arg manage_stream)"/>
+        <param name="camera_info_url" value="$(arg camera_info_url)"/>
+        <param name="frame_id" value="camera_link"/>
+    </node>
+</launch>

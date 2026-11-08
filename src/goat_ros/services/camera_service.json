@@ -1,0 +1,38 @@
+{
+  "type": "CameraService",
+  "version": 1,
+  "inputs": [
+    {
+      "id": 0,
+      "name": "StreamEnable",
+      "type": "uint8_t"
+    }
+  ],
+  "outputs": [
+    {
+      "id": 0,
+      "name": "StreamActive",
+      "type": "uint8_t"
+    },
+    {
+      "id": 1,
+      "name": "FrameSize",
+      "type": "uint16_t[2]"
+    },
+    {
+      "id": 2,
+      "name": "FrameRate",
+      "type": "float"
+    },
+    {
+      "id": 3,
+      "name": "FrameCount",
+      "type": "uint32_t"
+    },
+    {
+      "id": 4,
+      "name": "PreviewURL",
+      "type": "char[64]"
+    }
+  ]
+}

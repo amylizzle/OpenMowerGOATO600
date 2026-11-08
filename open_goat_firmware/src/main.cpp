@@ -48,6 +48,8 @@ int main() {
 	high_level_service.start();
 	ULOG_INFO("Screen...");
 	screen_service.start();
+	ULOG_INFO("Camera...");
+	camera_service.start();
 	ULOG_INFO("Done!");
 
 	mcu_dispatcher_driver.StartDriver("/dev/ttyS3", 115200);
