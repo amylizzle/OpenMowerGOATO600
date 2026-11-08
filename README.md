@@ -87,6 +87,7 @@ systemctl disable auto_ota_check.service
 systemctl disable auto_ota_check.timer
 systemctl disable log_clean.service
 systemctl disable log_clean.timer
+systemctl disable cameraProvider.service
 mv /usr/bin/hydra.sh /usr/bin/hydra.sh.bak
 ```
 install systemd-timesyncd and add service to setup hwclock setting
