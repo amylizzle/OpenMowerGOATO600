@@ -92,6 +92,9 @@ mount_all() {
     mountpoint -q "${ROOTFS}/dev"  || mount --bind /dev  "${ROOTFS}/dev"
     mountpoint -q "${ROOTFS}/dev/pts" || mount --bind /dev/pts "${ROOTFS}/dev/pts" 2>/dev/null || true
     mountpoint -q "${ROOTFS}/dev/shm" || mount --bind /dev/shm "${ROOTFS}/dev/shm" || true
+    # bind host /tmp so we can use the host's IPC sockets (eg, for cameraProvider)
+    mkdir -p "${ROOTFS}/hosttmp"
+    mountpoint -q "${ROOTFS}/tmp" || mount --bind /hosttmp "${ROOTFS}/tmp"
 
     # The workspace (open_mower_ros) is bind-mounted at /workspace so build
     # artifacts (build/, devel/) persist on the host.
@@ -114,7 +117,7 @@ mount_all() {
 }
 
 unmount_all() {
-    for m in "${ROOTFS}/workspace" "${ROOTFS}/dev/pts" "${ROOTFS}/dev/shm" "${ROOTFS}/dev" "${ROOTFS}/sys" "${ROOTFS}/proc" "${ROOTFS}/opt/ros/${ROS_DISTRO}"; do
+    for m in "${ROOTFS}/workspace" "${ROOTFS}/tmp" "${ROOTFS}/dev/pts" "${ROOTFS}/dev/shm" "${ROOTFS}/dev" "${ROOTFS}/sys" "${ROOTFS}/proc" "${ROOTFS}/opt/ros/${ROS_DISTRO}"; do
         mountpoint -q "$m" && umount "$m" || true
     done
 }
@@ -324,7 +327,7 @@ safe_rm_rootfs() {
     # Make sure nothing inside is still a bind-mounted host path before deleting;
     # `rm -rf` would otherwise recurse into a mounted dir and destroy host data.
     unmount_all
-    for t in "${real}/workspace" "${real}/dev/pts" "${real}/dev/shm" "${real}/dev" "${real}/sys" "${real}/proc" "${real}/opt/ros/${ROS_DISTRO}"; do
+    for t in "${real}/workspace" "${real}/tmp" "${real}/dev/pts" "${real}/dev/shm" "${real}/dev" "${real}/sys" "${real}/proc" "${real}/opt/ros/${ROS_DISTRO}"; do
         mountpoint -q "$t" && fatal "refusing to delete: ${t} is still a mount point"
     done
 

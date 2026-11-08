@@ -34,7 +34,7 @@ namespace xbot::driver::camera {
 
 // Defaults for the stock EcoVacs daemon on a GOAT O600.
 inline constexpr const char* kDefaultShmPath = "/dev/shm/shm_fisheye2";
-inline constexpr const char* kDefaultControlSocket = "/tmp/camerasockt.domain";
+inline constexpr const char* kDefaultControlSocket = "/hosttmp/camerasockt.domain";
 
 /**
  * Geometry and identity of one frame in the shared memory segment.
